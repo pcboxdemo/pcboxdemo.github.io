@@ -1,0 +1,81 @@
+{{#> base }}
+
+{{#*inline "content-block"}}
+
+				<!-- Box Content Explorer -->
+				<div class="tab-pane show active mts" role="tabpanel" id="explorer">
+					<p>access token: {{token}}</p>
+					<div style="height:500px" class="pcontainer"></div>
+				</div>
+
+				<script src="https://cdn01.boxcdn.net/platform/elements/6.0.0/en-US/uploader.js"></script>
+			  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/6.0.0/en-US/uploader.css" />
+
+<script>
+const CancelToken = axios.CancelToken;
+const source = CancelToken.source();
+var contentUploader;
+var conflictsMap = new Map();
+var shouldCancel = false;
+var testResponseInterceptor = (response /* https://github.com/axios/axios#request-config */) => {
+		if(response.type) {
+			if(response.type=='error' && response.status=='409') {
+				console.log(JSON.stringify(response));
+				var name = response.context_info.conflicts.name;
+				var conflictId = response.context_info.conflicts.id;
+				conflictsMap.set(name,conflictId);
+				console.log("name:" + name + " / " + "id:" + conflictId + " / " + conflictsMap.size);
+			}
+		}
+	return response;
+};
+
+var testRequestInterceptor = (config /* https://github.com/axios/axios#response-config */) => {
+	//console.log(JSON.stringify(config));
+	var method = config.method;
+	//config.cancelToken=source.token;
+		if(method=='post') {
+			var jsonRep = JSON.parse(config.data.attributes);
+			console.log(config.data.attributes);
+			console.log(" trying to find:" + jsonRep.name  + " / " + conflictsMap.get(jsonRep.name));
+			if(conflictsMap.get(jsonRep.name)!=null) {
+				var spans = document.getElementsByTagName('span');
+				var l = spans.length;
+				for (var i=0;i<l;i++) {
+					var thisSpan = spans[i];
+	  			if ( thisSpan.innerHTML == "Cancel Uploads" ) {
+	      		alert("This upload will be cancelled as the file with name '" + jsonRep.name + "' already exists in the folder");
+						console.log(thisSpan.parentElement.parentElement.type);
+						var button = thisSpan.parentElement.parentElement;
+						button.click();
+	    		}
+				}
+			}
+		}
+		console.log("req method:" + method);
+    return config;
+};
+
+  var fileId = '{{id}}';
+  var accessToken = '{{token}}';
+ 	contentUploader = new Box.ContentUploader();
+	contentUploader.show(fileId, accessToken, {
+		container: '.pcontainer',
+		requestInterceptor:testRequestInterceptor,
+		responseInterceptor:testResponseInterceptor,
+
+	});
+	contentUploader.on('complete', (data) => {
+			console.log('All files successfully uploaded: ${JSON.stringify(data)}');
+			conflictsMap.clear();
+	});
+	contentUploader.on('error', (data) => {
+			console.log('Error:' + JSON.stringify(data));
+			conflictsMap.clear();
+	});
+
+</script>
+
+{{/inline}}
+
+{{/base}}

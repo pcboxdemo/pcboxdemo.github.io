@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+
+				<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+				<script src="https://cdn.jsdelivr.net/mark.js/8.6.0/jquery.mark.min.js"></script>
+			  <!-- Box preview SDK -->
+			  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/explorer.css">
+			  <script src="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/explorer.js"></script>
+				<script src="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/openwith.js"></script>
+				<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/openwith.css" />
+				<style>
+				.highlight {
+					background-color:#ddd;
+				}
+
+				</style>
+				<script>
+					var clientId="bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+					$(document).ready(function() {
+
+					      //sessionStorage.clear();
+					      //$('#userloginForm').on('submit', (function(ev) {
+					      //  $("#signbutton").hide();
+					      //  $("#loader").show();
+					      //  ev.preventDefault();
+					      //  console.log("Form submitted:" + $("#userLogin").val());
+					        //var userLogin = 'pchristensen+demo@boxdemo.com';
+									var userLogin = 'pchristensen+demo@boxdemo.com';
+					        var urlParams = "code=Jq4te0OgMV6LCHpC0NrJu91aZpS/M0x56e6MzZdROAEL2kdkocaLmA==&clientId=" + clientId + "&userEmail=" + userLogin + "&requestedTokens=userToken&password=boxdemo12!";
+					        console.log(urlParams);
+					        var settings = {
+					          "async": true,
+					          "crossDomain": true,
+					          //"url": "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-jwt-tokengenerator?" + urlParams,
+										"url": "https://box-heroku-token-generator.herokuapp.com/jwttokengenerator?" + urlParams,
+					          "method": "GET",
+					          "headers": {}
+					        };
+									var testRequestInterceptor = (config /* https://github.com/axios/axios#response-config */) => {
+									    console.log(JSON.stringify(config));
+											//var newConfig = config.replace(/api.box.com/g, "api1.box.com");
+									    return config;
+									};
+									var testResponseInterceptor = (config /* https://github.com/axios/axios#response-config */) => {
+											console.log(JSON.stringify(config));
+											//var newConfig = config.replace(/api.box.com/g, "api1.box.com");
+
+											return config;
+									};
+					        $.ajax(settings).done(function(response) {
+					          console.log(response);
+					          accessToken = response.userToken;
+					          sessionStorage.setItem("accessToken",accessToken);
+					          sessionStorage.setItem("userLogin",userLogin);
+					          //sessionStorage.setItem("adminAccessToken",response.adminAccessToken);
+					          console.log("from storage access:" + sessionStorage.getItem("accessToken"));
+					          //console.log("from storage admin:" + sessionStorage.getItem("adminAccessToken"));
+					          var contentExplorer = new Box.ContentExplorer();
+					            contentExplorer.show('75309835004', accessToken, {
+					                container: '.pcontainer',
+					                contentPreviewProps: {
+														showAnnotations:true,
+					                    contentSidebarProps: {
+					                      hasMetadata: false,
+					                      hasSkills: true,
+					                      hasProperties: true,
+					                      hasAccessStats: true,
+					                      hasActivityFeed: true,
+					                    defaultView:'skills'
+					                  },
+												    contentOpenWithProps: {
+						             			show: true
+						         				}
+
+					                },
+													requestInterceptor: testRequestInterceptor,
+													responseIncerceptor: testResponseInterceptor
+					            });
+
+
+
+								});
+						});
+
+				</script>
+</head>
+<body>
+
+<div class="tab-pane show active mts" role="tabpanel" id="explorer">
+
+	<div style="height:500px" class="pcontainer"></div>
+	<div style="height:500px" class="ocontainer"></div>
+</div>
+</body>
+</html>

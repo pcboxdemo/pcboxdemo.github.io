@@ -1,0 +1,52 @@
+{{#> base }}
+
+{{#*inline "content-block"}}
+
+				<!-- Box Content Explorer -->
+				<div class="tab-pane show active mts" role="tabpanel" id="explorer">
+					<p>access token: {{token}}</p>
+					<div style="height:500px" class="pcontainer"></div>
+				</div>
+
+				<script src="https://cdn01.boxcdn.net/platform/preview/1.46.0/en-US/preview.js"></script>
+			  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/1.46.0/en-US/preview.css" />
+
+<script>
+  var fileId = '{{id}}';
+
+  var accessToken = '{{token}}';
+  //var params = new URLSearchParams(window.location.search);
+//	var fileId = params.get('fileId');
+	//var accessToken = params.get('token');
+	        var preview = new Box.Preview();
+	      	preview.show(fileId, accessToken, {
+	            container: '.pcontainer',
+	            showDownload: false,
+	            showAnnotations:true,
+							viewers: {
+        				Image: {
+            			annotations: {
+                		enabled: true,
+                		enabledTypes: ['point','draw']
+            			}
+        			},
+        				Document: {
+            			annotations: {
+                		enabled: true,
+                		enabledTypes: ['point','highlight','draw','highlight-comment']
+            			}
+        			},
+        				Presentation: {
+            			annotations: {
+                		enabled: true,
+                		enabledTypes: ['highlight-comment','point','draw','highligt']
+            		}
+        			}
+    				}
+	       });
+	    </script>
+</script>
+
+{{/inline}}
+
+{{/base}}

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<!-- polyfill.io only loads the polyfills your browser needs -->
+	<script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Promise"></script>
+	<!-- Alternatively, use polyfills hosted on the Box CDN
+     <script src="https://cdn01.boxcdn.net/polyfills/bluebird/3.5.1/bluebird.min.js"></script>
+     -->
+
+	<!-- Latest version of Box Content Preview for en-US locale -->
+	<script src="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/preview.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/preview.css" />
+	<script src="https://cdn.jsdelivr.net/mark.js/8.6.0/jquery.mark.min.js"></script>
+
+	<script>
+		var clientId = "bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+
+
+
+		$(document).ready(function() {
+			var userLogin = 'pchristensen+demo@boxdemo.com';
+			var urlParams = "clientId=" + clientId + "&userEmail=" + userLogin +"&password=" + clientId;
+			console.log(urlParams);
+			var settings = {
+				"async": true,
+				"crossDomain": true,
+				//"url": "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-jwt-tokengenerator?" + urlParams,
+				"url": "https://box-heroku-token-generator.herokuapp.com/jwttokengenerator?" + urlParams,
+				//"url": "http://localhost:7000/jwttokengenerator?" + urlParams,
+				"method": "GET",
+				"headers": {}
+			};
+			$.ajax(settings).done(function(response) {
+				accessToken = response.userToken;
+				sessionStorage.setItem("accessToken", accessToken);
+				var preview = new Box.ContentPreview();
+				preview.show('428392560865', accessToken, {
+					container: '.pcontainer',
+					showDownload: true,
+					contentSidebarProps: {
+ 					 hasMetadata: false,
+ 					 hasSkills: true,
+ 					 hasProperties: true,
+ 					 hasAccessStats: true,
+ 					 hasActivityFeed: true,
+ 				 defaultView:'skills'
+ 			 }
+
+				});
+
+
+			});
+				checkDOMChange()
+
+		});
+		var prevText="";
+		function checkDOMChange() {
+			// check for any new element being inserted here,
+			// or a particular node being modified
+			var i = 0;
+			$(".be-transcript-row").each(function(index) {
+				i++;
+			});
+			// call the function again after 100 milliseconds
+			if(i==0) {
+				setTimeout(checkDOMChange, 100);
+			}
+			else {
+				$(".be-transcript-row").click(function(ev) {
+					var target = $(this).children(".be-transcript-time").html().substring(3, 4)
+					var text1 = $(this).children(".be-transcript-text").html();
+					console.log("page:" + target + ":" + text1);
+
+					$(".bp-current-page").trigger("click");
+					$(".bp-page-num-input").val(target);
+					//$(".bp-current-page").html($(this).children(":first").html().substring(0,1));
+					console.log("1");
+					$('.bp-page-num-input').trigger(jQuery.Event('keypress', {
+						keycode: 13
+					}));
+					$(".bp-current-page").trigger("focusout");
+					$(".bp-current-page").trigger("blur");
+					$(".bp-page-num-input").trigger("blur");
+					$(".bp-page-num-input").trigger("focusout");
+					$(".pdfViewer").trigger("focus");
+					$("div.page").each(function(index) {
+						if ($(this).attr("data-page-number") == target) {
+							console.log("found:" + $(this).attr("data-page-number"));
+							$(this).children().each(function(index) {
+								var m = $(this).text();
+
+								//if (m.includes(text1)) {
+									$(this).mark(text1);
+									//$(this).text(m.replace(text,"<mark'>"+text+"</mark>"));
+								//}
+
+							});
+						}
+						else {
+							$(this).unmark();
+						}
+					});
+
+				});
+			}
+		}
+	</script>
+</head>
+
+<body>
+
+	<div class="tab-pane show active mts" role="tabpanel" id="explorer">
+
+		<div style="height:800px;width:1200px;" class="pcontainer"></div>
+	</div>
+</body>
+
+</html>

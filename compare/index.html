@@ -1,0 +1,166 @@
+
+<!--
+Author: W3layouts
+Author URL: http://w3layouts.com
+License: Creative Commons Attribution 3.0 Unported
+License URL: http://creativecommons.org/licenses/by/3.0/
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sample OAuth 2.0 third party page</title>
+<!-- for-mobile-apps -->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+    <script>
+
+
+  var params = new URLSearchParams(window.location.search);
+  var clientId=params.get("clientId");
+  var accessToken;
+  var fileId=params.get('id');
+  var fileExt=params.get('ext');
+  $(document).ready(function(){
+
+      $.ajax({
+          method : 'get',
+          //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-node-tokengenerator",
+          url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+          data: {authCode:params.get('auth'),id:params.get('id'),clientId:params.get('clientId')},
+          crossDomain: true,
+          timeout:120000,
+          cache: false,
+          beforeSend: function() {
+              $('#loader').show();
+
+           },
+           complete: function(){
+              $('#loader').hide();
+
+          },
+          success : function(response){
+            console.log("Success:" + JSON.stringify(response));
+            accessToken = response.token;
+            loadVersions();
+          }
+          ,
+          error : function(err){
+            console.log(JSON.stringify(err));
+            console.log("error:" + err.message);
+
+          }
+      });
+   });
+   function loadVersions() {
+     console.log("loadVersions");
+     var url = "https://api.box.com/2.0/files/" + fileId + "/versions";
+
+     $(".fileChooser").append($('<div/>').addClass('checkbox').html('<label><input ext="' + fileExt +'" type="checkbox" value="' + fileId + '" >terms3.doc <o id="mainVersion"></o></label>'));
+
+     $.ajax({
+      //url: 'https://box-heroku-token-generator.herokuapp.com/jwttokengenerator?',
+      url: url,
+      headers: {"Authorization":"Bearer " + accessToken},
+      type: 'get',
+      data:{},
+      success: function(response) {
+        console.log("Fetched versions");
+        var i = response.entries.length;
+          $.each(response.entries, function(k, data) {
+            var extension = data.name.substr( (data.name.lastIndexOf('.') +1) );
+           $(".fileChooser").append($('<div/>').addClass('checkbox').attr('id',data.id).html('<label><input ext="' +extension +'" type="checkbox" value="' + data.id + '">' + data.name + '  (v' + i + ')</label>'));
+           i--;
+          });
+          $("#mainVersion").text("(v" + (response.entries.length+1) +") Current version ");
+         $(".fileChooser").append($('<button/>').addClass('btn btn-primary btn-sm').text('Compare'));
+         $(".btn").click(function(ev) {
+           $('#compareFrame').attr('src','');
+
+           var count=0;
+           var id1;
+           var id2;
+           var ext1;
+           var ext2;
+           $. each($("input[type='checkbox']:checked"), function(){
+             $("#loader").show();
+               if(count==0 ) {
+                 id1=$(this).val();
+                 ext1=$(this).attr('ext');
+
+               }
+               else if(count==1) {
+                 id2=$(this).val();
+                 ext2=$(this).attr('ext');
+               }
+               else if(count>=2) {
+                 $(this).prop( "checked", false );
+               }
+               count++;
+             });
+             compare(id1,id2,ext1,ext2);
+         });
+      },
+      error: function(xhr, status, error) {
+        console.log(xhr);
+
+      }
+     });
+   }
+   function compare(id1,id2,ext1,ext2) {
+     var url='https://cvw2zdcqpc.execute-api.eu-west-2.amazonaws.com/default/box-document-compare?mainId=' + fileId + '&id1='+id1 + '&id2='+id2 + '&token=' + accessToken + "&ext1=" + ext1 + "&ext2=" + ext2;
+     console.log(url);
+     $.ajax({
+     //  //url: 'http://0.0.0.0:8000',
+       url: url,
+       headers: {},
+       type: 'get',
+       data:{},
+       success: function(response) {
+         $("#loader").hide();
+         //src="https://api.draftable.com/v1/comparisons/viewer/SxAoLy-test/fPIkDfnM";
+         src=response.url;
+         $("#dialog").show();
+         $('#compareFrame').attr('src',src);
+
+
+       },
+       error: function(xhr) {
+         $("#loader").hide();
+         $("#dialog").show();
+         $("#dialog").append($("<div/>").text("An error occurred processing the compare"));
+       }
+     });
+   }
+
+</script>
+
+</head>
+<body style="height:1000px;overflow-x:hidden;">
+  <div class="container">
+    <div class="row">
+        <div class="col-md-2">
+            <div class="fileChooser">
+              <div id="fileName"></div>
+
+            </div>
+        </div>
+        <div class="col-md-12">
+          <img src='../Template/img/ajax-loader_t.gif' id='loader'/>
+
+          <div id="dialog" style="display:none;height:1000px;overflow-x:hidden;left:100px !important;flow: left">
+              <iframe id="compareFrame" src="" height="95%" width="85%" frameborder=0></iframe>
+          </div>
+        </div>
+    </div>
+</div>
+
+
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+	<script
+	  src="https://code.jquery.com/jquery-3.3.1.min.js"
+	  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+	  crossorigin="anonymous"></script>
+
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/uploader.css">
+	<script src="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/uploader.js"></script>
+
+	<script>
+		$(document).ready(function() {
+			var contentUploader = new Box.ContentUploader();
+			contentUploader.show('0', sessionStorage.get("token"), {
+				container: '.pcontainer'
+			});
+		});
+		//});
+	</script>
+</head>
+
+<body>
+
+	<div class="tab-pane show active mts" role="tabpanel" id="explorer">
+
+		<div style="height:500px" class="pcontainer"></div>
+	</div>
+</body>
+
+</html>

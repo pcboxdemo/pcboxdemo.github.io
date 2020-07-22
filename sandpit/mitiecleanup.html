@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <link rel="stylesheet" type="text/css" href="/KYC/style.css" />
+
+
+    <meta charset="utf-8" />
+    <title>Mitie Cleaner</title>
+    <!-- polyfill.io only loads the polyfills your browser needs -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Promise"></script>
+    <!-- Alternatively, use polyfills hosted on the Box CDN
+    <script src="https://cdn01.boxcdn.net/polyfills/bluebird/3.5.1/bluebird.min.js"></script>
+    -->
+    <!-- Bootstrap core CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Material Design Bootstrap -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.8.2/css/mdb.min.css" rel="stylesheet">
+
+    <link href="https://cdn01.boxcdn.net/platform/elements/10.1.0/en-US/preview.css" rel="stylesheet" type="text/css"></link>
+
+
+    <script src="https://cdn01.boxcdn.net/polyfills/core-js/2.5.3/core.min.js"></script>
+    <script src="https://cdn01.boxcdn.net/platform/elements/10.1.0/en-US/preview.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+
+</head>
+
+
+<script>
+    var cleanupUrl = 'https://box-java-sandpit.herokuapp.com/mitieclean';
+    //var cleanupUrl = 'http://localhost:5000/mitieclean';
+    var i =0;
+    function loaderCheck() {
+        i++;
+        if(i==3) {
+            $("#loader").hide();
+        }
+    }
+    $(document).ready(function () {
+        $.ajax({
+            method: 'get',
+            url: cleanupUrl,
+            data: {
+                type: 'jobref'
+            },
+            dataType: 'json',
+            crossDomain: true,
+            cache: false,
+            async:true,
+            success: function (response) {
+               $("#messages").append("job references cleaned:" + response.totalCleaned).append("<br/>");
+               loaderCheck();
+            },
+            error: function (err) {
+                console.log(JSON.stringify(err));
+                console.log("error:" + err.message);
+            }
+        });
+        $.ajax({
+            method: 'get',
+            url: cleanupUrl,
+            data: {
+                type: 'received'
+            },
+            dataType: 'json',
+            crossDomain: true,
+            cache: false,
+            async:true,
+            success: function (response) {
+                $("#messages").append("recieved cleaned:" + response.totalCleaned).append("<br/>");
+                loaderCheck();
+
+            },
+            error: function (err) {
+                console.log(JSON.stringify(err));
+                console.log("error:" + err.message);
+            }
+        });
+        $.ajax({
+            method: 'get',
+            url: cleanupUrl,
+            data: {
+                type: 'unrecognized'
+            },
+            dataType: 'json',
+            crossDomain: true,
+            cache: false,
+            async:true,
+            success: function (response) {
+                $("#messages").append("unrecognized cleaned:" + response.totalCleaned).append("<br/>");
+                loaderCheck();
+
+
+            },
+            error: function (err) {
+                console.log(JSON.stringify(err));
+                console.log("error:" + err.message);
+            }
+        });
+
+    });
+
+</script>
+
+<body>
+    <img src="/Template/img/ajax-loader_t.gif" id="loader"/>
+<div id="messages"></div>
+ 
+</body>
+
+</html>

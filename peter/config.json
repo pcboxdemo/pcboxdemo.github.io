@@ -1,0 +1,26 @@
+//Client ID
+var clientId="bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+
+//Main page
+var redirectAfterLoginPage="/peter/main.html";
+
+//Navigation
+var navigation=[
+    {
+        "page": "folder1.html",
+        "title": "UI Metadata",
+        "boxId": "80828733864"
+    },
+    {
+        "page": "tree_local.html",
+        "title": "Custom Folder Tree",
+        "boxId": "80828733864"
+    },
+    
+    
+    {
+        "page": "zipdownload.html",
+        "title": "Zip Download API",
+        "boxId": "0"
+    }
+];

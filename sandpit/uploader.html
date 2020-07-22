@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<!-- Box preview SDK -->
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/uploader.css">
+	<script src="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/uploader.js"></script>
+
+	<script>
+		var clientId = "bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+		$(document).ready(function() {
+		//sessionStorage.clear();
+		//$('#userloginForm').on('submit', (function(ev) {
+		//  $("#signbutton").hide();
+		//  $("#loader").show();
+		//  ev.preventDefault();
+		//  console.log("Form submitted:" + $("#userLogin").val());
+		var userLogin = 'pchristensen+demo@boxdemo.com';
+		var urlParams = "code=Jq4te0OgMV6LCHpC0NrJu91aZpS/M0x56e6MzZdROAEL2kdkocaLmA==&clientId=" + clientId + "&userEmail=" + userLogin;
+		console.log(urlParams);
+		var settings = {
+			"async": true,
+			"crossDomain": true,
+			"url": "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-jwt-tokengenerator?" + urlParams,
+			"method": "GET",
+			"headers": {}
+		};
+		$.ajax(settings).done(function(response) {
+			console.log(response);
+			accessToken = response.token;
+			sessionStorage.setItem("accessToken", accessToken);
+			sessionStorage.setItem("userLogin", userLogin);
+			//sessionStorage.setItem("adminAccessToken",response.adminAccessToken);
+			console.log("from storage access:" + sessionStorage.getItem("accessToken"));
+			//console.log("from storage admin:" + sessionStorage.getItem("adminAccessToken"));
+			var contentUploader = new Box.ContentUploader();
+			contentUploader.show('69389962348', accessToken, {
+				container: '.pcontainer'
+			});
+			var contentUploader1 = new Box.ContentUploader();
+			contentUploader1.show('75410861990', accessToken, {
+				container: '.ocontainer'
+			});
+			contentUploader.addListener('complete',function(file) {
+					$(".second").toggle();
+			});
+			contentUploader1.addListener('complete',function(file) {
+					$("#explorer").text('thank you - we have received the information');
+			});
+
+		});
+		});
+		//});
+	</script>
+</head>
+
+<body>
+
+	<div class="tab-pane show active mts" role="tabpanel" id="explorer">
+
+	<div>Upload a picture of yourself
+		<div style="height:300px;" class="pcontainer"></div>
+	</div>
+	<div class='second' style="display:none;">Upload a picture of your drivers license or passport
+		<div style="height:300px" class="ocontainer"></div>
+	</div>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Box OAuth2.0 Template</title>
+  <!-- for-mobile-apps -->
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+
+  <script>
+
+    $(document).ready(function() {
+      var params = new URLSearchParams(window.location.search);
+      var code = params.get('auth');
+      if(code==null) {
+        code = params.get('code');
+      }
+      $.ajax({
+        method: 'get',
+        //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-tokengenerator",
+        url:"https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+
+      data: {authCode:code,id:params.get('id'),clientId:params.get('clientId')},
+        crossDomain: true,
+        cache: false,
+        success: function(response) {
+          console.log(response);
+          $("#text").append("<li>AuthCode: " + code + "</li>");
+          $("#text").append("<li>ClientId: " + params.get('clientId') + "</li>");
+          $("#text").append("<li>Token: " +response.token + "</li>");
+          $("#text").append("<li>Refresh Token: " + response.refreshToken + "</li>");
+          $("#text").append("<li>BoxId: " +params.get('id') + "</li>");
+        },
+        error: function(err) {
+          console.log(JSON.stringify(err));
+          console.log("error:" + err.message);
+
+        }
+      });
+
+    });
+
+
+  </script>
+
+</head>
+
+<body>
+
+
+  <ul id="text"></ul>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="utf-8" />
+    <title>Box Platform - Template Application</title>
+
+    <!-- polyfill.io only loads the polyfills your browser needs -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=es6,Intl"></script>
+    <!-- Alternatively, use polyfill hosted on the Box CDN
+    <script src="https://cdn01.boxcdn.net/polyfills/core-js/2.5.3/core.min.js"></script>
+    -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+
+</head>
+
+<script>
+  var accessToken="vhwcAfXH8EVRvwy0jxeWv2pdYYU5R3fs";
+  var userId="3561743217";
+  $(document).ready(function() {
+     getItems(71860153222,0);
+     $("#71860153222").find("ul").hide();
+
+    $("#71860153222 > li").click(function(){
+    	$(this).find("ul").slideToggle();
+    });
+  });
+   function getItems(folderId,parentId) {
+    $.ajax({
+      url: 'https://api.box.com/2.0/folders/' + folderId + '/items?fields=id,name,type,owned_by',
+      type: 'get',
+      headers: {
+        "Authorization":"Bearer " + accessToken,
+        "Content-Type":"application/json"
+      },
+      dataType: 'json',
+      success: function(response) {
+        $.each(response.entries, function(k, data) {
+          if(data.type=='folder' && data.owned_by.name=='Peter Christensen') {
+            console.log(data.name + ":" + folderId + ":" + parentId);
+            var p = $("<ul id="  +data.id + "></ul");
+            p.append($("<li class='uf'  parent=" + parentId + ">"+data.name + "</li>"));
+            $("#" + folderId).append(p);
+            window.setTimeout(1000,getItems(data.id,folderId));
+            window.setTimeout(1000,getCollaborators(data.id,folderId));
+          }
+
+        });
+
+      }});
+  }
+  function  getCollaborators(folderId,parentId) {
+    $.ajax({
+      url: 'https://api.box.com/2.0/folders/' + folderId + '/collaborations',
+      type: 'get',
+      headers: {
+        "Authorization":"Bearer " + accessToken
+      },
+      success: function(response) {
+        var p = $("<ul></ul");
+        var appendIt=false;
+        $.each(response.entries, function(k, data) {
+
+          if(folderId==data.item.id) {
+            appendIt=true;
+            p.append($("<li class='pf' id='u_" + folderId + "'>"+data.accessible_by.login + " (" + data.role + ")</li>"));
+          }
+          });
+          if(appendIt) {
+            $("#" + folderId).append(p);
+          }
+        }
+      });
+
+  }
+  </script>
+<style>
+  .uf {
+     list-style-image: url('Folder-32.png');
+  }
+  .pf {
+     list-style-image: url('pers.png');
+     margin-left:-10px;
+  }
+  </style>
+<body>
+    <ul id="71860153222"></ul>
+</body>
+</html>

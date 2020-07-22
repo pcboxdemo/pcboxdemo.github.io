@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<link href="/platform/steps.css" rel="stylesheet">
+<style>
+  input[type=text],
+  input[type=number],
+  input[type=file],
+  select {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  input[type=submit] {
+    width: 100%;
+    background-color: #3278cf;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  p {
+    font-family: sans-serif;
+    font-size: 18px;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    color: #3278cf;
+    text-align: left;
+  }
+
+  span {
+    font-family: sans-serif;
+    font-size: 10px;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+
+    text-align: left;
+  }
+
+  .big {
+    font-family: sans-serif;
+    font-size: 14px;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+
+    text-align: left;
+  }
+
+  label,
+  select,
+  input,
+  option {
+    font-family: sans-serif;
+    font-size: 12px;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    color: #3278cf;
+
+  }
+
+
+  .bcu-footer {
+    display: none;
+  }
+  * {
+  .border-radius(0) !important;
+}
+
+#field {
+    margin-bottom:20px;
+
+
+}
+
+</style>
+
+<script>
+  var mode="create";
+function getMessage(id) {
+  switch(id) {
+    case "enameMessage":
+      return "<p style='padding: 5px;'>The email address is used to identify and confirm your jwt upload</p>";
+    case "dnameMessage":
+      return "<p style='padding: 5px;'>The display name is used to identify the application in the database for debugging and logging purposes</p>";
+    case "corsMessage":
+      return "<p style='padding: 5px;'>Add the URLs from where the token generator can be called. Don't forget to also add them to the CORS list in the Box JWT app config</p><p style='padding:5px;'>Please add URls on like https://mysite.com or http://0.0.0.0:5000";
+    case "durationMessage":
+      return "<p style='padding: 5px;'>Here you can specify for how long you want the JWT config to be stored. It will be deleted without confirmation after the period chosen - so will any app user logins stored</p>";
+    case "fileMessage":
+      return "<p style='padding: 5px;'>Upload your config json file here. The file name is not important!</p>";
+    case "pwdMessage":
+      return "<p style='padding: 5px;'>Default password for Managed users. This is required as we are generating a JWT token for these so standard account OAuth password will not be used</p>";
+  }
+
+}
+
+
+  $(document).ready(function() {
+
+    $("#loadExisting").click(function(ev) {
+      $('#myModal').modal("show");
+    });
+    $("#modalClient").click(function(e) {
+          $("#cloader").show();
+          $("#modal-body").hide();
+          $("#updatedClientId").val($("#clientId").val());
+          $.get( "http://localhost:5000/sandpit", { cmd: "getRegistration", app: $("#clientId").val(),data:$("#fetchEmail").val() })
+          .done(function( data ) {
+            console.log("good:" + data);
+            mode="update";
+            $("#mode").val("update");
+
+            var jdata = JSON.parse(data)
+            var cors = jdata.cors;
+            $("#dname").val(jdata.displayName);
+            $("#ename").val(jdata.email);
+            $("#pwd").val(jdata.password);
+            if(jdata.ttl) {
+              console.log("ttl found:" + jdata.ttl);
+            }
+            else {
+              console.log("ttl not found");
+              $('#duration option[value="forever"]').attr("selected", "selected");
+              $("#dnumber").removeAttr("required");
+
+            }
+            $("#file").attr("disabled","true");
+            //$(".custom-file-upload").hide();
+            var corsCounter=1;
+            for(val in cors) {
+              $("#cors" + corsCounter).val(cors[val]);
+              $(".add-more").trigger("click");
+              corsCounter++;
+            }
+            $("#submit1").val("Update registration");
+            $('#myModal').modal("hide");
+            //$("#deleteExisting").show();
+          });
+        });
+
+	 $(".showmessage").click(function() {
+      $("#message").html(getMessage($(this).attr("id")));
+    });
+
+    var next = 1;
+    $(".add-more").click(function(e){
+    	console.log("clicked");
+        e.preventDefault();
+        var addto = "#cors" + next;
+        var addRemove = "#cors" + (next);
+        next = next + 1;
+        var newIn = '<input  style="width:90%;"  autocomplete="off" class="input form-control" id="cors' + next + '" name="cors" type="text">';
+        var newInput = $(newIn);
+        var removeBtn = '<button id="remove' + (next - 1) + '" class="btn btn-danger remove-me" >-</button></div><div id="field' + next + '">';
+        var removeButton = $(removeBtn);
+        $(addto).after(newInput);
+        $(addRemove).after(removeButton);
+        $("#field" + next).attr('data-source',$(addto).attr('data-source'));
+        $("#count").val(next);
+
+         $('.remove-me').click(function(e){
+             e.preventDefault();
+             var fieldNum = this.id.charAt(this.id.length-1);
+             var fieldID = "#cors" + fieldNum;
+             $(this).remove();
+             $(fieldID).remove();
+         });
+    });
+
+    $('ul.tabs li').click(function() {
+      var tab_id = $(this).attr('data-tab');
+
+      $('ul.tabs li').removeClass('current');
+      $('.tab-content').removeClass('current');
+
+      $(this).addClass('current');
+      $("#" + tab_id).addClass('current');
+    });
+    $("#uploadfilesJWT").on('submit', (function(ev) {
+      ev.preventDefault();
+      uploadFiles(this);
+    }));
+    $("#uploadfilesSkill").on('submit', (function(ev) {
+      ev.preventDefault();
+      uploadFiles(this);
+    }));
+    $("#uploadfilesOAuth").on('submit', (function(ev) {
+      ev.preventDefault();
+      uploadFiles(this);
+    }));
+    var params = new URLSearchParams(window.location.search);
+    var page = params.get("page");
+    console.log(page);
+    $("#" + page).trigger("click");
+  });
+
+  function uploadFiles(form, type) {
+    //$("#uploadfiles").prop("disabled", true);
+    $("#submit").hide();
+    $("#loader").show();
+    $.ajax({
+      url: 'http://localhost:5000/uploadfiles',
+      type: 'POST',
+      data: new FormData(form),
+      crossDomain: true,
+      contentType: false,
+      cache: false,
+      processData: false,
+      success: function(data, status, xhr) {
+        console.log("good:" + data + ":" + status);
+        $('#upload-form').trigger("reset");
+        //Reload table to show uploaded document
+        $("#loader").hide();
+        $(".container").html("Your JWT app was registered. You can now use the token generator and <a href='https://box-java-sandpit.herokuapp.com/platform/index.html'>workbench</a>");
+      },
+      error: function(xhr, status, error) {
+        console.log(JSON.stringify(error));
+        if(status=='409') {
+          $(".container").html("An app with these details has already been registered. In the next version you can update your registered app");
+        }
+        else {
+          console.log("bad upload:" + error);
+          $(".container").html("An error occurred registering your app - please check JWT file - does it have private/public key?. If problem persists contact pchristensen@box.com");
+        }
+        $("#loader").hide();
+      }
+    });
+
+  };
+</script>
+
+<body style="margin-left:50px;">
+  <div class="container">
+    <div class="row">
+      <br>
+
+      <P>Register application file for Box Platform assets</p>
+
+      <br>
+      <span>Contact pchristensen@box.com if you have any questions</span>
+      <br/>
+      <button id="loadExisting">Load existing</button>
+      <button id="deleteExisting" style="display:none;">Delete </button>
+      <br/>
+      <br/>
+    </div>
+    <div class="row">
+      <div class="col-8">
+        <ul class="tabs">
+          <li class="tab-link current" data-tab="tab-1" id="jwt">JWT Config file upload</li>
+          <li class="tab-link" data-tab="tab-2" id="jwtskills">JWT with Skills upload</li>
+          <li class="tab-link" data-tab="tab-3" id="oauth2">OAuth 2.0 client/secret</li>
+        </ul>
+        <form id="uploadfilesJWT" action="#" method="post">
+          <input type="hidden" value="jwt" name="type" />
+          <input type="hidden" value="" name="updatedClientId" id="updatedClientId" />
+          <input type="hidden" value="create" id="mode" name="mode" />
+          <div id="tab-1" class="tab-content current" style="width: 600px; float: left;z-index:-9999;border:1px solid;padding:5px;box-shadow:3px 6px">
+            <span class="big">Use this if you are going to use the JWT token generator or the Platform workbench.</span><br/><br/>
+            <label for="dname">Display name <a class="showmessage" id="dnameMessage" href="#"><span class="glyphicon glyphicon-info-sign"></span></a></label>
+            <input type="text" id="dname" name="dname" placeholder="Application name.." required>
+            <label for="dname">Email <a class="showmessage" id="enameMessage" href="#"><span class="glyphicon glyphicon-info-sign"></span></a></label>
+            <input type="text" id="ename" name="ename" placeholder="Your email.." required>
+            <label for="dname">Password <a class="showmessage" id="pwdMessage" href="#"><span class="glyphicon glyphicon-lock"></span></a></label>
+            <input type="text" id="pwd" name="pwd" placeholder="Default pwd.." required>
+            <label for="duration">Duration <a class="showmessage" id="durationMessage" href="#"><span class="glyphicon glyphicon-info-sign"></span></a></label>
+            <input type="number" id="dnumber" name="dnumber" placeholder="Enter number.." required>
+            <select id="duration" name="duration" required style="height:35px" required>
+          <option value="hours">hours</option>
+          <option value="days">days</option>
+          <option value="weeks">weeks</option>
+          <option value="months">months</option>
+          <option value="forever">Forever</option>
+
+        </select>
+        <br/><br/>
+            <label for="cors">CORS <a class="showmessage" id="corsMessage" href="#"><span class="glyphicon glyphicon-info-sign"></span></a></label>
+            	<input type="hidden" name="count" value="1" />
+       			 <div class="control-group" id="fields">
+            		<div class="controls" id="profs">
+                		<form class="input-append">
+                    		<div id="field">
+                    		<input style="width:90%;" autocomplete="off" class="input" id="cors1" name="cors" type="text" placeholder="Type URL.." data-items="8"/>
+                    		<button id="b1" class="btn add-more" type="button">+</button>
+                    		</div>
+		                </form>
+        			</div>
+        		</div>
+
+            <div class="custom-file-upload">
+
+              <!--<label for="file">File: </label>-->
+              <input type="file" id="file" name="myfiles[]" required/>
+            </div>
+            <input type="submit" id="submit1" value="Upload to Platform Assets Repository">
+            <img src="/platform/ajax-loader_t.gif" style="display:none;" align=center/>
+            <p id="msg"></p>
+          </div>
+        </form>
+        <form id="uploadfilesSkill" action="#" method="post">
+          <input type="hidden" value="skill" name="type" />
+          <div class="tab-content" id="tab-2" style="width: 600px; float: left;z-index:-9999;border:1px solid;padding:5px;box-shadow:3px 6px">
+            <span class="big">Use this if you are going to use the a skill that requires JWT tokens to perform additional actions (like upload new file or move file)</span><br/><br/>
+
+            <label for="dname">Display name</label>
+            <input type="text" id="dname" name="dname" placeholder="Skill name.." required>
+            <label for="dname">Skill ID</label>
+            <input type="text" id="sid" name="sid" placeholder="Skill ID.." required>
+            <label for="eid">Enterprise ID</label>
+            <input type="text" id="eid" name="eid" placeholder="Enteprise ID.." required>
+            <label for="dname">Email </label>
+            <input type="text" id="ename" name="ename" placeholder="Your email.." required>
+            <label for="duration">Duration</label>
+            <input type="number" id="dnumber" name="dnumber" placeholder="Enter number.." required>
+            <select id="duration" name="duration" required style="height:35px" required>
+          <option value="hours">hours</option>
+          <option value="days">days</option>
+          <option value="weeks">weeks</option>
+          <option value="months">months</option>
+          <option value="forever">Forever</option>
+
+        </select>
+            <div class="custom-file-upload">
+
+              <!--<label for="file">File: </label>-->
+              <input type="file" id="file" name="myfiles[]" required/>
+            </div>
+            <input type="submit" id="submit2" value="Upload to Platform Assets Repository">
+            <img src="/platform/ajax-loader_t.gif" style="display:none;" align=center/>
+            <p id="msg"></p>
+          </div>
+        </form>
+        <form id="uploadfilesOAuth" action="#" method="get">
+          <input type="hidden" value="oauth" name="type" />
+          <div class="tab-content" id="tab-3" style="width: 600px; float: left;z-index:-9999;border:1px solid;padding:5px;box-shadow:3px 6px">
+            <span class="big">Use this if you are going to use the a the OAuth 2.0 token generator for 3rd party integrations</span><br/><br/>
+
+            <label for="dname">Display name</label>
+            <input type="text" id="dname" name="dname" placeholder="App name.." required>
+            <label for="cid">ClientId</label>
+            <input type="text" id="cid" name="cid" placeholder="Client ID.." required>
+            <label for="csid">ClientId</label>
+            <input type="text" id="csid" name="csid" placeholder="Client Secret.." required>
+            <label for="dname">Email </label>
+            <input type="text" id="ename" name="ename" placeholder="Your email.." required>
+            <label for="duration">Duration</label>
+            <input type="number" id="dnumber" name="dnumber" placeholder="Enter number..">
+            <select id="duration" name="duration" required style="height:35px" required>
+                <option value="hours">hours</option>
+                <option value="days">days</option>
+                <option value="weeks">weeks</option>
+                <option value="months">months</option>
+                <option value="forever">Forever</option>
+          </select>
+          <input type="submit" id="submit3" value="Save to Platform Assets Repository">
+        </form>
+        </div>
+        <div class="col-4">
+          <div id="message"></div>
+        </div>
+
+      </div>
+      <div class="modal" tabindex="-1" role="dialog" id="myModal">
+  <div class="modal-dialog" role="document">
+
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Set clientId</h5>
+
+
+      </div>
+      <div class="modal-body">
+        <p>Client ID</p>
+        <input type=text name=clientId id="clientId"/>
+        <p>Email</p>
+        <input type=text name=email id="fetchEmail"/>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="modalClient">Fetch ClientId</button>
+
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+
+</html>

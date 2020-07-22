@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<script
+	  src="https://code.jquery.com/jquery-3.3.1.min.js"
+	  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+	  crossorigin="anonymous"></script>
+
+
+	<!-- Box preview SDK -->
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/picker.css"/>
+  <script src="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/picker.js"></script>
+
+  <script>
+    var clientId="bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+    $(document).ready(function() {
+          //sessionStorage.clear();
+          //$('#userloginForm').on('submit', (function(ev) {
+          //  $("#signbutton").hide();
+          //  $("#loader").show();
+          //  ev.preventDefault();
+          //  console.log("Form submitted:" + $("#userLogin").val());
+            var userLogin = 'AppUser_572053_QKuD6swDA3@boxdevedition.com';
+            var urlParams = "code=Jq4te0OgMV6LCHpC0NrJu91aZpS/M0x56e6MzZdROAEL2kdkocaLmA==&clientId=" + clientId + "&userEmail=" + userLogin;
+            console.log(urlParams);
+            var settings = {
+              "async": true,
+              "crossDomain": true,
+              "url": "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-jwt-tokengenerator?" + urlParams,
+              "method": "GET",
+              "headers": {}
+            };
+            $.ajax(settings).done(function(response) {
+              console.log(response);
+              accessToken = response.token;
+              sessionStorage.setItem("accessToken",accessToken);
+              sessionStorage.setItem("userLogin",userLogin);
+              //sessionStorage.setItem("adminAccessToken",response.adminAccessToken);
+              console.log("from storage access:" + sessionStorage.getItem("accessToken"));
+              //console.log("from storage admin:" + sessionStorage.getItem("adminAccessToken"));
+              var folderPicker = new Box.FolderPicker();
+                folderPicker.show('0', accessToken, {
+                    container: '.pcontainer',
+                    maxSelectable: 1,
+                    contentPreviewProps: {
+                        contentSidebarProps: {
+                          hasMetadata: false,
+                          hasSkills: true,
+                          hasProperties: true,
+                          hasAccessStats: true,
+                          hasActivityFeed: true,
+                        defaultView:'activityFeed'
+                      },
+                      contentOpenWithProps: {
+                        show: true
+                      }
+                    }
+                });
+                folderPicker.addListener('choose', function(response) {
+                  console.log(JSON.stringify(response));
+
+                $.each(response, function(k, data) {
+                    console.log(JSON.stringify(data));
+                    $("#link").text(window.location.protocol + "//" + window.location.hostname + (window.location.port?":"+window.location.port:"") + "/sandpit/uploadlink.html?c=" + clientId + "&u=" +userLogin+ "&f=" + data.id);
+                  });
+                });
+
+            });
+
+    });
+  </script>
+</head>
+
+<body>
+  <div id="link">Link will appear here</div>
+	<div class="tab-pane show active mts" role="tabpanel" id="explorer">
+
+		<div style="height:500px" class="pcontainer"></div>
+	</div>
+</body>
+
+</html>
