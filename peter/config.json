@@ -1,5 +1,5 @@
 //Client ID
-var clientId="bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+var clientId="of926g5v0mqi50dpiislr1avju7h3jl8";
 
 //Main page
 var redirectAfterLoginPage="/peter/main.html";
