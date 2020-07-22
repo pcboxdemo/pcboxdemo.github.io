@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="utf-8" />
+    <title>Box Content Explorer</title>
+    <!-- Polyfill promise API if using Internet Explorer 11 -->
+    <script src="https://cdn.jsdelivr.net/bluebird/latest/bluebird.min.js"></script>
+    <!-- Latest version of the explorer css for your locale -->
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/file/0.22.0/en-US/explorer.css" />
+</head>
+<body>
+    <% include ../partials/common/claims-header%>
+    <div class="container" style="height:100%;width:100%;"></div>
+    <!-- Latest version of the explorer js for your locale -->
+    <script src="https://cdn01.boxcdn.net/platform/file/0.22.0/en-US/explorer.js"></script>
+    <script>
+        var folderId = "<%= vaultFolder %>";
+        var accessToken = "<%= user.accessToken %>";
+        var contentExplorer = new Box.ContentExplorer();
+        contentExplorer.show(folderId, accessToken, {
+            container: '.container',
+            logoUrl: "http://i72.photobucket.com/albums/i162/carycheng77/Screen%20Shot%202017-04-29%20at%206.15.14%20PM_zpswhhtrhcf.png"
+        });
+
+        $('.bcp-sub-header').css('margin-top', '1%');
+    </script>
+</body>
+</html>

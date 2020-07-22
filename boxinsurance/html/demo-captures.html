@@ -1,0 +1,31 @@
+<% include ../partials/common/header %>
+
+<div class="row column">
+  <table>
+    <thead>
+      <tr>
+        <th>Company</th>
+        <th>Industry</th>
+        <th>Salesforce Opportunity</th>
+        <th>Logo</th>
+        <th>Date</th>
+        <th>Real Demo?</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% dbEntries.forEach(function(entry) { %>
+        <tr>
+          <td><%= entry.company %></td>
+          <td><%= entry.industry %></td>
+          <td><a href="<%= entry.salesforce %>"><%= entry.salesforce %></a></td>
+          <td><img class="company-logo" src="<%= entry.logo %>"></td>
+          <td><%= entry.date %></td>
+          <td><%= entry.real_demo %></td>
+          <td><a class="button" href="/delete-entry/<%= entry.id%>">Remove</a></td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
+<% include ../partials/common/footer %>

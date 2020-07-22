@@ -1,0 +1,113 @@
+.preview-container {
+  height: 512px;
+  width: 100%;
+}
+
+.red {
+  color: #f00;
+}
+
+.image {
+  background-image: url('../img/temp.jpg');
+}
+
+.dark-background {
+  background-color: #333 !important;
+  color: #fff !important;
+}
+
+.menu.separate li:not(:first-child) {
+  border-left: 1px solid #4e4e4e;
+}
+
+.auth0-lock-header {
+  display: none;
+}
+
+.login {
+  margin-top: 1% !important;
+  margin-right: 3% !important;
+}
+
+.top-bar-override{
+  background-color: #fff !important;
+}
+
+/*edit icon top right*/
+.edit-icon {
+  /*text-indent: -16px;*/
+  overflow: hidden;
+  background-color: #CED3D8;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+}
+
+.edit-icon.btn:hover {
+  box-shadow: 0 5px 11px 0 rgba(0, 0, 0, 0.18), 0 4px 15px 0 rgba(0, 0, 0, 0.15);
+  width: 400px !important;
+  height: auto;
+  background-color: #fff;
+  /*text-indent: -25px;
+  content: "asdfafads";*/
+  -webkit-transition-duration: 0.35s;
+  -o-transition-duration: 0.35s;
+  transition-duration: 0.35s;
+  -webkit-transition-timing-function: ease;
+  -o-transition-timing-function: ease;
+  transition-timing-function: ease;
+}
+
+.config-title {
+  font-size: 20px !important;
+}
+
+.edit-icon.btn {
+  opacity: 1;
+  position: fixed;
+  right: 0px !important;
+  top: 80px;
+  display: block;
+  width: 35px;
+  height: 35px;
+  padding-right: 0px;
+  z-index: 1;
+  /*text-indent: -15px;*/
+  /*// overflow: hidden;*/
+  background-color: #fff;
+  border-color: #fff;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12)s;
+}
+
+.edit-icon.btn span {
+  color: #222222;
+  position: relative;
+  /*text-transform: lowercase;*/
+  font-size: 12px;
+}
+
+.edit-icon.btn span a {
+  padding-left: 5px;
+  font-size: 12px;
+}
+
+.edit-icon.btn span label {
+  font-size: 12px;
+}
+
+.edit-icon-style {
+  margin: 10px;
+  vertical-align: middle;
+  font-size: 18px;
+  color: #222222;
+}
+
+/* iPads (landscape) ----------- */
+@media only screen and (max-width : 920px){
+  .hide_mobile {
+    display: none;
+  }
+}
+
+/* company logo */
+.company-logo {
+  height: 40px;
+}

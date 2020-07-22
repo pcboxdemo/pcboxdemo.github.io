@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Cache-control" content="No-Cache">
+    <title>Box Platform - Template Application</title>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+    <!-- polyfill.io only loads the polyfills your browser needs -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=es6,Intl"></script>
+
+    <!-- Alternatively, use polyfill hosted on the Box CDN
+    <script src="https://cdn01.boxcdn.net/polyfills/core-js/2.5.3/core.min.js"></script>
+    -->
+
+    <!-- Latest version of the explorer css for your locale -->
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/11.0.2/en-US/picker.css" />
+</head>
+<script src="https://cdn01.boxcdn.net/platform/elements/11.0.2/en-US/picker.js"></script>
+<script>
+    var filePicker = new Box.FilePicker();
+    //var folderPicker = new Box.FolderPicker();
+    var accessToken = "Z0w3n8RTAgoPNNOhBbWEVXR0I5abZIQ0";
+    var timer;
+    $(document).ready(function () {
+        $( "#msg" ).sortable();
+        $( "#msg" ).disableSelection();
+        var params = new URLSearchParams(window.location.search);
+        var code = params.get('auth');
+        if (code == null) {
+            code = params.get('code');
+        }
+        $.ajax({
+            method: 'get',
+            //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-tokengenerator",
+            url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+
+            data: { authCode: code, id: params.get('id'), clientId: params.get('clientId') },
+            crossDomain: true,
+            cache: false,
+            success: function (response) {
+                console.log(response);
+                accessToken = response.token;
+                filePicker.show(params.get('id'), accessToken, {
+                    container: '.fileChooser'
+                });
+                addListeners();
+
+            },
+            error: function (err) {
+                console.log(JSON.stringify(err));
+                console.log("error:" + err.message);
+                filePicker.show('116954381026', accessToken, {
+                    container: '.fileChooser'
+                });
+                addListeners();
+            }
+        });
+        $(".swap").click(function (event) {
+            if ($(this).text() == 'Switch to folder selector') {
+                filePicker.hide();
+                getAccessToken().then(function (result) {
+                    folderPicker.show(boxId, result, {
+                        container: '.fileChooser'
+                    });
+                });
+                addListeners();
+                $(this).text('Switch to file selector');
+            }
+            else {
+                folderPicker.hide();
+                getAccessToken().then(function (result) {
+                    filePicker.show(boxId, result, {
+                        container: '.fileChooser'
+                    });
+                });
+                addListeners();
+                $(this).text('Switch to folder selector');
+            }
+
+        });
+
+        $(".zipper").click(function (event) {
+            console.log("zipper clicked");
+            $("#loader").show();
+            $(".zipper").hide();
+            var ids = '';
+            var number=0;
+            var delim=''
+            $(".list-group-item").each(function (index) {
+                ids +=delim + $(this).attr('id').substring(1)
+                delim='~';
+            });
+
+            $.ajax({
+               // url: 'http://localhost:5000/pdfmerge?accessToken=' + accessToken + '&ids=' +ids,
+               url: 'https://box-java-sandpit.herokuapp.com/pdfmerge?accessToken=' + accessToken + '&ids=' +ids,
+                type: 'get',
+                success: function (response) {
+                    console.log(response);
+                    
+                    $("#loader").hide();
+                    $("#zipperMsg").text("PDFs merged and result saved in Box Folder")
+                }
+            })
+        });
+
+    });
+    function addListeners() {
+        filePicker.addListener('choose', function (response) {
+            $.each(response, function (k, data) {
+                console.log($("#l" + data.id));
+                if (!document.getElementById("l" + data.id)) {
+                    $("#msg").append("<li type='file' id='l" + data.id + "' class='list-group-item d-flex justify-content-between align-items-center'><span class='glyphicon glyphicon-file'>&nbsp;</span>" + truncateString(data.name, 20) + "<span  class='badge badge-default badge-pill remove'>x</span></li>");
+                }
+            });
+            $(".remove").click(function (event) {
+                console.log("remove clicked");
+                $(this).parent('li').remove();
+
+            });
+        });
+
+    }
+
+    function truncateString(str, num) {
+        if (str.length <= num) {
+            return str
+        }
+        return str.slice(0, num) + '...'
+    }
+
+</script>
+
+<body>
+    <div class="container" style="height:90vh; width:100vw;">
+        <div class="row">
+            <div class="col-md-5">
+
+                <div class="fileChooser" style="height:500px;">
+                </div>
+
+            </div>
+            <div class="col-md-3">
+                <div width="100%">Files</div>
+                <ul id="msg" style="height:500px;"></ul>
+
+            </div>
+            <div class="col-md-4">
+                <button type="button" class="btn btn-primary zipper">Create and save merged PDF</button>
+                <img  id="loader" src="/template2.0/img/custom/progress_vertical_green.gif" style="display:none;" />
+                
+                <div id="zipperMsg" style="height:500px;"></div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

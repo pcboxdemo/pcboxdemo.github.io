@@ -1,0 +1,403 @@
+<head>
+  <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Nobile" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+</head>
+
+<div id="folders" class="col-md-3" style="padding-left:-2.0rem">
+  <div id="foldersUi">
+    <% if(folders.length === 0) { %>
+      <p id="noFolders">No subfolders found.</p>
+      <% } %>
+      <ul id="folderGroup" class="medium-12 columns tile-padding">
+        <% folders.forEach(function(folder) { %>
+          <div class="card-wrapper">
+            <div class="card radius shadowDepth1">
+              <div class="card__content card__padding">
+              <div class="card__action">
+                <div class="card__author">
+                  <% if(folder.metadata.claimtype == "Auto Physical Damage Claim") { %>
+                    <img style="margin-left:-15px;" src="../img/car_policy.png">
+                  <% } else if(folder.metadata.claimtype == "Homeowner Damage Claim"){ %>
+                    <img style="margin-left:-15px;" src="../img/home_policy.png">
+                  <% } else if(folder.metadata.claimtype == "Commercial Claim"){ %>
+                    <img style="margin-left:-15px;background:#F38A6D" src="../img/commercial_policy.png">
+                  <% } else if(folder.metadata.claimtype == "Health Insurance Claim"){ %>
+                    <img style="margin-left:-15px;" src="../img/health_policy.png">
+                  <% } %>
+                  <div class="card__author-content lato-font" style="font-size:15px;">
+                    Claim Number
+                  </br>
+                    <a style="color:#888888;font-size:14px;padding-left:6px;" class="lato-font"><%= folder.id%></a>
+                  </div>
+                  <div style="float:right;padding-top:12px;" class="lato-font">
+                    Claim Type
+                  </br>
+                  <a style="color:#888888;font-size:14px;padding-left:0px;" class="lato-font"><%= folder.metadata.claimtype %></a>
+                  </div>
+                </div>
+              </div>
+              <hr>
+              <!-- <div class="card__meta" style="font-size:15px">
+                <time><%=folder.creationDate%></time>
+              </div> -->
+              <article style="font-size:15px;" class="card__article">
+                <i class="fa fa-user-circle-o" style="margin-left:-2px;color:#2199E8" aria-hidden="true"></i>
+                <span style="font-size:13px;;color:#2199E8;" class="lato-font"> Claims Agent: </span>
+                <span class="lato-font" style="font-size:13px;color:#888888"> Garret Kelley </span>
+                </br>
+                <i class="fa fa-calendar-check-o" style="margin-left:-2px;color:#2199E8" aria-hidden="true"></i>
+                <span style="font-size:13px;;color:#2199E8;" class="lato-font"> Approval Date: </span>
+                <span class="lato-font" style="font-size:13px;color:#888888;"> <time><%=folder.creationDate%></time> </span>
+                </br>
+                <% if(folder.metadata.claimStage=="Approved by agent") {%>
+                  <i class="fa fa-check-circle" style="margin-left:-2px;color:#F96F67;" aria-hidden="true"></i>
+                  <span style="font-size:13px;;color:#F96F67;" class="lato-font"> Status: </span>
+                  <span class="lato-font" style="font-size:13px;color:#F96F67;"><%= folder.metadata.claimStage %> </span>
+                <%} else {%>
+                  <i class="fa fa-check-circle" style="margin-left:-2px;color:#54D6C7;" aria-hidden="true"></i>
+                  <span style="font-size:13px;;color:#54D6C7;" class="lato-font"> Status: </span>
+                  <span class="lato-font" style="font-size:13px;color:#54D6C7;"><%= folder.metadata.claimStage %> </span>
+                <% } %>
+                </br>
+                </br>
+                <i class="fa fa-info-circle" style="width:0!important;color:#F96F67;padding-top:2px;" aria-hidden="true"></i>
+                <span style="font-size:13px;;margin-left:15px;color:#F96F67;" class="lato-font"> Incident Summary </span>
+                </br>
+                <span style="color:#888888;font-size:13px;" class="verela-font"><%= folder.description %></span>
+                </br>
+                <% if(folder.name == "Jason Smith") { %>
+                  <a href="/adjuster/approve/<%= folder.id %>"><button type="button" class="btn btn-primary btn-sm" style="margin-top:5%;background-color:#2199E8;border-color:#2199E8;color:#fff;">Approve</button></a>
+                  <a href="/adjuster/reject/<%= folder.id %>"><button type="button" class="btn btn-danger btn-sm" style="margin-top:5%;background-color:#F96F67;border-color:#F96F67;color:#fff">Reject</button></a>
+                  <a href="/adjuster/adjuster_full_report/<%= folder.id %>"><button type="button" class="btn btn-info btn-sm" style="margin-top:5%;background-color:#54D6C7;border-color:#54D6C7;color:#fff">View Report</button></a>
+                <% } else { %>
+                  <a disabled><button type="button" class="btn btn-primary btn-sm disabled" style="margin-top:5%;background-color:#2199E8;border-color:#2199E8;color:#fff;">Approve</button></a>
+                  <a disabled><button type="button" class="btn btn-danger btn-sm disabled" style="margin-top:5%;background-color:#F96F67;border-color:#F96F67;color:#fff">Reject</button></a>
+                  <a disabled><button type="button" class="btn btn-info btn-sm disabled" style="margin-top:5%;background-color:#54D6C7;border-color:#54D6C7;color:#fff">View Report</button></a>
+                <% } %>
+              </article>
+        </div>
+      </div>
+    </div>
+    <!-- <li class=""><a href="/dashboard/<%= folder.id %>"><%= folder.name %></a></li> -->
+    <% }); %>
+  </ul>
+</div>
+</div>
+<style>
+@import 'https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css';
+@import 'https://fonts.googleapis.com/css?family=Roboto:700,400';
+#contentBox {
+    margin: 0 auto;
+    width: 70%;
+    padding-bottom:15%;
+}
+#contentBox .column {
+    float: left;
+    margin: 0;
+    width: 65%;
+}
+#contentBox .leftpush {
+    padding-left: 35px;
+}
+.lato-font{
+  font-family: 'Lato', sans-serif;
+}
+/*
+*  Basic Reset
+*/
+*,
+*:after,
+*:before {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+/**
+* Basics Styles
+*/
+a {
+  text-decoration: none;
+  color: #3498db;
+}
+a:hover {
+  color: #2980b9;
+}
+h2 {
+  line-height: 1.2;
+  /*margin-bottom: 1.6rem;*/
+}
+.card-wrapper {
+  width: 450%;
+  padding-right: 1em;
+}
+/**
+* Helpers
+*/
+.border-tlr-radius {
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+}
+.text-center { text-align: center; }
+.radius { border-radius: 2px; }
+.padding-tb { padding-top: 1.6rem;}
+.shadowDepth0 { box-shadow: 0 1px 3px rgba(0,0,0, 0.12); }
+.shadowDepth1 {
+  box-shadow:
+  0 1px 3px rgba(0,0,0, 0.12),
+  0 1px 2px rgba(0,0,0, 0.24);
+}
+/**
+* Card Styles
+*/
+.card {
+  background-color: #fff;
+}
+.card__padding {
+  padding: 1.6rem;
+}
+.card__image {
+  min-height: 100px;
+  background-color: #eee;
+}
+.card__image img {
+  width: 100%;
+  max-width: 100%;
+  display: block;
+}
+.card__content {
+  position: relative;
+}
+/* card meta */
+.card__meta time {
+  font-size: 1.0rem;
+  color: #bbb;
+  margin-left: 0.0rem;
+}
+/* card article */
+.card__article a {
+  text-decoration: none;
+  color: #444;
+  transition: all 0.5s ease;
+}
+.card__article a:hover {
+  color: #2980b9;
+}
+/* card action */
+.card__action {
+  overflow: hidden;
+  padding-right: 1.6rem;
+  padding-left: 1.6rem;
+}
+.card__author {}
+  .card__author img,
+  .card__author-content {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .card__author img{
+    border-radius: 50%;
+    margin-right: 0.6em;
+  }
+  .card__share {
+    float: right;
+    position: relative;
+    margin-top: -42px;
+  }
+  .card__social {
+    position: absolute;
+    top: 0;
+    right: 0;
+    visibility: hidden;
+    width: 160px;
+    transform: translateZ(0);
+    transform: translateX(0px);
+    transition: transform 0.35s ease;
+  }
+  .card__social--active {
+    visibility: visible;
+    /*z-index: 3;*/
+    transform: translateZ(0);
+    transform: translateX(-48px);
+    transition: transform 0.35s ease;
+  }
+  .share-toggle {
+    z-index: 2;
+  }
+  .share-toggle:before {
+    content: "\f067";
+    font-family: 'FontAwesome';
+    color: #3498db;
+  }
+  .share-toggle.share-expanded:before {
+    content: "\f00d";
+  }
+  .share-icon {
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+    line-height: 48px;
+    text-align: center;
+    border-radius: 50%;
+    background-color: #fff;
+    transition: all 0.3s ease;
+    outline: 0;
+    box-shadow:
+    0 2px 4px rgba(0,0,0, 0.12),
+    0 2px 4px rgba(0,0,0, 0.24);
+  }
+  .share-icon:hover,
+  .share-icon:focus {
+    box-shadow:
+    0 3px 6px rgba(0,0,0, 0.12),
+    0 3px 6px rgba(0,0,0, 0.24);
+    -webkit-transform: scale(1.2);
+    -moz-transform: scale(1.2);
+    -ms-transform: scale(1.2);
+    -o-transform: scale(1.2);
+    transform: scale(1.2);
+  }
+  .facebook {
+    background-color: #2B9DE8;
+  }
+  .twitter {
+    background-color: #F96F67;
+  }
+  .googleplus {
+    background-color: #54D6C7;
+  }
+  .facebook,
+  .twitter,
+  .googleplus {
+    color: #fff;
+  }
+  .facebook:hover,
+  .twitter:hover,
+  .googleplus:hover {
+    color: #eee;
+  }
+  .tile-padding{
+    margin-left: -2.0rem !important;
+    margin-top: -2.5rem !important;
+  }
+  .raleway-font{
+    font-family: 'Raleway', sans-serif;
+  }
+  .icon-padding{
+    padding-top: 10px;
+  }
+  html, body{
+    width:100%;
+    height:100%;
+    margin:0;
+  }
+  .page-wrapper{
+    width:100%;
+    height:100%;
+    background:url(http://i.imgur.com/2ZgHKbQ.jpg) center no-repeat;
+    background-size:cover;
+  }
+  .blur{
+    -webkit-filter: blur(5px);
+    -moz-filter: blur(5px);
+    -o-filter: blur(5px);
+    -ms-filter: blur(5px);
+    filter: blur(5px);
+  }
+  a.btn{
+    width:150px;
+    display:block;
+    margin:-25px 0 0 -75px;
+    padding:1em 0;
+    position:absolute;
+    top:50%; left:50%;
+    font:1.125em 'Arial', sans-serif;
+    font-weight:700;
+    text-align:center;
+    text-decoration:none;
+    color:#fff;
+    border-radius:5px;
+    background:rgba(217,67,86,1);
+  }
+  .modal-wrapper{
+    width:100%;
+    height:100%;
+    position:fixed;
+    top:0; left:0;
+    background:rgba(236,240,243,0.72);
+    visibility:hidden;
+    opacity:0;
+    -webkit-transition: all 0.25s ease-in-out;
+    -moz-transition: all 0.25s ease-in-out;
+    -o-transition: all 0.25s ease-in-out;
+    transition: all 0.25s ease-in-out;
+  }
+  .modal-wrapper.open{
+    opacity:1;
+    visibility:visible;
+    z-index: 100;
+  }
+  .modal{
+    width:600px;
+    height:400px;
+    display:block;
+    margin:50% 0 0 -300px;
+    position:relative;
+    top:50%; left:50%;
+    background:#fff;
+    opacity:0;
+    -webkit-transition: all 0.5s ease-in-out;
+    -moz-transition: all 0.5s ease-in-out;
+    -o-transition: all 0.5s ease-in-out;
+    transition: all 0.5s ease-in-out;
+  }
+  .modal-wrapper.open .modal{
+    margin-top:-200px;
+    opacity:1;
+  }
+  .head{
+    width:100%;
+    height:5px;
+    padding:1.5em 5%;
+    overflow:hidden;
+  }
+  .btn-close{
+    width:10px;
+    display:block;
+    float:right;
+  }
+  .btn-close::before, .btn-close::after{
+    content:'';
+    width:32px;
+    height:6px;
+    display:block;
+    background:#e6e6e6;
+  }
+  .btn-close::before{
+    margin-top:12px;
+    -webkit-transform:rotate(45deg);
+    -moz-transform:rotate(45deg);
+    -o-transform:rotate(45deg);
+    transform:rotate(45deg);
+  }
+  .btn-close::after{
+    margin-top:-6px;
+    -webkit-transform:rotate(-45deg);
+    -moz-transform:rotate(-45deg);
+    -o-transform:rotate(-45deg);
+    transform:rotate(-45deg);
+  }
+  .content{
+    padding:5%;
+  }
+  </style>
+  <script>
+  $(document).ready(function($) {
+    $('.card__share > a').on('click', function(e){
+      e.preventDefault() // prevent default action - hash doesn't appear in url
+      $(this).parent().find( 'div' ).toggleClass( 'card__social--active' );
+      $(this).toggleClass('share-expanded');
+    });
+  });
+  </script>

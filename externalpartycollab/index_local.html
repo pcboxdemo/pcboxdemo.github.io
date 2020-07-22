@@ -1,0 +1,259 @@
+<!--
+Author: W3layouts
+Author URL: http://w3layouts.com
+License: Creative Commons Attribution 3.0 Unported
+License URL: http://creativecommons.org/licenses/by/3.0/
+-->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Add external party to folder</title>
+  <!-- for-mobile-apps -->
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <script src="https://cdn01.boxcdn.net/platform/elements/10.1.0/en-US/preview.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/10.1.0/en-US/preview.css" />
+  <script src="https://cdn01.boxcdn.net/platform/elements/10.1.0/en-US/explorer.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/10.1.0/en-US/explorer.css" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css">
+  <!-- Bootstrap core CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Material Design Bootstrap -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.8.2/css/mdb.min.css" rel="stylesheet">
+  <!-- JQuery -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <!-- Bootstrap tooltips -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper.min.js"></script>
+  <!-- Bootstrap core JavaScript -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <!-- MDB core JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.proto.min.js" integrity="sha256-caJ5d3++BXLzBy3MKsOiJWHlVgh8O3W61W/XxBN3u1I=" crossorigin="anonymous"></script>
+  <script src="box.js"></script>
+
+
+  <script>
+    var preview = new Box.ContentPreview();
+
+    var params = new URLSearchParams(window.location.search);
+    var clientId = 'bn2iyg37p78jkowrp0io0nc2ln0be3wt';
+    var userEmail = 'pchristensen+demo@boxdemo.com';
+    var password = 'bn2iyg37p78jkowrp0io0nc2ln0be3wt';
+    var token;
+    var fileId = "475117803371";
+    var type = "files";
+    var typeS = "file";
+
+    var readyToRoll = false;
+    var countDownCalls = -1;
+    $(document).ready(function() {
+      $("#saveAll").hide();
+      $("#add").on('submit', (function(ev) {
+        ev.preventDefault();
+        for (var i = 0; i < $("#selectUser").chosen().val().length; i++) {
+          var chosenVal = $("#selectUser").chosen().val()[i];
+          var chosenName;
+          $("#selectUser > option").each(function() {
+            if (this.value == chosenVal) {
+              chosenName = this.text;
+            }
+          });
+          $(".collaborators").append("<li id=" + chosenVal + " class='list-group-item d-flex justify-content-between align-items-center ital'>" + chosenName + "<span id='" + chosenVal + "_p' class='badge badge-primary badge-pill'>" + $(
+            "#selectPermission").val() + "</span><span  class='badge badge-primary badge-pill remove'>x</span></li>")
+        }
+        $(".remove").click(function(event) {
+          console.log("remove clicked");
+          $(this).parent('li').removeClass('d-flex').hide('slow');
+          $("#saveAll").show();
+        });
+        $("#addAll").attr("disabled", false);
+        $("#saveAll").show();
+
+      }));
+      $("#save").on('submit', (function(ev) {
+        $("#saveAll").attr("disabled", true);
+        console.log("submitted");
+        ev.preventDefault();
+        countDownCalls = 0;
+        $(".list-group-item").each(function(index) {
+          console.log($(this).attr('id'));
+          if ($(this).attr('collabId')) {
+            if ($(this).is(":hidden")) {
+              countDownCalls++;
+              removeCollaboration($(this).attr("collabId"), token);
+            }
+          } else {
+            var spanPermit = $("#" + $(this).attr('id') + "_p");
+            countDownCalls++;
+            addCollaboration(this, fileId, $(this).attr('id'), spanPermit.text(), token);
+
+          }
+          $(this).remove();
+          if(countDownCalls==-1) {
+            getCollaborators(fileId,token);
+
+          }
+
+         });
+        $("#saveAll").attr("disabled", false);
+        if(type=='')
+        preview.hide();
+        preview.show(fileId, token, {
+            container: '#docView',
+            showDownload: true,
+            contentSidebarProps: {
+              hasMetadata: true,
+              hasSkills: true,
+              hasProperties: true,
+              hasAccessStats: true,
+              hasActivityFeed: true,
+              defaultView: 'activityFeed'
+            }
+          });
+
+
+      }));
+      $.ajax({
+        method: 'get',
+        //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-tokengenerator",
+        url: "https://box-heroku-token-generator.herokuapp.com/jwttokengenerator?clientId=" + clientId + "&userEmail=" + userEmail + "&password=" + password + "&requestedTokens=userToken",
+        crossDomain: true,
+        cache: false,
+        beforeSend: function() {
+          $('#loader').show();
+          $(".container").hide();
+        },
+        complete: function() {
+          $('#loader').hide();
+          $(".container").show();
+
+        },
+        success: function(response) {
+          console.log(response);
+          token = response.userToken;
+          getDocumentInfo(fileId, token, type);
+          getGroups(token);
+          getCollaborators(fileId, token);
+        },
+        error: function(err) {
+          console.log(JSON.stringify(err));
+          console.log("error:" + err.message);
+
+        }
+      });
+      $("#selectGroup").change(function() {
+        console.log($(this).val());
+        if ($("#selectGroup").val() != 'Select a group') {
+          getUsers($(this).val(), token)
+        }
+      });
+      $("#selectUser").change(function() {
+        console.log($(this).val());
+
+      });
+      $("#selectPermission").change(function() {
+        console.log($(this).val());
+        if ($(this).val() != 'Select permission') {
+          $("#addAll").attr("disabled", false);
+        } else {
+          $("#addAll").attr("disabled", true);
+        }
+      });
+      $("#selectUser").chosen({
+        disable_search_threshold: 10,
+        width: "95%",
+        display_disabled_options: true,
+        display_selected_options: true
+
+      });
+      $(".remove").click(function(event) {
+        console.log("remove clicked");
+        $(this).parent('.list-group-item').hide();
+      });
+      $(".chosen-choices").addClass("peters");
+      //$(".chosen-container").addClass("peters");
+      $('#selectUser').on('change', function(evt, params) {
+        console.log(evt);
+        console.log(params);
+      });
+    });
+
+
+  </script>
+  <style>
+    .DraftEditor-editorContainer {
+      width: 250px;
+      height: 36px;
+    }
+
+    .peters {
+      padding: .375rem 1.75rem .375rem .75rem;
+      width: 100%;
+      margin-bottom: 1.5rem !important;
+      font-style: roboto;
+      font-size: 13px;
+    }
+    .ital {
+      font-style:italic;
+    }
+
+    .dropdown-secondary-text {
+      display: none;
+    }
+    .remove {
+      cursor:pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <img id="loader" src="/externalpartycollab/images/ajax-loader-gif-1.gif" style="display:none;" />
+  <div class="container" style="display:none;">
+    <div class="row">
+      <div class="col-lg-8" id='documentInfo' style="height:800px;" class="border border-light p-5">
+        <div id="docInfo"></div>
+        <div id="docView" style="height:800px;"></div>
+      </div>
+
+
+      <div class="col-lg-4">
+        <form class="border border-light p-5" id="add">
+
+          <select class="peters" id="selectGroup">
+                <option value="" disabled="" selected="">select groups</option>
+
+              </select>
+          <select data-placeholder="Users..." class="peters chosen-select " multiple id="selectUser">
+
+              </select>
+          <select class="peters" id="selectPermission">
+                  <option value="" disabled="" selected="">Select permission</option>
+                  <option value="Previewer">Previewer</option>
+                  <option value="Viewer">Viewer</option>
+                  <option value="Editor">Editor</option>
+              </select>
+
+          <button id='addAll' disabled class="btn btn-info btn-block my-2" style="background-color:#4285f4 !important" type="submit">Add</button>
+
+        </form>
+        <form id="save" class="border border-light p-5">
+          <div id="collabs">
+            <ul class="list-group collaborators">
+
+            </ul>
+          </div>
+          <button id='saveAll' class="btn btn-info btn-block my-2" style="background-color:#4285f4 !important" type="submit">Save</button>
+          <div id="saveMsg"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.8.2/js/mdb.min.js"></script>
+
+</html>

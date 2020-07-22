@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <% if(locals.title) { %>
+    <title><%- title %></title>
+  <% } else { %>
+    <title>Claims Management</title>
+  <% } %>
+
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <!-- Box preview SDK -->
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/1.13.0/en-US/preview.css">
+  <script src="https://cdn01.boxcdn.net/platform/preview/1.13.0/en-US/preview.js"></script>
+  <!-- foundation 6 style + js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/foundation/6.2.4/foundation.min.css">
+  <script src="https://cdn.jsdelivr.net/foundation/6.2.4/foundation.min.js"></script>
+  <!-- Auth0 js -->
+  <script src="https://cdn.auth0.com/js/auth0/8.3.0/auth0.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css?family=Poppins" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Questrial|Quicksand" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+  <!-- local css and js -->
+  <link rel="stylesheet" href="/css/custom.css">
+  <link rel="stylesheet" href="/icons/foundation-icons/foundation-icons.css">
+  <link rel="stylesheet" href="/css/page_loader.css">
+  <script src="/js/GoogleAnalytics.js"></script>
+</head>
+<body>
+
+  <!-- Start Top Bar -->
+  <div class="top-bar top-bar-override">
+    <div class="top-bar-left top-bar-override">
+      <ul class="white-background menu separate top-bar-override">
+          <% if(logoUrl) { %>
+            <li class="menu-text"><img class="company-logo" src="<%= logoUrl %>"></li>
+          <% } else { %>
+            <li class="menu-text"><a href="" style="font-size:20px" class="quicksand-font">Blue Insurance</a></li>
+          <% } %>
+          <li class="lato-font" style="font-size:15px"><a href="">My claims</a></li>
+          <li class="lato-font" style="font-size:15px"><a href="">Find an agent</a></li>
+          <li class="lato-font" style="font-size:15px"role="menuitem"><a href="/dashboard">Customer care</a></li>
+          <li class="lato-font" style="font-size:15px"><a href="">Get a quote</a></li>
+      </ul>
+    </div>
+    <div style="padding-top:5px;" class="top-bar-right login">
+      <ul class="menu  top-bar-override">
+        <i style="color:#F96F67;padding-right:1px;" class="fa fa-user-o" aria-hidden="true"></i>
+        <span style="font-size:17px;cursor:pointer;color:#2B9DE8;" class="lato-font" onclick="openNav()">Log in</span>
+      </ul>
+    </div>
+  </div>
+  <div id="loader" style="display:none" class="loading">Loading...</div>
+  <!-- End Top Bar -->
+
+  <style>
+    @import 'https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css';
+    .poppins-font{
+      font-family: 'Poppins', sans-serif;
+    }
+    .quicksand-font{
+      font-family: 'Quicksand', sans-serif;
+    }
+    .lato-font{
+      font-family: 'Lato', sans-serif;
+    }
+  </style>

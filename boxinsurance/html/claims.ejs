@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <% if(locals.title) { %>
+    <title><%- title %></title>
+  <% } else { %>
+    <title>Claims Management</title>
+  <% } %>
+
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <!-- Box preview SDK -->
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/1.13.0/en-US/preview.css">
+  <script src="https://cdn01.boxcdn.net/platform/preview/1.13.0/en-US/preview.js"></script>
+  <!-- foundation 6 style + js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/foundation/6.2.4/foundation.min.css">
+  <script src="https://cdn.jsdelivr.net/foundation/6.2.4/foundation.min.js"></script>
+  <!-- Auth0 js -->
+  <script src="https://cdn.auth0.com/js/auth0/8.3.0/auth0.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css?family=Poppins" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Halant" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+  <!-- local css and js -->
+  <link rel="stylesheet" href="/css/custom.css">
+  <link rel="stylesheet" href="/icons/foundation-icons/foundation-icons.css">
+</head>
+
+<!-- Start Top Bar -->
+<% include ../partials/common/claims-header %>
+
+<body>
+
+  <div id="test" class="preview-container" style="margin-bottom:5%;width:70%;margin-left:15%;margin-top:1%;"></div>
+
+  <ul class="steps" style="margin-bottom:5%;">
+    <li id='step1' class="step step--complete step--active">
+      <span class="step__icon"></span>
+      <span class="step__label">Waiting - internal</span>
+    </li>
+    <li id="step2" class="step step--incomplete step--inactive">
+      <span class="step__icon"></span>
+      <span class="step__label">Approved - Agent</span>
+    </li>
+    <li id="step3" class="step step--incomplete step--inactive">
+      <span class="step__icon"></span>
+      <span class="step__label">Need More Info</span>
+    </li>
+    <li id="step4" class="step step--incomplete step--inactive">
+      <span class="step__icon"></span>
+      <span class="step__label">Sent to Body Shop</span>
+    </li>
+    <li id="step5" class="step step--incomplete step--inactive">
+      <span class="step__icon"></span>
+      <span class="step__label">Payment released</span>
+    </li>
+  </ul>
+
+  <% if(claimStage=="Waiting for review") { %>
+    <div class="container" >
+      <div class="row">
+        <div class="col-xs-12" style="padding-bottom:3%;">
+          <div class="card">
+            <div class="card-image">
+              <img src="../../img/clock.png" style="margin-left:30%;" />
+            </div>
+
+            <div class="card-modal">Take a look at my Profile!</div>
+
+            <div class="card-info">
+              <div class="name">
+                <p>Pending approval from agent</p>
+              </div>
+              <hr>
+              <div class="content" class="lato-font">
+                <p>Approval Date</br>
+                  <span style="font-size:13px;color:#F96F67">Pending</span>
+                </p>
+                <p>Approver</br>
+                  <span style="font-size:13px;color:#F96F67">Pending</span>
+                </p>
+                <p>Additional Information</br>
+                  <span style="font-size:13px;">This claim is waiting for approval from you. To approve, navigate to your dashboard and select the approve button from the more actions</span>
+                </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <% if(claimStage=="Approved by agent") { %>
+    <div class="container" >
+      <div class="row">
+        <div class="col-xs-12" style="padding-bottom:8%;">
+          <div class="card">
+            <div class="card-image">
+                <img src="../../img/contract.png" style="margin-left:30%;"/>
+            </div>
+            <div class="card-info">
+              <div class="name">
+                <p>Approved by agent</p>
+              </div>
+              <hr>
+              <div class="content" class="lato-font">
+                <p>
+                  Approval Date</br>
+                  <span style="font-size:13px;"><%=currentDate%></span>
+                </p>
+                <p>Approver</br>
+                  <span style="font-size:13px;">Garret Kelly</span>
+                </p>
+                <p>
+                  Additional Information</br>
+                  <span style="font-size:13px;">You have approved this claim. What this means is that this claim has been pushed through to your field adjuster and await further approval. You will get a notification when the stage changes.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <% if(claimStage=="Need more info") { %>
+    <div class="container" >
+      <div class="row">
+        <div class="col-xs-12" style="padding-bottom:8%;">
+          <div class="card">
+            <div class="card-image">
+                <img src="../../img/info.png" style="margin-left:30%;"/>
+            </div>
+            <div class="card-info">
+              <div class="name">
+                <p>Information Needed</p>
+              </div>
+              <hr>
+              <div class="content" class="lato-font">
+                <p>
+                  Approval Date</br>
+                  <span style="font-size:13px;"><%=currentDate%></span>
+                </p>
+                <p>Inquirer</br>
+                  <span style="font-size:13px;">Mia Henery</span>
+                </p>
+                <p>
+                  Additional Information</br>
+                  <span style="font-size:13px;">This claim is missing documents or needs additonal context regarding submitted documents. Please review and make necessary steps to obtain updated information from the client.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <% if(claimStage=="Sent to Body Shop") { %>
+    <div class="container" >
+      <div class="row">
+        <div class="col-xs-12" style="padding-bottom:8%;">
+          <div class="card">
+            <div class="card-image">
+                <img src="../../img/letter.png" style="margin-left:30%;"/>
+            </div>
+            <div class="card-info">
+              <div class="name">
+                <p>Awaiting Quote</p>
+              </div>
+              <hr>
+              <div class="content" class="lato-font">
+                <p>
+                  Approval Date</br>
+                  <span style="font-size:13px;"><%=currentDate%></span>
+                </p>
+                <p>Approver</br>
+                  <span style="font-size:13px;">Mia Henery</span>
+                </p>
+                <p>
+                  Additional Information</br>
+                  <span style="font-size:13px;">Mia Henery has approved this claim. This claim along with relevant documents has been dispatched to the body shop you specified for a quote. They will follow up with your field adjuster directly.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <% if(claimStage=="Payment Released") { %>
+    <div class="container" >
+      <div class="row">
+        <div class="col-xs-12" style="padding-bottom:8%;">
+          <div class="card">
+            <div class="card-image">
+                <img src="../../img/contract.png" style="margin-left:30%;"/>
+            </div>
+            <div class="card-info">
+              <div class="name">
+                <p>Approved by agent</p>
+              </div>
+              <hr>
+              <div class="content" class="lato-font">
+                <p>
+                  Approval Date</br>
+                  <span style="font-size:13px;"><%=currentDate%></span>
+                </p>
+                <p>Approver</br>
+                  <span style="font-size:13px;">Garret Kelly</span>
+                </p>
+                <p>
+                  Additional Information</br>
+                  <span style="font-size:13px;">You have approved this claim. What this means is that this claim has been pushed through to your field adjuster and await further approval. You will get a notification when the stage changes.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+  <footer>
+    <div class="row column">
+      <hr>
+      <div class="row">
+        <div class="medium-6 column">
+          <ul style="font-size:12px;" class="menu">
+            <li><a style="color:#2199E8" href="#">Home</a></li>
+            <li><a style="color:#2199E8" href="#">About</a></li>
+            <li><a style="color:#2199E8" href="#">Security</a></li>
+            <li><a style="color:#2199E8" href="#">Terms of Use</a></li>
+            <li><a style="color:#2199E8" href="#">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="medium-6 column">
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+
+
+<style>
+/* Libs */
+@import url("//fonts.googleapis.com/css?family=Lato:400,300,100");
+@import url("//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.3/css/font-awesome.min.css");
+.lato-font{
+  font-family: 'Lato', sans-serif;
+}
+
+/* General */
+* {
+  box-sizing: border-box;
+  outline: none;
+}
+
+a {
+  -moz-transition: all 0.1s ease-out;
+  -o-transition: all 0.1s ease-out;
+  -webkit-transition: all 0.1s ease-out;
+  transition: all 0.1s ease-out;
+  color: #e74c3c;
+}
+a:hover {
+  color: #4BD3F4;
+}
+
+/* Card */
+.card {
+  background-size: 100%;
+  display: block;
+  position: relative;
+  padding: 20px;
+}
+
+.card .card-modal {
+  -moz-transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  -o-transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  -webkit-transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  background-color: #bdc3c7;
+  color: white;
+  display: none;
+  position: absolute;
+  top: 40px;
+  left: 130px;
+  z-index: 2;
+  padding: 20px;
+}
+.card .card-modal.active {
+  left: 140px;
+}
+.card .card-modal:before {
+  content: "";
+  border-style: solid;
+  border-width: 15px 15px 15px 0;
+  border-color: transparent #bdc3c7 transparent transparent;
+  width: 0;
+  height: 0;
+  display: block;
+  position: absolute;
+  top: 20%;
+  left: -15px;
+}
+
+.card .card-image {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+.card .card-image .btn {
+  -moz-border-radius: 50px;
+  -webkit-border-radius: 50px;
+  border-radius: 50px;
+  background-position: -45px 0;
+  background-repeat: no-repeat;
+  background-size: cover;
+  border: 0;
+  cursor: pointer;
+  width: 100px;
+  height: 100px;
+  overflow: hidden;
+  position: absolute;
+  padding: 0;
+}
+.card .card-image .btn:after {
+  content: "";
+  -moz-transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  -o-transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  -webkit-transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  -moz-border-radius: 50px;
+  -webkit-border-radius: 50px;
+  border-radius: 50px;
+  border: rgba(255, 255, 255, 0.4) 50px solid;
+  width: 100%;
+  height: 100%;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+}
+.card .card-image .btn:hover:after {
+  border-width: 0;
+}
+.card .card-image .btn img {
+  display: none;
+}
+
+.card .card-info {
+  margin-left: 120px;
+}
+
+.card .card-info .name {
+  font-size: 28px;
+  font-weight: 100;
+  display: inline-block;
+  vertical-align: top;
+  position: relative;
+}
+
+.card .card-info .social-network {
+  font-size: 0;
+  display: inline-block;
+  vertical-align: top;
+  overflow: hidden;
+  margin-bottom: 15px;
+}
+@media (min-width: 639px) {
+  .card .card-info .social-network {
+    float: right;
+    margin: 5px 0 0;
+  }
+}
+.card .card-info .social-network .icon {
+  background-color: #bdc3c7;
+  border: 0;
+  -moz-border-radius: 50%;
+  -webkit-border-radius: 50%;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: inline-block;
+  vertical-align: top;
+  overflow: hidden;
+  position: relative;
+  margin-left: 10px;
+}
+.card .card-info .social-network .icon:first-child {
+  margin: 0;
+}
+.card .card-info .social-network .icon:before {
+  -moz-transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  -o-transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  -webkit-transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  -moz-border-radius: 16px;
+  -webkit-border-radius: 16px;
+  border-radius: 16px;
+  content: "";
+  width: 32px;
+  height: 32px;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+.card .card-info .social-network .icon.facebook:before {
+  border: rgba(59, 89, 152, 0.7) 0 solid;
+}
+.card .card-info .social-network .icon.facebook:hover:before {
+  border-width: 30px;
+}
+.card .card-info .social-network .icon.twitter:before {
+  border: rgba(15, 191, 242, 0.7) 0 solid;
+}
+.card .card-info .social-network .icon.twitter:hover:before {
+  border-width: 30px;
+}
+.card .card-info .social-network .icon.youtube:before {
+  border: rgba(179, 18, 23, 0.7) 0 solid;
+}
+.card .card-info .social-network .icon.youtube:hover:before {
+  border-width: 30px;
+}
+.card .card-info .social-network .icon i {
+  color: white;
+  font-size: 16px;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  margin-top: -7px;
+}
+
+.card .card-info hr {
+  margin: 0 0 15px;
+}
+
+/* Mixins */
+/* Color Variables */
+/* Theme Variables */
+/* Animations */
+@-webkit-keyframes bounce {
+  0% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+  }
+  33% {
+    -webkit-transform: scale(0.9);
+            transform: scale(0.9);
+  }
+  66% {
+    -webkit-transform: scale(1.1);
+            transform: scale(1.1);
+  }
+  100% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+  }
+}
+@keyframes bounce {
+  0% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+  }
+  33% {
+    -webkit-transform: scale(0.9);
+            transform: scale(0.9);
+  }
+  66% {
+    -webkit-transform: scale(1.1);
+            transform: scale(1.1);
+  }
+  100% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+  }
+}
+/* Base Styles */
+html {
+  font-size: 16px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+/* Component Styles - Steps */
+.steps {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 2rem 0;
+  list-style: none;
+}
+
+.step {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
+  position: relative;
+  pointer-events: none;
+}
+.step--active, .step--complete {
+  cursor: pointer;
+  pointer-events: all;
+}
+.step:not(:last-child):before, .step:not(:last-child):after {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 0.25rem;
+  content: '';
+  -webkit-transform: translateY(-50%);
+          transform: translateY(-50%);
+  will-change: width;
+  z-index: -1;
+}
+.step:before {
+  width: 100%;
+  background-color: #F96F67;
+}
+.step:after {
+  width: 0;
+  background-color: #54D6C7;
+}
+.step--complete:after {
+  width: 100% !important;
+  opacity: 1;
+  -webkit-transition: width 0.6s ease-in-out, opacity 0.6s ease-in-out;
+  transition: width 0.6s ease-in-out, opacity 0.6s ease-in-out;
+}
+
+.step__icon {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  position: relative;
+  width: 3rem;
+  height: 3rem;
+  background-color: #fff;
+  border: 0.25rem solid #F96F67;
+  border-radius: 50%;
+  color: transparent;
+  font-size: 2rem;
+}
+.step__icon:before {
+  display: block;
+  content: '\2713';
+}
+.step--complete.step--active .step__icon {
+  color: #fff;
+  -webkit-transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+.step--incomplete.step--active .step__icon {
+  border-color: #F96F67;
+  -webkit-transition-delay: 0.5s;
+          transition-delay: 0.5s;
+}
+.step--complete .step__icon {
+  -webkit-animation: bounce 0.5s ease-in-out;
+          animation: bounce 0.5s ease-in-out;
+  background-color: #54D6C7;
+  border-color: #54D6C7;
+  color: #fff;
+}
+
+.step__label {
+  position: absolute;
+  bottom: -2rem;
+  left: 50%;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  -webkit-transform: translateX(-50%);
+          transform: translateX(-50%);
+  color: #54D6C7;
+}
+.step--incomplete.step--inactive .step__label {
+  color: #F96F67;
+}
+.step--incomplete.step--active .step__label {
+  color: #F96F67;
+}
+.step--active .step__label {
+  -webkit-transition: color 0.3s ease-in-out;
+  transition: color 0.3s ease-in-out;
+  -webkit-transition-delay: 0.5s;
+          transition-delay: 0.5s;
+}
+
+
+.poppins-font{
+  font-family: 'Poppins', sans-serif;
+}
+
+.halant-font{
+  font-family: 'Halant', serif;
+}
+
+.topbar-responsive {
+  background: #fbfbfb;
+  padding: 1rem 1.5rem;
+}
+
+.topbar-responsive .topbar-responsive-logo {
+  color: #fbfbfb;
+  vertical-align: middle;
+}
+
+.topbar-responsive .menu {
+  background: #fbfbfb;
+}
+
+.topbar-responsive .menu li:last-of-type {
+  margin-right: 0;
+}
+
+.topbar-responsive .menu a {
+  color: #fbfbfb;
+  transition: color 0.15s ease-in;
+}
+
+.topbar-responsive .menu a:hover {
+  color: #c6d1d8;
+}
+
+@media screen and (max-width: 39.9375em) {
+  .topbar-responsive .menu a {
+    padding: 0.875rem 0;
+  }
+}
+
+.topbar-responsive .menu .topbar-responsive-button {
+  color: #fefefe;
+  border-color: #2B9DE8;
+  border-radius: 5000px;
+  transition: color 0.15s ease-in, border-color 0.15s ease-in;
+}
+
+.topbar-responsive .menu .topbar-responsive-button:hover {
+  color: #c6d1d8;
+  border-color: #c6d1d8;
+}
+
+@media screen and (max-width: 39.9375em) {
+  .topbar-responsive .menu .topbar-responsive-button {
+    width: 100%;
+    margin: 0.875rem 0;
+  }
+}
+
+@media screen and (max-width: 39.9375em) {
+  .topbar-responsive {
+    padding: 0.75rem;
+  }
+  .topbar-responsive .top-bar-title {
+    position: relative;
+    width: 100%;
+  }
+  .topbar-responsive .top-bar-title span {
+    position: absolute;
+    right: 0;
+    border: 1px solid #fefefe;
+    border-radius: 5px;
+    padding: 0.25rem 0.45rem;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+            transform: translateY(-50%);
+  }
+  .topbar-responsive .top-bar-title span .menu-icon {
+    margin-bottom: 4px;
+  }
+}
+
+@-webkit-keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes slideDown {
+  0% {
+    -webkit-transform: translateY(-100%);
+            transform: translateY(-100%);
+  }
+  100% {
+    -webkit-transform: translateY(0%);
+            transform: translateY(0%);
+  }
+}
+
+@keyframes slideDown {
+  0% {
+    -webkit-transform: translateY(-100%);
+            transform: translateY(-100%);
+  }
+  100% {
+    -webkit-transform: translateY(0%);
+            transform: translateY(0%);
+  }
+}
+
+@media screen and (max-width: 39.9375em) {
+  .topbar-responsive-links {
+    -webkit-animation-fill-mode: both;
+            animation-fill-mode: both;
+    -webkit-animation-duration: 0.5s;
+            animation-duration: 0.5s;
+    width: 100%;
+    -webkit-animation: fadeIn 1s ease-in;
+            animation: fadeIn 1s ease-in;
+  }
+}
+</style>
+
+<script type="text/javascript">
+  stage = "<%= claimStage %>";
+  console.log('Stage: ' + stage);
+
+  $( document ).ready(function() {
+    if(stage=="Approved by agent"){
+      $('#step2').removeClass('step--incomplete').addClass('step--complete');
+    } else if(stage=="Need more info"){
+      $('#step2').removeClass('step--incomplete').addClass('step--complete');
+      $('#step3').removeClass('step--incomplete').addClass('step--complete');
+    } else if(stage=="Sent to Body Shop"){
+      $('#step2').removeClass('step--incomplete').addClass('step--complete');
+      $('#step3').removeClass('step--incomplete').addClass('step--complete');
+      $('#step4').removeClass('step--incomplete').addClass('step--complete');
+    } else if(stage=="Payment released"){
+      $('#step2').removeClass('step--incomplete').addClass('step--complete');
+      $('#step3').removeClass('step--incomplete').addClass('step--complete');
+      $('#step4').removeClass('step--incomplete').addClass('step--complete');
+      $('#step5').removeClass('step--incomplete').addClass('step--complete');
+    }
+  });
+
+
+  var accessToken = "<%= user.accessToken %>", imageIds = [], docIds = [];
+  var preview = new Box.Preview();
+  <% images.forEach(function(image) { %>
+    imageIds.push('<%= image %>');
+  <% }); %>
+  <% documents.forEach(function(doc) { %>
+    docIds.push('<%= doc %>');
+  <% }); %>
+
+  console.log("Image Ids: " + imageIds);
+  console.log("Doc Ids: " + docIds);
+  preview.show(docIds[0], accessToken, {
+    container: '.preview-container',
+    showAnnotations: true,
+    showDownload: true,
+    logoUrl: "http://i72.photobucket.com/albums/i162/carycheng77/rsz_screen_shot_2017-04-29_at_61514_pm_zpskbdkglj5.png",
+    collection: docIds
+  });
+
+  /* From img to background */
+bg_image_replace(".card-image a img", ".card-image a");
+
+function bg_image_replace(image, parent){
+  $(image).each(function(index,elem){
+
+    var src = $(elem).attr("src"),
+        $parent = $(elem).closest(parent);
+
+    $parent.css("background-image","url(" + src + ")");
+  });
+}
+
+
+/* Review */
+$( '.card-image' ).mouseover(function(){
+        $('.card-modal').fadeIn(100).toggleClass('active');
+    }).mouseout(function(){
+        $('.card-modal').fadeOut(100).toggleClass('active');
+    });
+
+
+</script>
+</html>
