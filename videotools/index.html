@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Video Bookmark</title>
+  <!-- for-mobile-apps -->
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+  <!-- //for-mobile-apps
+<!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+
+  <!-- jQuery library-->
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
+
+  <!-- Latest compiled JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+  <!-- Latest version of Box Content Preview for en-US locale -->
+  <script src="https://cdn01.boxcdn.net/platform/preview/1.59.0/en-US/preview.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/1.53.1/en-US/preview.css" />
+  <script>
+    var params = new URLSearchParams(window.location.search);
+    var gfileId = params.get("id");//'620881957539';
+    var gaccessToken = 'Cbnn4g38xhmZwvGu2m5M0VOcSLaaGi2T';//sessionStorage.getItem('accessToken');
+
+
+    $(document).ready(function () {
+      var preview = new Box.Preview();
+      $.ajax({
+        method: 'get',
+        //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-tokengenerator",
+        url:"https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+        //url:"https://pchristensenb.github.io/Template/login.html",
+        data: { authCode: params.get('auth'), id: params.get('id'), clientId: params.get('clientId') },
+        crossDomain: true,
+        cache: false,
+        beforeSend: function () {
+          $('#loader').show();
+          $(".container-fluid").hide();
+        },
+        complete: function () {
+          $('#loader').hide();
+          $(".container-fluid").show();
+
+        },
+        success: function (response) {
+          console.log(response);
+          gaccessToken = response.token;
+          windlow.location.href='https://pcdemobox.github.io/sandpit/transcode.html?token=' + gaccessToken + "&fileId="+gfileId;
+        
+          
+        },
+        error: function (err) {
+          console.log(JSON.stringify(err));
+          console.log("error:" + err.message);
+        }
+      });
+}
+
+
+  </script>
+
+</head>
+
+<body style="border:0px;">
+    <img id="loader" src="/externalpartycollab/images/ajax-loader-gif-1.gif" style="display:none;" />
+  
+
+</body>
+
+</html>

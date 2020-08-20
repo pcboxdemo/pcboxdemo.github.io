@@ -1,0 +1,506 @@
+<!--
+Author: W3layouts
+Author URL: http://w3layouts.com
+License: Creative Commons Attribution 3.0 Unported
+License URL: http://creativecommons.org/licenses/by/3.0/
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Transcoding Landing Page</title>
+  <!-- for-mobile-apps -->
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+  <!-- //for-mobile-apps
+<!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+
+  <!-- jQuery library
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>  -->
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+
+  <!-- Popper JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+
+  <!-- Latest compiled JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+  <!-- Latest version of Box Content Preview for en-US locale -->
+  <script src="https://cdn01.boxcdn.net/platform/preview/1.59.0/en-US/preview.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/1.53.1/en-US/preview.css" />
+  <!-- Load AWS JavaScript SDK -->
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.329.0.min.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+
+  <script>
+    var params = new URLSearchParams(window.location.search);
+    var gfileId = params.get("fileId");//"709417015341";//sessionStorage.getItem('selectedId');
+    sessionStorage.setItem("selectedId",gfileId);
+    var gaccessToken = params.get("token");//"sjIDVDZZcqI4XirdpcA3O6QUwlnGautP";//sessionStorage.getItem('accessToken');
+    sessionStorage.setItem("accessToken",gaccessToken);
+    var grefreshToken = "NA";
+    var inPause = false;
+    $(document).ready(function() {
+
+      var preview = new Box.Preview();
+      //alert("Preview:" + gaccessToken);
+      $("#preview-container").show();
+      console.log("selected item:" + sessionStorage.getItem('selectedId'));
+      preview.show(sessionStorage.getItem('selectedId'), sessionStorage.getItem('accessToken'), {
+        container: '.preview-container',
+        showDownload: false
+      });
+      var duration;
+      preview.addListener('pause', (data) => {
+        console.log(preview);
+        console.log(preview.viewer.mediaEl.currentTime);
+        duration=preview.viewer.mediaEl.duration;
+        //set random Value
+        if(inPause) {
+          $("#bookmarkendtime").val(preview.viewer.mediaEl.currentTime);
+        }
+        else {
+          $("#bookmarkstarttime").val(preview.viewer.mediaEl.currentTime);
+          inPause=true;
+        }
+        $("#bend").show();
+
+      });
+
+      $(".closeModal").on('click', function(e) {
+        parent.closeModal();
+      });
+      //Send Video Slice Instuctions to SQS
+      $("#submitvideoslicebutton").on('click', function(e) {
+        var settingsSQS = {
+          "async": true,
+          "crossDomain": true,
+          "url": "https://box-java-sandpit.herokuapp.com/videoconversiondirect?action=slice&fileId=" +
+            gfileId + "&token=" + gaccessToken + "&duration=" + $("#duration").val() + "&startTime=" + toSeconds($("#starttime").val()),
+          "method": "GET"
+          
+        }
+
+        $.ajax(settingsSQS).done(function(response) {
+          $("#transcodeContentModal").modal("show");
+          $("#submitvideoslicebutton").attr("disabled", true);
+          $("#submitvideoslicebutton").html("Submitted");
+
+          console.log(response);
+
+        });
+
+      });
+
+      //Send Audio Extraction Instuctions to SQS
+      $("#submitbutton-audio").on('click', function(e) {
+        var settingsAudionExtractSQS = {
+          "async": true,
+          "crossDomain": true,
+          "url": "https://box-java-sandpit.herokuapp.com/videoconversiondirect?action=audio&fileId=" +
+            gfileId + "&token=" + gaccessToken + "&duration=" + $("#audioextractduration").val() + "&startTime=" + toSeconds($("#audioextractstarttime").val()),
+          "method": "GET",
+        }
+
+        $.ajax(settingsAudionExtractSQS).done(function(response) {
+          $("#audioExtractContentModal").modal("show");
+          $("#submitbutton-audio").attr("disabled", true);
+          $("#submitbutton-audio").html("Extraction Submitted");
+
+          console.log(response);
+
+        });
+
+      });
+
+      //Send Frame Extraction Instuctions to SQS
+      $("#submitbutton-frame").on('click', function(e) {
+
+
+        var settingsFrameExtractSQS = {
+          "async": true,
+          "crossDomain": true,
+          "url": "https://box-java-sandpit.herokuapp.com/videoconversiondirect?action=frames&fileId=" +
+            gfileId + "&token=" + gaccessToken + "&frames=" + $("#frameextractnumber").val() + "&startTime=" + toSeconds($("#frameextractstarttime").val()),
+          "method": "GET"
+        }
+
+        $.ajax(settingsFrameExtractSQS).done(function(response) {
+          $("#frameExtractContentModal").modal("show");
+          $("#submitbutton-audio").attr("disabled", true);
+          $("#submitbutton-audio").html("Extraction Submitted");
+
+          console.log(response);
+
+        });
+
+      });
+      $("#submitbutton-bookmark").on('click', function(e) {
+        $("#submitbutton-bookmark").hide();
+        $("#spinner").attr("src","smallspinner.gif");
+        $("#spinner").show();
+        var settngs = {
+          "async": true,
+          "crossDomain": true,
+          "dataType":"json",
+          "url": " https://7hev8ivfij.execute-api.eu-west-2.amazonaws.com/default/box-updateskills-card?token="+sessionStorage.getItem("accessToken") + "&id=" + sessionStorage.getItem("selectedId"),
+          "data":'{"bookmarkstarttime":' + $("#bookmarkstarttime").val() + ',"bookmarkendtime":' + $("#bookmarkendtime").val() + ',"bookmarkname":"' + $("#bookmarkname").val() + '","duration":"' + duration + '"}',
+          "method": "POST",
+          "headers": {
+            //"Content-Type": "application/application-json"
+            //"Cache-Control": "no-cache"
+          }
+        }
+
+        $.ajax(settngs).done(function(response) {
+          $("#bookmarkstarttime").val("0.00");
+          $("#bookmarkendtime").val("0.00");
+          inPause = false;
+          $("#bookmarkname").val("");
+          console.log("Done");
+          $("#spinner").attr("src","tick.png");
+          $("#submitbutton-bookmark").show();
+          console.log(response);
+        });
+      });
+
+    });
+
+    function toSeconds(str) {
+      var pieces = str.split(":");
+      var result = Number(pieces[0]) * 60 + Number(pieces[1]);
+      return (result.toFixed(0));
+    }
+  </script>
+
+</head>
+<style>
+  a,
+  .btn,
+  th,
+  tr,
+  td,
+  button,
+  p,
+  span {
+    font-family: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+  }
+
+  .bp-header {
+    display: none;
+  }
+
+  .bp-header+.bp:not(.bp-is-fullscreen) {
+    top: 1px;
+  }
+</style>
+
+<body style="border:0px;">
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col">
+        <ul class="nav nav-tabs" id="transcodeTab" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="transcode-tab" data-toggle="tab" href="#transcode" role="tab" aria-controls="transcode" aria-selected="true">Video Slicing</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="audioextract-tab" data-toggle="tab" href="#audioextract" role="tab" aria-controls="audioextract" aria-selected="false">Audio Extraction</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="frameextract-tab" data-toggle="tab" href="#frameextract" role="tab" aria-controls="frameextract" aria-selected="false">Frame Extraction</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="bookmark-tab" data-toggle="tab" href="#bookmark" role="tab" aria-controls="bookmark" aria-selected="false">Bookmark</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-8" id="preview" aria-labelledby="preview-tab">
+        <div id="preview-container" class="preview-container" style="height:600px; width:100%;"></div>
+      </div>
+      <div class="col-sm-4">
+        <div class="tab-content" id="transcodeContent">
+          <div class="tab-pane fade show active" id="transcode" role="tabpanel" aria-labelledby="transcode-tab">
+            <!-- Code for the Information Modal -->
+            <!-- Central Modal Medium Info -->
+            <div class="modal fade" id="transcodeContentModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-notify modal-info" role="document">
+                <!--Content-->
+                <div class="modal-content">
+                  <!--Header-->
+                  <div class="modal-header bg-primary">
+                    <p class="heading lead text-white">Transcoding Info</p>
+
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true" class="white-text">&times;</span>
+                    </button>
+                  </div>
+
+                  <!--Body-->
+                  <div class="modal-body">
+                    <div class="text-center">
+                      <i class="fa fa-check fa-4x mb-3 animated rotateIn"></i>
+                      <p>The video has been submitted for transcoding. Please allow time for transcoding and check the folder for the result.</p>
+                    </div>
+                  </div>
+
+                  <!--Footer-->
+                  <div class="modal-footer justify-content-center">
+                    <a type="button" class="btn btn-primary closeModal" data-dismiss="modal">Close</a>
+                  </div>
+                </div>
+                <!--/.Content-->
+              </div>
+            </div>
+            <!-- Central Modal Medium Info-->
+            <!-- Central Modal Medium Info-->
+            <!-- Modal End -->
+            <table class="table table-striped table-bordered table-hover">
+              <thead class="thead-dark">
+                <tr>
+                  <th>Option</th>
+                  <th>Value</th>
+
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Video Start Time</td>
+                  <td>
+                    <input type="text" id="starttime" name="starttime" value="0:00">
+                  </td>
+
+                </tr>
+                <tr>
+                  <td>Duration</td>
+                  <td>
+                    <input type="text" id="duration" name="duration" value="5">
+                  </td>
+
+                </tr>
+
+              </tbody>
+            </table>
+            <button type="button" id="submitvideoslicebutton" name="submitvideoslicebutton" class="btn btn-primary">Transcode</button>
+          </div>
+          <div class="tab-pane fade" id="audioextract" role="tabpanel" aria-labelledby="audioextract-tab">
+            <!-- Central Modal Medium Info -->
+            <div class="modal fade" id="audioExtractContentModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabelAudio" aria-hidden="true">
+              <div class="modal-dialog modal-notify modal-info" role="document">
+                <!--Content-->
+                <div class="modal-content">
+                  <!--Header-->
+                  <div class="modal-header bg-primary">
+                    <p class="heading lead text-white">Audio Extraction</p>
+
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true" class="white-text">&times;</span>
+                    </button>
+                  </div>
+
+                  <!--Body-->
+                  <div class="modal-body">
+                    <div class="text-center">
+                      <i class="fa fa-check fa-4x mb-3 animated rotateIn"></i>
+                      <p>The video has been submitted for audio extraction. Please allow time for extraciton and check the folder for the result.</p>
+                    </div>
+                  </div>
+
+                  <!--Footer-->
+                  <div class="modal-footer justify-content-center">
+                    <a type="button" class="btn btn-primary" id='closeModal' data-dismiss="modal">Close</a>
+                  </div>
+                </div>
+                <!--/.Content-->
+              </div>
+            </div>
+            <!-- Central Modal Medium Info-->
+            <table class="table table-striped table-bordered table-hover">
+              <thead class="thead-dark">
+                <tr>
+                  <th>Option</th>
+                  <th>Value</th>
+
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Audio Start Time (Minute:Second)</td>
+                  <td>
+                    <input type="text" id="audioextractstarttime" name="audioextractstarttime" value="0:00">
+                  </td>
+
+                </tr>
+                <tr>
+                  <td>Duration (Seconds)</td>
+                  <td>
+                    <input type="text" id="audioextractduration" name="audioextractduration" value="5">
+                  </td>
+
+                </tr>
+                <tr>
+                  <td>Audio Quality (Kilo Bits)</td>
+                  <td>
+                    <select class="mdb-select md-form colorful-select dropdown-primary" id="audioextractquality" name="audioextractquality">
+                      <option value="8000">8000</option>
+                      <option value="11025">11025</option>
+                      <option value="12000">12000</option>
+                      <option value="16000">16000</option>
+                      <option value="22050">22050</option>
+                      <option value="32000">32000</option>
+                      <option value="44100" selected>44100</option>
+                      <option value="48000">48000</option>
+                      <option value="96000">96000</option>
+                    </select>
+                  </td>
+
+                </tr>
+
+              </tbody>
+            </table>
+            <button type="button" id="submitbutton-audio" name="submitbutton-audio" class="btn btn-primary">Extract Audio</button>
+          </div>
+          <div class="tab-pane fade" id="frameextract" role="tabpanel" aria-labelledby="frameextract-tab">
+            <!-- Central Modal Medium Info -->
+            <div class="modal fade" id="frameExtractContentModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabelAudio" aria-hidden="true">
+              <div class="modal-dialog modal-notify modal-info" role="document">
+                <!--Content-->
+                <div class="modal-content">
+                  <!--Header-->
+                  <div class="modal-header bg-primary">
+                    <p class="heading lead text-white">Frame Extraction</p>
+
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true" class="white-text">&times;</span>
+                    </button>
+                  </div>
+
+                  <!--Body-->
+                  <div class="modal-body">
+                    <div class="text-center">
+                      <i class="fa fa-check fa-4x mb-3 animated rotateIn"></i>
+                      <p>The video has been submitted for frame extraction. Please allow time for extraciton and check the folder for the result.</p>
+                    </div>
+                  </div>
+
+                  <!--Footer-->
+                  <div class="modal-footer justify-content-center">
+                    <a type="button" class="btn btn-primary" data-dismiss="modal">Close</a>
+                  </div>
+                </div>
+                <!--/.Content-->
+              </div>
+            </div>
+            <!-- Central Modal Medium Info-->
+            <table class="table table-striped table-bordered table-hover">
+              <thead class="thead-dark">
+                <tr>
+                  <th>Option</th>
+                  <th>Value</th>
+
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Frame Start Time (Minute:Second)</td>
+                  <td>
+                    <input type="text" id="frameextractstarttime" name="frameextractstarttime" value="0:00">
+                  </td>
+
+                </tr>
+                <tr>
+                  <td>Number of Frames</td>
+                  <td>
+                    <input type="text" id="frameextractnumber" name="frameextractnumber" value="3">
+                  </td>
+
+                </tr>
+
+              </tbody>
+            </table>
+            <button type="button" id="submitbutton-frame" name="submitbutton-frame" class="btn btn-primary">Extract Frames</button>
+          </div>
+
+
+        <div class="tab-pane fade" id="bookmark" role="tabpanel" aria-labelledby="bookmark-tab">
+          <!-- Central Modal Medium Info -->
+          <div class="modal fade" id="bookmarkontentModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabelAudio" aria-hidden="true">
+            <div class="modal-dialog modal-notify modal-info" role="document">
+              <!--Content-->
+              <div class="modal-content">
+                <!--Header-->
+                <div class="modal-header bg-primary">
+                  <p class="heading lead text-white">bookmark Extraction</p>
+
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" class="white-text">&times;</span>
+                  </button>
+                </div>
+
+                <!--Body-->
+                <div class="modal-body">
+                  <div class="text-center">
+                    <i class="fa fa-check fa-4x mb-3 animated rotateIn"></i>
+                    <p>The video has been submitted for bookmark extraction. Please allow time for extraciton and check the folder for the result.</p>
+                  </div>
+                </div>
+
+                <!--Footer-->
+                <div class="modal-footer justify-content-center">
+                  <a type="button" class="btn btn-primary" data-dismiss="modal">Close</a>
+                </div>
+              </div>
+              <!--/.Content-->
+            </div>
+          </div>
+          <!-- Central Modal Medium Info-->
+          <table class="table table-striped table-bordered table-hover">
+            <thead class="thead-dark">
+              <tr>
+                <th>Option</th>
+                <th>Value</th>
+
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Bookmark Start</td>
+                <td>
+                  <input type="text" id="bookmarkstarttime" name="bookmarkstarttime" value="0:00"><br>
+
+                </td>
+              </tr>
+              <tr id=bend style="display:none;"><td>Bookmark End</td>
+                <td>
+                  <input  type="text" id="bookmarkendtime" name="bookmarkendtime" value="0:00">
+                </td>
+                </tr>
+              <tr>
+                <td>Bookmark name</td>
+                <td>
+                  <input type="text" id="bookmarkname" name="bookmarkname" value="">
+                </td>
+
+              </tr>
+
+            </tbody>
+          </table>
+          <button type="button" id="submitbutton-bookmark" name="submitbutton-bookmark" class="btn btn-primary">Add bookmark</button>
+          <img src='smallspinner.gif' id='spinner' style="display:none;"/>
+        </div>
+
+      </div>
+      </div>
+    </div>
+
+
+</body>
+
+</html>
