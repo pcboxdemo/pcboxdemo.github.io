@@ -49,7 +49,7 @@
         success: function (response) {
           console.log(response);
           gaccessToken = response.token;
-          windlow.location.href='https://pcdemobox.github.io/sandpit/transcode.html?token=' + gaccessToken + "&fileId="+gfileId;
+          window.location.href='https://pcdemobox.github.io/sandpit/transcode.html?token=' + gaccessToken + "&fileId="+gfileId;
         
           
         },
