@@ -170,7 +170,7 @@
         cache: false,
         success: function (response) {
           $.each(response.cards[0].entries, function (k, data) {
-            $(".bookmarks").append("<li uid=" + i + " id=v_" + i + " class='list-group-item d-flex justify-content-between align-items-center ital' bk='" + data.text + "'>" + data.text + "</span><span id='start_" + i + "' class='badge badge-primary badge-pill'>" + data.appears[0].start + "</span><span id='end_" + i + "' class='badge badge-warning badge-pill'>" + data.appears[0].end + "</span><span  class='badge badge-primary badge-pill remove'>x</span></li>")
+            $(".bookmarks").append("<li uid=" + i + " id=v_" + i + " class='list-group-item d-flex justify-content-between align-items-center ital' bk='" + data.text + "'><span style='width:100px'>" + data.text + "</span><span id='start_" + i + "' class='badge badge-primary badge-pill'>" + data.appears[0].start + "</span><span id='end_" + i + "' class='badge badge-warning badge-pill'>" + data.appears[0].end + "</span><span  class='badge badge-primary badge-pill remove'>x</span></li>")
             i++;
           });
           $(".remove").click(function (event) {
