@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>convex MDQ</title>
+  <!-- for-mobile-apps -->
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+  <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.css" />
+  <script src="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.js"></script>
+  <script>
+    var token = 'oUt4iNH7yClHJ19iYcyQuOlS6BqThax7';
+    var boxId = "123982504475";
+    var contentExplorer = new Box.ContentExplorer();
+    var tab = "nav-progress";
+    var status = "In Progress";
+    $(document).ready(function () {
+      var params = new URLSearchParams(window.location.search);
+      var code = params.get('auth');
+      if (code == null) {
+        code = params.get('code');
+      }
+      var clientId="of926g5v0mqi50dpiislr1avju7h3jl8";
+      var userLogin = 'pchristensen+demo10@boxdemo.com';
+
+      var urlParams = "clientId=" + clientId + "&userEmail=" + userLogin + "&requestedTokens=userToken&password=boxdemo12!";
+
+      $.ajax({
+        method: 'get',
+        //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-tokengenerator",
+        //url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+        url: "https://box-tokengenerator-v2.herokuapp.com/tokengenerator?"+urlParams,
+        crossDomain: true,
+        cache: false,
+        success: function (response) {
+          console.log(response);
+          token = response.userToken;
+          loadTab("nav-container", "In Progress");
+        },
+        error: function (err) {
+          console.log(JSON.stringify(err));
+          console.log("error:" + err.message);
+        
+        }
+      });
+    
+      $("#broker").change(function () {
+          contentExplorer.clearCache();
+          contentExplorer.hide();
+          loadTab(tab, status);
+        
+      });
+      $("#underwriter").change(function () {
+          contentExplorer.clearCache();
+          contentExplorer.hide();
+          loadTab(tab, status);
+        
+      });
+      $("#cob").change(function () {
+          contentExplorer.clearCache();
+          contentExplorer.hide();
+          loadTab(tab, status);
+        
+      });
+      $("#year").change(function () {
+          contentExplorer.clearCache();
+          contentExplorer.hide();
+          loadTab(tab, status);
+        
+      });
+     
+    });
+    function loadTab(tabName, status) {
+      var broker = $("#broker").val();
+      var underWriter = $("#underwriter").val();
+      var cob = $("#cob").val();
+      var year = $("#year").val();
+      console.log(broker);
+      console.log(underWriter);
+      console.log(cob);
+      console.log(year);
+      var query = ""
+      delim="";
+      if (broker != null && broker != "" && broker!='All') {
+        query += delim + " broker = :broker ";
+        delim=" AND ";
+      }
+      if (underWriter != null && underWriter != "" && underWriter!='All') {
+        query += delim + " underwriter=:underwriter"
+        delim=" AND ";
+
+      }
+      if (cob != null && cob != "" && cob!='All') {
+        query += delim + " classOfBusiness=:classOfBusiness"
+        delim=" AND ";
+
+      }
+      if (year != null && year != "" && year!='All') {
+        query += delim + " year=:year"
+        delim=" AND ";
+        
+      }
+      else {
+        year=1;
+      }
+      if(query=='') {
+        query='year>:d';
+      }
+      const mdQuery = {
+        from: "enterprise_210762180.convex",
+        query: query,
+        limit: 20,
+        query_params: {
+          "broker": broker,
+          "underwriter": underWriter,
+          "classOfBusiness": cob,
+          "year":parseInt(year),
+          "d":1
+        },
+        ancestor_folder_id: boxId,
+        fields: [
+          'metadata.enterprise_210762180.convex.broker',
+          'metadata.enterprise_210762180.convex.documentType',
+          'metadata.enterprise_210762180.convex.underwriter',
+          'metadata.enterprise_210762180.convex.classOfBusiness',
+          'metadata.enterprise_210762180.convex.insuredName',
+          'metadata.enterprise_210762180.convex.status',
+          'metadata.enterprise_210762180.convex.year',
+        ],
+        order_by: [{
+          "field_key":"inceptionDate",
+          "direction":"desc"
+        }]
+      };
+
+      // The metadata fields/columns to view - must be valid field names from the metadata template
+      const fieldsToShow = [
+        { key: 'metadata.enterprise_210762180.convex.broker', canEdit: true },
+        { key: 'metadata.enterprise_210762180.convex.documentType', canEdit: true },
+        { key: 'metadata.enterprise_210762180.convex.underwriter', canEdit: true },
+        { key: 'metadata.enterprise_210762180.convex.classOfBusiness', canEdit: true },
+        { key: 'metadata.enterprise_210762180.convex.insuredName', canEdit: true },
+        { key: 'metadata.enterprise_210762180.convex.status', canEdit: true },
+        { key: 'metadata.enterprise_210762180.convex.year', canEdit: false }
+
+      ];
+
+      const defaultView = "metadata";
+      contentExplorer.show(boxId, token, {
+        container: '#nav-container',
+        metadataQuery: mdQuery,
+        fieldsToShow: fieldsToShow,
+        defaultView: defaultView,
+        contentPreviewProps: {
+                contentSidebarProps: {
+                  detailsSidebarProps: {
+                    hasNotices: true,
+                    hasProperties: true,
+                    hasAccessStats: true,
+                    hasVersions: true
+                  },
+                  hasActivityFeed: true,
+                  hasSkills: true,
+                  hasMetadata: true
+                }
+              }
+
+      });
+    }
+
+  </script>
+  <style>
+    body {
+      font-style:"Lato,  Helvetica, Arial, sans-serif";
+      background-color: #3A61D5;
+    }
+    *{
+  box-sizing:border-box;
+}
+.container1{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100%;
+}
+.normal-div{
+ 
+  height:100%;
+  position:relative;
+  padding: 2px 2px 2px 2px;
+  float:left;
+  -webkit-transition: all 0.5s ease-in-out;
+  -moz-transition: all 0.5s ease-in-out;
+  transition: all 0.5s ease-in-out;
+}
+.expanded-div{
+  width:100%;
+}
+.compressed-div{
+  width:10%;
+}
+#div-1{
+  width:10%;
+}
+#div-2{
+  width:90%;
+}
+a.expansion-btn{
+  position:absolute;
+  top:10px;
+  right:10px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.form-group {
+  color:white;
+}
+  </style>
+</head>
+
+<body>
+    <div class="container1">
+        <div class="normal-div" id="div-1">
+            <div style="margin-top:50px;">
+
+                <form>
+                  <div class="form-group">
+                    <label for="org">Broker</label>
+                    <select class="form-control" id="broker">
+                      <option>All</option>
+                      <option>Garth Burkes</option>
+                      <option>Harriette Keil</option>
+                      <option>Laraine Dennett</option>
+                      <option>Denisse Massenburg</option>
+                      <option>Jinny Reineck</option>
+                      <option>Terrilyn Pratt</option>
+                      <option>Kylie Corry</option>
+                      <option>Tresa Petters</option>
+                      <option>Leo Antonelli</option>
+                      <option>Caren Grillo</option>
+                      <option>Isaac Peavey</option>
+                      <option>Bill Madriz</option>
+                      <option>Nathan Paley</option>
+                      <option>Edie Llanas</option>
+                      <option>Ammie Laplante</option>
+                      <option>Erlinda Kliebert</option>
+                      <option>Kimi Coutu</option>
+                      <option>Hertha Encinas</option>
+                      <option>Joycelyn Isbell</option>
+                      <option>Lizeth Heal</option>
+                      <option>Jaquelyn Oles</option>
+                      <option>Cherri Galasso</option>
+                      <option>Lola Strandberg</option>
+                      <option>Breann Lawler</option>
+                      <option>Season Racca</option>
+                      <option>Reda Palomo</option>
+                      <option>Melissia Gwyn</option>
+                      <option>Jannie Scofield</option>
+                      <option>Chauncey Carlson</option>
+                      <option>Bernadine Manzanares</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="org">Underwriter</label>
+                    <select class="form-control" id="underwriter">
+                      <option>All</option>
+                      <option>Anna Sthesia</option>
+                      <option>Cliff Hanger</option>
+                      <option>Robin Banks</option>
+                      <option>Polly Tech</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="org">Class of Business</label>
+                    <select class="form-control" id="cob">
+                      <option>All</option>
+                      <option>A&H</option>
+                      <option>Aerospace</option>
+                      <option>Energy</option>
+                      <option>Marine</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="org">Year</label>
+                    <select class="form-control" id="year">
+                      <option>All</option>
+                      <option>2020</option>
+                      <option>2019</option>
+                      <option>2018</option>
+                      <option>2017</option>
+                      <option>2016</option>
+                      <option>2015</option>
+                      <option>2014</option>
+                      <option>2013</option>
+                      <option>2012</option>
+                      <option>2011</option>
+                      <option>2010</option>
+                    </select>
+                  </div>
+                </form>
+              </div>
+        </div>
+        <div class="normal-div" id="div-2">
+            <div id="nav-container" role="tabpanel" aria-labelledby="nav-progress-tab" style="height:1000px;">
+                
+              </div>
+           
+        </div>
+       
+      </div>
+
+  
+
+</html>
