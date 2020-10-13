@@ -32,8 +32,8 @@
       }
       var clientId = params.get('clientId');//"of926g5v0mqi50dpiislr1avju7h3jl8";
       var userLogin = 'pchristensen+demo10@boxdemo.com';
-
-      var urlParams = "code=" + code + "&clientId=" + clientId + "&userEmail=" + userLogin + "&requestedTokens=userToken&password=boxdemo12!";
+      boxId=params.get('id');
+      var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId + "&userEmail=" + userLogin + "&requestedTokens=userToken&password=boxdemo12!";
 
       $.ajax({
         method: 'get',
