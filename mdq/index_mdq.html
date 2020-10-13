@@ -39,17 +39,17 @@
         method: 'get',
         //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-tokengenerator",
         //url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
-        url: "https://box-tokengenerator-v2.herokuapp.com/tokengenerator?" + urlParams,
-        //url:"https://89w694ee39.execute-api.eu-west-2.amazonaws.com/default/box-token-generator-mdq?"+urlParams,
+        //url: "https://box-tokengenerator-v2.herokuapp.com/tokengenerator?" + urlParams,
+        url:"https://89w694ee39.execute-api.eu-west-2.amazonaws.com/default/box-token-generator-mdq?"+urlParams,
         crossDomain: true,
         cache: false,
         success: function (response) {
           console.log(response);
           token = response.userToken;
-          template = 'abb';//response.template;
-          filters = { 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
-          columns = 'region,priorityStatus,workflowStatus,owner,contentFormat,responsibleOrganisation';//response.columns;
-          eid = '210762180';//response.eid
+          template = response.template;//'abb'
+          filters = response.fitlers;//{ 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
+          columns = response.columns;//'region,priorityStatus,workflowStatus,owner,contentFormat,responsibleOrganisation';//response.columns;
+          eid = response.eid;//'210762180';//response.eid
           loadTab("nav-container", true);
         },
         error: function (err) {
