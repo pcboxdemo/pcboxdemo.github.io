@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>convex MDQ</title>
+  <!-- for-mobile-apps -->
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+  <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.css" />
+  <script src="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.js"></script>
+  <script>
+    var token = 'ZYBeg0yrkCdCobfDansJgrMy7w0dxih2';
+    var boxId = "124092627842";
+    var contentExplorer = new Box.ContentExplorer();
+    var tab = "nav-progress";
+    var status = "In Progress";
+    var token, template, filters, columns;
+    var loaded = false;
+    var firstFilter;
+    $(document).ready(function () {
+      $("#loader").show();
+      $(".container1").hide();
+      var params = new URLSearchParams(window.location.search);
+      var code = params.get('auth');
+      if (code == null) {
+        code = params.get('code');
+      }
+      var clientId = params.get('clientId');//"of926g5v0mqi50dpiislr1avju7h3jl8";
+      var userLogin = 'pchristensen+demo10@boxdemo.com';
+
+      var urlParams = "code=" + code + "&clientId=" + clientId + "&userEmail=" + userLogin + "&requestedTokens=userToken&password=boxdemo12!";
+
+      $.ajax({
+        method: 'get',
+        //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-tokengenerator",
+        //url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+        url: "https://box-tokengenerator-v2.herokuapp.com/tokengenerator?" + urlParams,
+        //url:"https://89w694ee39.execute-api.eu-west-2.amazonaws.com/default/box-token-generator-mdq?"+urlParams,
+        crossDomain: true,
+        cache: false,
+        success: function (response) {
+          console.log(response);
+          token = response.userToken;
+          template = 'abb';//response.template;
+          filters = { 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
+          columns = 'region,priorityStatus,workflowStatus,owner,contentFormat,responsibleOrganisation';//response.columns;
+          eid = '210762180';//response.eid
+          loadTab("nav-container", true);
+        },
+        error: function (err) {
+          console.log(JSON.stringify(err));
+          console.log("error:" + err.message);
+
+        }
+      });
+
+      $(".filter").change(function () {
+        if (loaded) {
+          contentExplorer.clearCache();
+          contentExplorer.hide();
+        }
+        loadTab(tab, false);
+
+      });
+
+
+    });
+    function loadTab(tabName, buildFilters) {
+
+      delim = "";
+      var col = columns.split(',');
+      var query = "";
+
+      var query_params = "";
+      var index;
+      var delim = "";
+
+      console.log(query_params);
+      var fields = [];
+      var fieldsToShow = [];
+      col.forEach(element => fields.push('metadata.enterprise_' + eid + "." + template + "." + element));
+      col.forEach(element => fieldsToShow.push({ key: 'metadata.enterprise_' + eid + "." + template + "." + element, canEdit: true }));
+      if (buildFilters) {
+        $.each(filters, function (filterKey, disp) {
+          firstFilter = filterKey;
+          $("#filters").append(getHTMLForFilter(filterKey, disp));
+        });
+      }
+      $(".filter").change(function () {
+        if (loaded) {
+          contentExplorer.clearCache();
+          contentExplorer.hide();
+        }
+        loadTab(tab, false);
+
+      });
+      query_params += '{';
+      $.each(filters, function (k, v) {
+        query_params += delim + '"' + k + '":"' + $('#' + k).val() + '"';
+        delim = " , ";
+      });
+      query_params += '}';
+      delim = "";
+      $.each(filters, function (k, v) {
+        if ($('#' + k).val() != 'All') {
+          query += delim + k + "=:" + k;
+          delim = " AND ";
+        }
+      });
+      if (query == '') {
+        query = firstFilter + ' IS NOT NULL';
+      }
+
+      const mdQuery = {
+        from: "enterprise_" + eid + "." + template,
+        query: query,
+        limit: 20,
+        query_params: JSON.parse(query_params),
+        ancestor_folder_id: boxId,
+        fields: fields
+      };
+
+      // The metadata fields/columns to view - must be valid field names from the metadata template
+      loaded = true;
+      const defaultView = "metadata";
+      contentExplorer.show(boxId, token, {
+        container: '#nav-container',
+        metadataQuery: mdQuery,
+        fieldsToShow: fieldsToShow,
+        defaultView: defaultView,
+        contentPreviewProps: {
+          contentSidebarProps: {
+            detailsSidebarProps: {
+              hasNotices: true,
+              hasProperties: true,
+              hasAccessStats: true,
+              hasVersions: true
+            },
+            hasActivityFeed: true,
+            hasSkills: true,
+            hasMetadata: true
+          }
+        }
+
+      });
+      $("#loader").hide();
+      $(".container1").show();
+    }
+
+    function getHTMLForFilter(filterName, filterValue) {
+      var disp;
+      var options;
+      $.each(filterValue, function (id, key) {
+        disp = id;
+        options = key;
+      })
+      var html = '<label for="' + filterName + '">' + disp + '</label>' +
+        '<select class="form-control filter"  style="height:35px" id="' + filterName + '" required>';
+      html += '<option>All</option>';
+      $.each(options.split(","), function (id, key) {
+        html += '<option>' + key + '</option>';
+      });
+      html += '</select>';
+      return html;
+    }
+  </script>
+  <style>
+    body {
+      font-style: "Lato,  Helvetica, Arial, sans-serif";
+      background-color: #3A61D5;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .container1 {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .normal-div {
+
+      height: 100%;
+      position: relative;
+      padding: 2px 2px 2px 2px;
+      float: left;
+      -webkit-transition: all 0.5s ease-in-out;
+      -moz-transition: all 0.5s ease-in-out;
+      transition: all 0.5s ease-in-out;
+    }
+
+    .expanded-div {
+      width: 100%;
+    }
+
+    .compressed-div {
+      width: 10%;
+    }
+
+    #div-1 {
+      width: 10%;
+    }
+
+    #div-2 {
+      width: 90%;
+    }
+
+    a.expansion-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .form-group,
+    #filters {
+      color: white;
+    }
+    .center {
+  margin: auto;
+  width: 50%;
+  
+  padding: 10px;
+}
+  </style>
+</head>
+
+<body>
+  <div class="container1">
+    <div class="normal-div" id="div-1">
+      <div style="margin-top:50px;" id="filters">
+
+
+      </div>
+    </div>
+    <div class="normal-div" id="div-2">
+      <div id="nav-container" role="tabpanel" aria-labelledby="nav-progress-tab" style="height:1000px;">
+
+      </div>
+
+    </div>
+
+  </div>
+  <div id='loader' class='center'><img src='l.gif'/></div>
+
+
+
+</html>
