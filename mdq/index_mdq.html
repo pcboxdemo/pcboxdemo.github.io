@@ -14,12 +14,15 @@
   <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.css" />
   <script src="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.js"></script>
   <script>
-    var token = 'ZYBeg0yrkCdCobfDansJgrMy7w0dxih2';
+    //var token = 'ZYBeg0yrkCdCobfDansJgrMy7w0dxih2';
     var boxId = "124092627842";
     var contentExplorer = new Box.ContentExplorer();
     var tab = "nav-progress";
     var status = "In Progress";
-    var token, template, filters, columns;
+    var token;
+    var template;
+    var  filters;
+    var columns;
     var loaded = false;
     var firstFilter;
     $(document).ready(function () {
@@ -45,9 +48,9 @@
         cache: false,
         success: function (response) {
           console.log(response);
-          token = response.userToken;
+          token = response.token;
           template = response.template;//'abb'
-          filters = response.fitlers;//{ 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
+          filters = response.filters;//{ 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
           columns = response.columns;//'region,priorityStatus,workflowStatus,owner,contentFormat,responsibleOrganisation';//response.columns;
           eid = response.eid;//'210762180';//response.eid
           loadTab("nav-container", true);
