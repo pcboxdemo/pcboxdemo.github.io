@@ -112,7 +112,12 @@
       });
       query_params += '{';
       $.each(filters, function (k, v) {
-        query_params += delim + '"' + k + '":"' + $('#' + k).val() + '"';
+        if(isNaN($('#' + k).val())) {
+          query_params += delim + '"' + k + '":"' + $('#' + k).val() + '"';
+        }
+        else {
+          query_params += delim + '"' + k + '":' + $('#' + k).val() + '';
+        }
         delim = " , ";
       });
       query_params += '}';
