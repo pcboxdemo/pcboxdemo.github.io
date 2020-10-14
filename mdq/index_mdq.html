@@ -22,6 +22,8 @@
     var token;
     var template;
     var  filters;
+    var orderBy;
+    var orderByDirection;
     var columns;
     var loaded = false;
     var firstFilter;
@@ -36,6 +38,9 @@
       var clientId = params.get('clientId');//"of926g5v0mqi50dpiislr1avju7h3jl8";
       var userLogin = 'pchristensen+demo10@boxdemo.com';
       boxId=params.get('id');
+      if(boxId==null) {
+        boxId='0';
+      }
       var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId + "&userEmail=" + userLogin + "&requestedTokens=userToken&password=boxdemo12!";
 
       $.ajax({
@@ -53,6 +58,9 @@
           filters = response.filters;//{ 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
           columns = response.columns;//'region,priorityStatus,workflowStatus,owner,contentFormat,responsibleOrganisation';//response.columns;
           eid = response.eid;//'210762180';//response.eid
+          orderBy=response.orderBy;
+          orderByDirection=response.orderByDirection;
+          console.log("order by:"+orderBy);
           loadTab("nav-container", true);
         },
         error: function (err) {
