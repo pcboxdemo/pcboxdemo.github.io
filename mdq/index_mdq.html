@@ -176,7 +176,7 @@
         options = key;
       })
       var html = '<label class="bea" for="' + filterName + '">' + disp + '</label>' +
-        '<select class="form-control filter bea"  style="height:35px" id="' + filterName + '" required>';
+        '<select class="form-control filter bea1"  style="height:35px" id="' + filterName + '" required>';
       html += '<option>All</option>';
       $.each(options.split(","), function (id, key) {
         html += '<option>' + key + '</option>';
@@ -258,7 +258,22 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    
+    padding:3px;
+    border: 0;
+    outline: none;
+  }
+  .bea1 {
+    font-size: 13px;
+    font-family: Lato,Helvetica Neue,Helvetica,Arial,sans-serif;
+    color: #000;
+    line-height: 20px;
+    letter-spacing: .3px;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    padding:3px;
     border: 0;
     outline: none;
   }
