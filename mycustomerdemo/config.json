@@ -1,0 +1,45 @@
+var clientId="bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+
+//Main page
+var redirectAfterLoginPage="/mycustomerdemo/main.html";
+
+//Navigation
+var navigation=[
+
+  {
+      "page":"landing.html",
+      "title":"Home"
+  },
+  
+  {
+      "page":"folder1.html",
+      "title":"My Personal Documents",
+      "boxId":"122313101714"
+  },
+  {
+      "page":"folder2.html",
+      "title":"Payslips",
+      "boxId":"122312979191"
+  },
+  {
+    "page":"metadataformWithFolder.html",
+    "title":"UPLOAD FORM WITH FOLDER",
+    "boxId":"116751117003",
+    "templateKey":"case",
+    "eid":"47757585",
+    "fieldForFolderName":"name"
+},
+  {
+    "page":"preview1.html",
+    "title":"Employee Handbook",
+    "boxId":"717008340780"
+}, 
+{
+    "page":"map_folder.html",
+    "title":"My Sites",
+    "boxId":"122372116720",
+    "latitude":51.34030786189239,
+    "longitude":0.34743296397762524,
+    "zoomLevel":12
+}    
+];

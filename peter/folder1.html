@@ -32,8 +32,8 @@
     getAccessToken().then(function (result) {
       const mdQuery = {
         from: "enterprise_210762180.imdb", // 973933 is Enterprise ID and mdBasedContentExplorer is metadata template key
-        query: "director= :arg2",
-        query_params: { arg1: 8.9 ,arg2:"Peter Christensen"},
+        query: "imdbRating> :arg1",
+        query_params: { arg1: 8.0 },
         ancestor_folder_id: boxId
       };
 
