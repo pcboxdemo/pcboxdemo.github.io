@@ -2,12 +2,17 @@
 <html>
 
 <head>
-  <title>MDQ</title>
+  <title>convex MDQ</title>
   <!-- for-mobile-apps -->
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+  <!-- Bootstrap core CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+
   <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
   <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
 
@@ -21,13 +26,14 @@
     var status = "In Progress";
     var token;
     var template;
-    var  filters;
+    var filters;
     var orderBy;
     var orderByDirection;
     var columns;
     var loaded = false;
     var firstFilter;
     $(document).ready(function () {
+
       $("#loader").show();
       $(".container1").hide();
       var params = new URLSearchParams(window.location.search);
@@ -35,29 +41,54 @@
       if (code == null) {
         code = params.get('code');
       }
-      var clientId = params.get('clientId');//"of926g5v0mqi50dpiislr1avju7h3jl8";
-      boxId=params.get('id');
-      if(boxId==null) {
-        boxId='0';
+      var clientId = "of926g5v0mqi50dpiislr1avju7h3jl8";//params.get('clientId');
+      boxId = params.get('id');
+      if (boxId == null) {
+        boxId = '0';
       }
-      var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId ;
-
+      //var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId ;
+      var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId + "&userEmail=pchristensen+demo10@boxdemo.com&password=boxdemo12!";
       $.ajax({
         method: 'get',
-        url:"https://89w694ee39.execute-api.eu-west-2.amazonaws.com/default/box-token-generator-mdq?"+urlParams,
+        //url:"https://89w694ee39.execute-api.eu-west-2.amazonaws.com/default/box-token-generator-mdq?"+urlParams,
+        url: "https://box-tokengenerator-v2.herokuapp.com/tokengenerator?" + urlParams,
         crossDomain: true,
         cache: false,
         success: function (response) {
           console.log(response);
-          token = response.token;
-          template = response.template;//'abb'
-          filters = response.filters;//{ 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
-          columns = response.columns;//'region,priorityStatus,workflowStatus,owner,contentFormat,responsibleOrganisation';//response.columns;
-          eid = response.eid;//'210762180';//response.eid
-          orderBy=response.orderBy;
-          orderByDirection=response.orderByDirection;
-          console.log("order by:"+orderBy);
-          loadTab("nav-container", true);
+          token = response.userToken;
+          template = 'abb';//response.template;
+          filters = { 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
+          
+          $.each(filters, function (filterKey, disp) {
+          });
+          columns = 'region,priorityStatus,workflowStatus,owner,contentFormat,responsibleOrganisation';//response.columns;
+          eid = '210762180';//response.eid
+          //orderBy=response.orderBy;
+          //orderByDirection=response.orderByDirection;
+          console.log("order by:" + orderBy);
+          //loadTab("nav-container", true);
+          $("#loader").hide();
+          $(".container1").show();
+          $('#filters').jstree({
+            "plugins": ["json_data"],
+            'core': {
+              'data': [
+                'Root',
+                {
+                  'text': 'Root node 2',
+                  'state': {
+                    'opened': true,
+                    'selected': true
+                  },
+                  'children': [
+                    { 'text': 'Child 1' },
+                    'Child 2'
+                  ]
+                }
+              ]
+            }
+          })
         },
         error: function (err) {
           console.log(JSON.stringify(err));
@@ -108,7 +139,7 @@
       });
       query_params += '{';
       $.each(filters, function (k, v) {
-        if(isNaN($('#' + k).val())) {
+        if (isNaN($('#' + k).val())) {
           query_params += delim + '"' + k + '":"' + $('#' + k).val() + '"';
         }
         else {
@@ -237,42 +268,45 @@
     #filters {
       color: white;
     }
+
     .center {
       margin: auto;
       width: 50%;
-  
-    padding: 10px;
-  }
-  .bea {
-    font-size: 13px;
-    font-family: Lato,Helvetica Neue,Helvetica,Arial,sans-serif;
-    color: #fff;
-    line-height: 20px;
-    letter-spacing: .3px;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    padding:3px;
-    border: 0;
-    outline: none;
-  }
-  .bea1 {
-    font-size: 13px;
-    font-family: Lato,Helvetica Neue,Helvetica,Arial,sans-serif;
-    color: #000;
-    line-height: 20px;
-    letter-spacing: .3px;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    padding:3px;
-    border: 0;
-    outline: none;
-  }
+
+      padding: 10px;
+    }
+
+    .bea {
+      font-size: 13px;
+      font-family: Lato, Helvetica Neue, Helvetica, Arial, sans-serif;
+      color: #fff;
+      line-height: 20px;
+      letter-spacing: .3px;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      padding: 3px;
+      border: 0;
+      outline: none;
+    }
+
+    .bea1 {
+      font-size: 13px;
+      font-family: Lato, Helvetica Neue, Helvetica, Arial, sans-serif;
+      color: #000;
+      line-height: 20px;
+      letter-spacing: .3px;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      padding: 3px;
+      border: 0;
+      outline: none;
+    }
   </style>
 </head>
 
@@ -292,7 +326,9 @@
     </div>
 
   </div>
-  <div id='loader' class='center'><img src='l.gif'/></div>
+  <div id='loader' class='center'>
+    <img src='l.gif' />
+  </div>
 
 
 
