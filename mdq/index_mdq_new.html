@@ -45,11 +45,10 @@
       $.ajax({
         method: 'get',
         //url:"https://89w694ee39.execute-api.eu-west-2.amazonaws.com/default/box-token-generator-mdq?"+urlParams,
-        url:"https://box-tokengenerator-v2.herokuapp.com/mdqtoken?"+urlParams,
+        url:"https://box-tokengenrator-v2.herokuapp.com/mdqtoken?"+urlParams,
         crossDomain: true,
         cache: false,
         success: function (response) {
-          console.log(response);
           token = response.token;
           template = response.template;//'abb'
           filters = response.filters;//{ 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
@@ -57,7 +56,6 @@
           eid = response.eid;//'210762180';//response.eid
           orderBy=response.orderBy;
           orderByDirection=response.orderByDirection;
-          console.log("order by:"+orderBy);
           loadTab("nav-container", true);
         },
         error: function (err) {
@@ -88,15 +86,14 @@
       var index;
       var delim = "";
 
-      console.log(query_params);
       var fields = [];
       var fieldsToShow = [];
       col.forEach(element => fields.push('metadata.enterprise_' + eid + "." + template + "." + element));
       col.forEach(element => fieldsToShow.push({ key: 'metadata.enterprise_' + eid + "." + template + "." + element, canEdit: true }));
       if (buildFilters) {
-        $.each(filters, function (filterKey, disp) {
-          firstFilter = filterKey;
-          $("#filters").append(getHTMLForFilter(filterKey, disp));
+        $.each(filters, function (index, filter) {
+          firstFilter = filter.key;
+          $("#filters").append(getHTMLForFilter(filter));
         });
       }
       $(".filter").change(function () {
@@ -108,22 +105,23 @@
 
       });
       query_params += '{';
-      $.each(filters, function (k, v) {
-        if(isNaN($('#' + k).val())) {
-          query_params += delim + '"' + k + '":"' + $('#' + k).val() + '"';
+      $.each(filters, function (k, filter) {
+        
+        if(isNaN($('#' + filter.key).val())) {
+          query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
         }
         else {
-          query_params += delim + '"' + k + '":' + $('#' + k).val() + '';
+          query_params += delim + '"' + filter.key+ '":' + $('#' + filter.key).val() + '';
         }
         delim = " , ";
       });
       query_params += '}';
       delim = "";
-      $.each(filters, function (k, v) {
-        if ($('#' + k).val() != 'All') {
-          query += delim + k + "=:" + k;
-          delim = " AND ";
-        }
+      $.each(filters, function (k, filter) {
+          if ($('#' + filter.key).val() != 'All') {
+            query += delim + filter.key + "=:" + filter.key;
+            delim = " AND ";
+          }
       });
       if (query == '') {
         query = firstFilter + ' IS NOT NULL';
@@ -165,19 +163,20 @@
       $(".container1").show();
     }
 
-    function getHTMLForFilter(filterName, filterValue) {
-      var disp;
-      var options;
-      $.each(filterValue, function (id, key) {
-        disp = id;
-        options = key;
-      })
-      var html = '<label class="bea" for="' + filterName + '">' + disp + '</label>' +
-        '<select class="form-control filter bea1"  style="height:35px" id="' + filterName + '" required>';
-      html += '<option>All</option>';
-      $.each(options.split(","), function (id, key) {
-        html += '<option>' + key + '</option>';
-      });
+    function getHTMLForFilter(filter) {
+      var disp=filter.displayName;
+      var key=filter.key;
+      var options=filter.values;
+      var html ;
+     
+       html = '<label class="bea" for="' + key + '">' + disp + '</label>' +
+       '<select class="form-control filter bea1"  style="height:35px" id="' + key + '" required>';
+        html += '<option>All</option>';
+        
+        $.each(options,function(k,val) {
+          html += '<option>' + val + '</option>';
+        });
+
       html += '</select>';
       return html;
     }
@@ -186,6 +185,7 @@
     body {
       font-style: "Lato,  Helvetica, Arial, sans-serif";
       background-color: #3A61D5;
+      margin:3px 3px 3px 3px;
     }
 
     * {
