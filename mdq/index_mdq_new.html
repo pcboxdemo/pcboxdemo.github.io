@@ -62,6 +62,7 @@
         error: function (err) {
           console.log(JSON.stringify(err));
           console.log("error:" + err.message);
+          $("#loader").innerHTML(err.responseText);
 
         }
       });
