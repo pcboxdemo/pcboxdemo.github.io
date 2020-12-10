@@ -34,6 +34,8 @@
     var dateFormat;
     var loaded = false;
     var firstFilter = null;
+    var oldStartDate;
+    var oldEndDate;
     $(document).ready(function () {
 
 
@@ -165,20 +167,25 @@
 
       });
       $(".datepicker").change(function () {
-
-        console.log("date changed");
-        if ($(".filterD").val() == 'Between') {
-          var fid = $(this).attr("id");
-          if ($("#" + fid + "_end").val() == '' || $("#" + fid).val() == '') {
-            return;
+        if($(this).val()==$(this).attr("oldVal")) {
+          console.log("Changed but same val");
+        }
+        else {
+          console.log("Changed new val");
+          $(this).attr("oldVal",$(this).val());
+          if ($(".filterD").val() == 'Between') {
+            var fid = $(this).attr("id");
+            if ($("#" + fid + "_end").val() == '' || $("#" + fid).val() == '') {
+              return;
+            }
           }
-        }
-        if (loaded) {
-          contentExplorer.clearCache();
-          contentExplorer.hide();
-        }
+          if (loaded) {
+            contentExplorer.clearCache();
+            contentExplorer.hide();
+          }
 
-        loadTab(tab, false);
+          loadTab(tab, false);
+        }
       });
       query_params += '{';
       $.each(filters, function (k, filter) {
@@ -209,7 +216,6 @@
           }
         }
         else if (filter.type == 'date' && $('#' + filter.key + '_date').val() != '') {
-          console.log($('#' + filter.key + '_date').val());
 
           var symbol;
           if ($('#' + filter.key).val() == 'On') {
@@ -229,13 +235,13 @@
           }
 
           //val = "{%22gt%22:\"" + sD + "T00:00:00Z" + "\",%22lt%22:\"" + eD + "T00:00:00Z" + "\"}";
-          console.log($('#' + filter.key + '_date').val());
+          
         }
       });
       if (query == '') {
         query = firstFilter + ' IS NOT NULL';
       }
-      console.log(query_params);
+      
       const mdQuery = {
         from: "enterprise_" + eid + "." + template,
         query: query,
@@ -244,7 +250,7 @@
         ancestor_folder_id: boxId,
         fields: fields
       };
-
+      console.log("reloading:"+JSON.stringify(mdQuery));
       // The metadata fields/columns to view - must be valid field names from the metadata template
       loaded = true;
       const defaultView = "metadata";
