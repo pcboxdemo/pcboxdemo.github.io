@@ -1,0 +1,163 @@
+.input-containerEnd, .input-containerStart {
+    display: -ms-flexbox;
+    /* IE10 */
+    display: flex;
+    width: 100%;
+    margin-bottom: 15px;
+    margin-top:3px;
+  }
+
+  .icon {
+    padding: 5px;
+   
+    color: white;
+    min-width: 25px;
+    text-align: center;
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 10px;
+    outline: none;
+  }
+
+  .input-field:focus {
+    border: 2px solid dodgerblue;
+  }
+
+  /* Set a style for the submit button */
+  .ui-datepicker {
+background-color: #fff;
+}
+
+.ui-datepicker-header {
+background-color: #616eff;
+font-size: 13px;
+font-family: Lato, Helvetica Neue, Helvetica, Arial, sans-serif;
+line-height: 20px;
+letter-spacing: .3px;
+}
+
+.ui-datepicker-title {
+color: white;
+}
+
+.ui-widget-content .ui-state-default {
+border: 0px;
+text-align: center;
+background: #fff;
+font-size: 13px;
+font-family: Lato, Helvetica Neue, Helvetica, Arial, sans-serif;
+line-height: 20px;
+letter-spacing: .3px;
+color: #000;
+}
+  .btn {
+    background-color: dodgerblue;
+    color: white;
+    padding: 15px 20px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    opacity: 0.9;
+  }
+
+  .btn:hover {
+    opacity: 1;
+  }
+
+  body {
+    font-style: "Lato,  Helvetica, Arial, sans-serif";
+    background-color: #3A61D5;
+    margin: 3px 3px 3px 3px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  .container1 {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .normal-div {
+
+    height: 100%;
+    position: relative;
+    padding: 2px 2px 2px 2px;
+    float: left;
+    -webkit-transition: all 0.5s ease-in-out;
+    -moz-transition: all 0.5s ease-in-out;
+    transition: all 0.5s ease-in-out;
+  }
+
+  .expanded-div {
+    width: 100%;
+  }
+
+  .compressed-div {
+    width: 10%;
+  }
+
+  #div-1 {
+    width: 10%;
+  }
+
+  #div-2 {
+    width: 90%;
+  }
+
+  a.expansion-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .form-group,
+  #filters {
+    color: white;
+  }
+
+  .center {
+    margin: auto;
+    width: 50%;
+
+    padding: 10px;
+  }
+
+  .bea {
+    font-size: 13px;
+    font-family: Lato, Helvetica Neue, Helvetica, Arial, sans-serif;
+    color: #fff;
+    line-height: 20px;
+    letter-spacing: .3px;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    padding: 3px;
+    border: 0;
+    outline: none;
+  }
+
+  .bea1 {
+    font-size: 13px;
+    font-family: Lato, Helvetica Neue, Helvetica, Arial, sans-serif;
+    color: #000;
+    line-height: 20px;
+    letter-spacing: .3px;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    padding: 3px;
+    border: 0;
+    outline: none;
+  }

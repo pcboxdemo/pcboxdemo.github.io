@@ -10,9 +10,15 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
   <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
   <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.css" />
   <script src="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.js"></script>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="mdq.css">
   <script>
     //var token = 'ZYBeg0yrkCdCobfDansJgrMy7w0dxih2';
     var boxId = "124092627842";
@@ -21,32 +27,40 @@
     var status = "In Progress";
     var token;
     var template;
-    var  filters;
+    var filters;
     var orderBy;
     var orderByDirection;
     var columns;
+    var dateFormat;
     var loaded = false;
-    var firstFilter;
+    var firstFilter = null;
     $(document).ready(function () {
+
+
       $("#loader").show();
       $(".container1").hide();
       var params = new URLSearchParams(window.location.search);
       var code = params.get('auth');
+      var ptoken = params.get('token');
+      var url = params.get('url');
       if (code == null) {
         code = params.get('code');
       }
-      var clientId = params.get('clientId');//"of926g5v0mqi50dpiislr1avju7h3jl8";
-      boxId=params.get('id');
-      if(boxId==null) {
-        boxId='0';
+      if (url == null) {
+        url = "https://box-tokengenerator-v2.herokuapp.com/mdqtoken";
       }
-      var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId ;
+      var clientId = params.get('clientId');//"of926g5v0mqi50dpiislr1avju7h3jl8";
+      boxId = params.get('id');
+      if (boxId == null) {
+        boxId = '0';
+      }
+      var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId + (ptoken != null ? "&token=" + ptoken : "");
 
       $.ajax({
         method: 'get',
         //url:"https://89w694ee39.execute-api.eu-west-2.amazonaws.com/default/box-token-generator-mdq?"+urlParams,
-        url:"https://box-tokengenerator-v2.herokuapp.com/mdqtoken?"+urlParams,
-        //url:"http://localhost:3000/mdqtoken?"+urlParams,
+        //url:"https://box-tokengenerator-v2.herokuapp.com/mdqtoken?"+urlParams,
+        url: url + "?" + urlParams,
         crossDomain: true,
         cache: false,
         success: function (response) {
@@ -55,8 +69,12 @@
           filters = response.filters;//{ 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
           columns = response.columns;//'region,priorityStatus,workflowStatus,owner,contentFormat,responsibleOrganisation';//response.columns;
           eid = response.eid;//'210762180';//response.eid
-          orderBy=response.orderBy;
-          orderByDirection=response.orderByDirection;
+          orderBy = response.orderBy;
+          dateFormat=response.dateFormat;
+          orderByDirection = response.orderByDirection;
+          if(dateFormat==undefined) {
+            dateFormat='yy-mm-dd';
+          }
           loadTab("nav-container", true);
         },
         error: function (err) {
@@ -75,11 +93,22 @@
         loadTab(tab, false);
 
       });
+      $(".datepicker").change(function () {
+
+        if (loaded) {
+          contentExplorer.clearCache();
+          contentExplorer.hide();
+        }
+        loadTab(tab, false);
+
+      });
 
 
     });
     function loadTab(tabName, buildFilters) {
-
+      if (loaded) {
+        $(".form-control").prop("disabled", true);
+      }
       delim = "";
       var col = columns.split(',');
       var query = "";
@@ -94,10 +123,16 @@
       col.forEach(element => fieldsToShow.push({ key: 'metadata.enterprise_' + eid + "." + template + "." + element, canEdit: true }));
       if (buildFilters) {
         $.each(filters, function (index, filter) {
-          firstFilter = filter.key;
+          if (firstFilter == null) {
+            firstFilter = filter.key;
+          }
           $("#filters").append(getHTMLForFilter(filter));
+          if (filter.type == 'date') {
+            $("#" + filter.key).datepicker({ "dateFormat": dateFormat,changeYear: true });
+          }
         });
       }
+      $(".datepicker").datepicker({ dateFormat:dateFormat,changeYear: true});
       $(".filter").change(function () {
         if (loaded) {
           contentExplorer.clearCache();
@@ -106,29 +141,101 @@
         loadTab(tab, false);
 
       });
+      $(".filterD").change(function () {
+
+        $(".datepicker").val("");
+        if ($(this).val() == 'All') {
+          $(".datepicker").hide();
+          $(".input-containerStart").hide();
+          $(".input-containerEnd").hide();
+
+        }
+        else if ($(this).val() == 'Between') {
+          $(".datepickerEnd").show();
+          $(".datepickerStart").show();
+          $(".input-containerStart").show();
+          $(".input-containerEnd").show();
+        }
+        else if ($(this).val() == 'On' || $(this).val() == 'Before' || $(this).val() == 'After') {
+          $(".datepickerEnd").hide();
+          $(".datepickerStart").show();
+          $(".input-containerStart").show();
+          $(".input-containerEnd").hide();
+        }
+
+      });
+      $(".datepicker").change(function () {
+
+        console.log("date changed");
+        if ($(".filterD").val() == 'Between') {
+          var fid = $(this).attr("id");
+          if ($("#" + fid + "_end").val() == '' || $("#" + fid).val() == '') {
+            return;
+          }
+        }
+        if (loaded) {
+          contentExplorer.clearCache();
+          contentExplorer.hide();
+        }
+
+        loadTab(tab, false);
+      });
       query_params += '{';
       $.each(filters, function (k, filter) {
-        
-        if(isNaN($('#' + filter.key).val())) {
+
+        if (filter.type == 'date') {
+          if ($('#' + filter.key + '_date').val() != '') {
+            query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key + '_date').val() + "T00:00:00Z" + '"';
+            if ($(".filterD").val() == 'Between') {
+              query_params += delim + '"' + filter.key + '_end":"' + $('#' + filter.key + '_date_end').val() + "T00:00:00Z" + '"';
+            }
+          }
+        }
+        else if (isNaN($('#' + filter.key).val())) {
           query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
         }
         else {
-          query_params += delim + '"' + filter.key+ '":' + $('#' + filter.key).val() + '';
+          query_params += delim + '"' + filter.key + '":' + $('#' + filter.key).val() + '';
         }
         delim = " , ";
       });
       query_params += '}';
       delim = "";
       $.each(filters, function (k, filter) {
+        if (filter.type != 'date') {
           if ($('#' + filter.key).val() != 'All') {
             query += delim + filter.key + "=:" + filter.key;
             delim = " AND ";
           }
+        }
+        else if (filter.type == 'date' && $('#' + filter.key + '_date').val() != '') {
+          console.log($('#' + filter.key + '_date').val());
+
+          var symbol;
+          if ($('#' + filter.key).val() == 'On') {
+            symbol = "=:";
+            query += delim + filter.key + symbol + filter.key;
+          }
+          else if ($('#' + filter.key).val() == 'Before') {
+            symbol = "<:";
+            query += delim + filter.key + symbol + filter.key;
+          }
+          else if ($('#' + filter.key).val() == 'After') {
+            symbol = ">:";
+            query += delim + filter.key + symbol + filter.key;
+          }
+          else if ($('#' + filter.key).val() == 'Between') {
+            query += delim + "(" + filter.key + ">:" + filter.key + " AND " + filter.key + "<:" + filter.key + "_end)";
+          }
+
+          //val = "{%22gt%22:\"" + sD + "T00:00:00Z" + "\",%22lt%22:\"" + eD + "T00:00:00Z" + "\"}";
+          console.log($('#' + filter.key + '_date').val());
+        }
       });
       if (query == '') {
         query = firstFilter + ' IS NOT NULL';
       }
-
+      console.log(query_params);
       const mdQuery = {
         from: "enterprise_" + eid + "." + template,
         query: query,
@@ -163,120 +270,33 @@
       });
       $("#loader").hide();
       $(".container1").show();
+      $(".form-control").prop("disabled", false);
     }
 
     function getHTMLForFilter(filter) {
-      var disp=filter.displayName;
-      var key=filter.key;
-      var options=filter.values;
-      var html ;
-     
-       html = '<label class="bea" for="' + key + '">' + disp + '</label>' +
-       '<select class="form-control filter bea1"  style="height:35px" id="' + key + '" required>';
-        html += '<option>All</option>';
-        
-        $.each(options,function(k,val) {
-          html += '<option>' + val + '</option>';
-        });
+      var disp = filter.displayName;
+      var key = filter.key;
+      var options = filter.values;
+      var html;
+      var sclass = (filter.type == 'date' ? "filterD" : "filter");
+      html = '<label class="bea" for="' + key + '">' + disp + '</label>' +
+        '<select class="form-control ' + sclass + ' bea1"  style="height:35px" id="' + key + '" required>';
+      html += '<option>All</option>';
+
+      $.each(options, function (k, val) {
+        html += '<option>' + val + '</option>';
+      });
 
       html += '</select>';
+      if (filter.type == 'date') {
+        html += ' <div class="input-containerStart" style="display:none;"><i class="fa fa-calendar icon"></i><input autocomplete="off" class="bea1 input-field form-control datepicker datepickerStart" style="display:none;" type="text" name="' + filter.key + '_date" id="' + filter.key + '_date" ></div>';
+        html += '<div class="input-containerEnd" style="display:none;" > <i class="fa fa-calendar icon"></i><input autocomplete="off" class="bea1 input-field form-control datepicker datepickerEnd"  style="display:none;" type="text" name="' + filter.key + '_date_end" id="' + filter.key + '_date_end" ></div>';
+
+      }
       return html;
     }
   </script>
-  <style>
-    body {
-      font-style: "Lato,  Helvetica, Arial, sans-serif";
-      background-color: #3A61D5;
-      margin:3px 3px 3px 3px;
-    }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    .container1 {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .normal-div {
-
-      height: 100%;
-      position: relative;
-      padding: 2px 2px 2px 2px;
-      float: left;
-      -webkit-transition: all 0.5s ease-in-out;
-      -moz-transition: all 0.5s ease-in-out;
-      transition: all 0.5s ease-in-out;
-    }
-
-    .expanded-div {
-      width: 100%;
-    }
-
-    .compressed-div {
-      width: 10%;
-    }
-
-    #div-1 {
-      width: 10%;
-    }
-
-    #div-2 {
-      width: 90%;
-    }
-
-    a.expansion-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .form-group,
-    #filters {
-      color: white;
-    }
-    .center {
-      margin: auto;
-      width: 50%;
-  
-    padding: 10px;
-  }
-  .bea {
-    font-size: 13px;
-    font-family: Lato,Helvetica Neue,Helvetica,Arial,sans-serif;
-    color: #fff;
-    line-height: 20px;
-    letter-spacing: .3px;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    padding:3px;
-    border: 0;
-    outline: none;
-  }
-  .bea1 {
-    font-size: 13px;
-    font-family: Lato,Helvetica Neue,Helvetica,Arial,sans-serif;
-    color: #000;
-    line-height: 20px;
-    letter-spacing: .3px;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    padding:3px;
-    border: 0;
-    outline: none;
-  }
-  </style>
 </head>
 
 <body>
@@ -295,7 +315,9 @@
     </div>
 
   </div>
-  <div id='loader' class='center'><img src='l.gif'/></div>
+  <div id='loader' class='center'>
+    <img src='l.gif' />
+  </div>
 
 
 
