@@ -239,7 +239,7 @@
         }
       });
       if (query == '') {
-        query = firstFilter + ' IS NOT NULL';
+        query = firstFilter + ' IS NOT NULL OR ' + firstFilter + ' IS NULL';
       }
       
       const mdQuery = {
