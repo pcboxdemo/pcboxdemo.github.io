@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
-  <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+  <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'>
+  <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
   <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.css" />
@@ -72,10 +72,10 @@
           columns = response.columns;//'region,priorityStatus,workflowStatus,owner,contentFormat,responsibleOrganisation';//response.columns;
           eid = response.eid;//'210762180';//response.eid
           orderBy = response.orderBy;
-          dateFormat=response.dateFormat;
+          dateFormat = response.dateFormat;
           orderByDirection = response.orderByDirection;
-          if(dateFormat==undefined) {
-            dateFormat='yy-mm-dd';
+          if (dateFormat == undefined) {
+            dateFormat = 'yy-mm-dd';
           }
           loadTab("nav-container", true);
         },
@@ -130,11 +130,11 @@
           }
           $("#filters").append(getHTMLForFilter(filter));
           if (filter.type == 'date') {
-            $("#" + filter.key).datepicker({ "dateFormat": dateFormat,changeYear: true });
+            $("#" + filter.key).datepicker({ "dateFormat": dateFormat, changeYear: true });
           }
         });
       }
-      $(".datepicker").datepicker({ dateFormat:dateFormat,changeYear: true});
+      $(".datepicker").datepicker({ dateFormat: dateFormat, changeYear: true });
       $(".filter").change(function () {
         if (loaded) {
           contentExplorer.clearCache();
@@ -167,12 +167,12 @@
 
       });
       $(".datepicker").change(function () {
-        if($(this).val()==$(this).attr("oldVal")) {
+        if ($(this).val() == $(this).attr("oldVal")) {
           console.log("Changed but same val");
         }
         else {
           console.log("Changed new val");
-          $(this).attr("oldVal",$(this).val());
+          $(this).attr("oldVal", $(this).val());
           if ($(".filterD").val() == 'Between') {
             var fid = $(this).attr("id");
             if ($("#" + fid + "_end").val() == '' || $("#" + fid).val() == '') {
@@ -235,13 +235,13 @@
           }
 
           //val = "{%22gt%22:\"" + sD + "T00:00:00Z" + "\",%22lt%22:\"" + eD + "T00:00:00Z" + "\"}";
-          
+
         }
       });
       if (query == '') {
         query = firstFilter + ' IS NOT NULL OR ' + firstFilter + ' IS NULL';
       }
-      
+
       const mdQuery = {
         from: "enterprise_" + eid + "." + template,
         query: query,
@@ -250,7 +250,7 @@
         ancestor_folder_id: boxId,
         fields: fields
       };
-      console.log("reloading:"+JSON.stringify(mdQuery));
+      console.log("reloading:" + JSON.stringify(mdQuery));
       // The metadata fields/columns to view - must be valid field names from the metadata template
       loaded = true;
       const defaultView = "metadata";
