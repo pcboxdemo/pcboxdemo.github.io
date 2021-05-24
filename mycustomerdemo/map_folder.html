@@ -135,6 +135,7 @@ function getGenericIconURL(name,type) {
               contentExplorer = new Box.ContentExplorer();
               contentExplorer.show(self.id, sessionStorage.getItem('accessToken'), {
                 container: '.content_' + self.id,
+                logoUrl: 'img/custom/logo-small.png'
               });
             }
             else {
@@ -145,6 +146,9 @@ function getGenericIconURL(name,type) {
               contentPreview = new Box.Preview();
               contentPreview.show(self.id, sessionStorage.getItem('accessToken'), {
                 container: '.content_' + self.id,
+                logoUrl: 'img/custom/logo-small.png',
+                header:'none'
+
               });
             }
           });

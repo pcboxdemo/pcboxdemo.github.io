@@ -1,0 +1,22 @@
+
+#stdToken,#scopedToken {
+  display:none;
+}
+
+.checkboxFile,.checkboxFolder {
+  display:none;
+}
+.folderChooser,.fileChooser {
+  height:600px;
+}
+.custom-control-label {
+  width:150px;
+}
+.btn-success.disabled, .btn-success.disabled.active, .btn-success.disabled.focus, .btn-success.disabled:active, .btn-success.disabled:focus, .btn-success.disabled:hover, .btn-success[disabled], .btn-success[disabled].active, .btn-success[disabled].focus, .btn-success[disabled]:active, .btn-success[disabled]:focus, .btn-success[disabled]:hover, fieldset[disabled] .btn-success, fieldset[disabled] .btn-success.active, fieldset[disabled] .btn-success.focus, fieldset[disabled] .btn-success:active, fieldset[disabled] .btn-success:focus, fieldset[disabled] .btn-success:hover
+{
+    background-color: "#3278cf" !important;
+    border-color: "#3278cf" !important;
+}
+.loader {
+	display:none;
+}

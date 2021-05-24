@@ -1,0 +1,83 @@
+var clientId="bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+
+//Main page
+var redirectAfterLoginPage="/working/main.html";
+
+//Navigation
+var navigation=[
+
+  {
+      "page":"readme.html",
+      "title":"README"
+  },
+  
+  {
+      "page":"folder1.html",
+      "title":"FOLDER",
+      "boxId":"0"
+  },
+  {
+    "page":"tree_local.html",
+    "title":"TREEVIEW",
+    "boxId":"0"
+},
+  {
+      "page":"preview1.html",
+      "title":"PREVIEW",
+      "boxId":"797741954625"
+  },
+
+  {
+    "page":"zipdownload.html",
+    "title":"ZIP DOWNLOADER",
+    "boxId":"0"
+},
+  {
+    "page":"move.html",
+    "title":"MOVE",
+    "boxId":"0",
+    "boxId2":"0",
+  },
+  {
+    "page":"signrequest.html",
+    "title":"SIGN REQ",
+    "boxId":"130954787289",
+    "targetFolderId":"130954426794",
+  },
+  {
+    "page":"signdooku.html",
+    "title":"SIGN DOOKU",
+    "boxId":"130954787289",
+    "targetFolderId":"130954426794",
+  },
+  {
+      "page":"uploader.html",
+      "title":"UPLOADER",
+      "boxId":"0"
+  },
+  
+  {
+      "page":"https://peter-demo.app.box.com/f/fc0a2a975dd7431bb9681e528a69b4b7",
+      "title":"FILE REQUEST UPLOAD"
+  },
+  {
+      "page":"mdq.html",
+      "title":"METADATA VIEW",
+      "boxId":"63843176586",
+      "eid":"47757585",
+      "template":"case",
+      "columns":"name,caseStatus,documentType,region",
+      "filters":"caseStatus,reqion,documentType,name,caseDueDate",
+      "caseid":"A122,A123,A141,A188,B567,C111,D1233,C001,P001,H117",
+      "name":"Arthur Dent,Rick Deckard,Ralph Endymion,Hari Seldon,Salvor Hardin,William Mandella"
+  },
+  {
+      "page":"map_folder.html",
+      "title":"MAP",
+      "boxId":"81642016647",
+      "latitude":51.152899277243236,
+      "longitude":0.8391592693839822,
+      "zoomLevel":10
+    }
+     
+];

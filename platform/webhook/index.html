@@ -1,0 +1,218 @@
+<html>
+
+<head>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/explorer.css"/>
+  <script src="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/explorer.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/picker.css" />
+  <script src="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/picker.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/2.1.1/en-US/preview.css"/>
+  <script src="https://cdn01.boxcdn.net/platform/preview/2.1.1/en-US/preview.js"></script>
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+
+  <link href="//netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <link href="/platform/steps.css" rel="stylesheet">
+  <link href="/platform/webhook/webhook.css" rel="stylesheet">
+  <script src="/platform/common.js"></script>
+  <script src="/platform/webhook/webhook.js"></script>
+
+  <script src="/platform/jquery.steps.min.js"></script>
+
+</head>
+
+<body>
+<div id="errorMessage" style="color:red;display-none;"></div>
+  <div class="container" style="margin-left:-50px;">
+    <div class="stepwizard">
+      <div class="stepwizard-row setup-panel">
+        <div class="stepwizard-step col-xs-3">
+          <a id="userClicked" href="#step-1" type="button" class="btn btn-success btn-circle">1</a>
+          <p><small>Select user</small></p>
+        </div>
+        <div class="stepwizard-step col-xs-3">
+          <a id="folderClicked" href="#step-2" type="button" class="btn btn-default btn-circle chooser" disabled="disabled">2</a>
+          <p><small>Select folder</small></p>
+        </div>
+        <div class="stepwizard-step col-xs-3">
+          <a id="scopesClicked" href="#step-3" type="button" class="btn btn-default btn-circle eventsselect" disabled="disabled">3</a>
+          <p><small>Select event(s)</small></p>
+        </div>
+        <div class="stepwizard-step col-xs-3">
+          <a id="tryClicked" href="#step-4" type="button" class="btn btn-default btn-circle" disabled="disabled">4</a>
+          <p><small>Try it!</small></p>
+        </div>
+
+      </div>
+    </div>
+
+    <form role="form">
+      <div style="margin-left:100px;">
+      <div class="panel panel-primary setup-content" id="step-1">
+        <div class="panel-heading">
+          <h3 class="panel-title">Select Box User</h3>
+        </div>
+        <div id="user" class="panel-body">
+          <form>
+            <div class="select">
+              <span>Select user:<img id="uloader" src="../ajax-loader_t.gif" style="display:none;"/></span>
+              <select id="users" class="formelement"></select>
+            </div>
+            <input type="text" id="apps" style="display:none;">
+
+            <!--<div class="select"><span>Select app:</span> <select id="apps" class="formelement"> <option value=""></option> </select> </div>-->
+          </form>
+          <button class="btn btn-primary nextBtn pull-right" type="button">Next</button>
+        </div>
+      </div>
+
+      <div class="panel panel-primary setup-content" id="step-2">
+        <div class="panel-heading">
+          <h3 class="panel-title">Box folder</h3>
+        </div>
+        <div class="folderChooser"></div>
+<img id="uloader" src="../ajax-loader_t.gif" style="display:none;"/>
+          <button class="btn btn-primary nextBtn pull-right" type="button">Next</button>
+      </div>
+
+      <div class="panel panel-primary setup-content" id="step-3">
+        <div class="panel-heading">
+          <h3 class="panel-title">Events</h3>
+        </div>
+        <div class="panel-body">
+          <div class="custom-control custom-checkbox checkboxFolder" style="white-space:nowrap">
+            <input type="checkbox" class="custom-control-input" id="FILE.UPLOADED">
+            <label class="custom-control-label" for="defaultUnchecked">File Uploaded</label>
+
+            <input type="checkbox" class="custom-control-input" id="FILE.PREVIEWED">
+            <label class="custom-control-label" for="defaultUnchecked">File Previewed</label>
+
+            <input type="checkbox" class="custom-control-input" id="FILE.DOWNLOADED">
+            <label class="custom-control-label" for="defaultUnchecked">File Downloaded</label>
+
+            <input type="checkbox" class="custom-control-input" id="FILE.TRASHED">
+            <label class="custom-control-label" for="defaultUnchecked">File Trashed</label>
+            <input type="checkbox" class="custom-control-input" id="TASK_ASSIGNMENT.CREATED">
+            <label class="custom-control-label" for="defaultUnchecked">Task Assignment Created</label>
+          </div>
+    <div class="custom-control custom-checkbox" style="white-space:nowrap">
+            <input type="checkbox" class="custom-control-input" id="METADATA_INSTANCE.UPDATED">
+            <label class="custom-control-label" for="defaultUnchecked">Metadata Updated</label>
+
+            <input type="checkbox" class="custom-control-input" id="METADATA_INSTANCE.DELETED">
+            <label class="custom-control-label" for="defaultUnchecked">Metadata Deleted</label>
+
+            <input type="checkbox" class="custom-control-input" id="FOLDER.TRASHED">
+            <label class="custom-control-label" for="defaultUnchecked">Folder Trashed</label>
+
+            <input type="checkbox" class="custom-control-input" id="COLLABORATION.CREATED">
+            <label class="custom-control-label" for="defaultUnchecked">Collaboration Created</label>
+
+            <input type="checkbox" class="custom-control-input" id="SHARED_LINK.DELETED">
+            <label class="custom-control-label" for="defaultUnchecked">Shared Link Deleted</label>
+          </div>
+          <div class="custom-control custom-checkbox checkboxFolder" style="white-space:nowrap">
+            <input type="checkbox" class="custom-control-input" id="FILE.DELETED">
+            <label class="custom-control-label" for="defaultUnchecked">File Deleted</label>
+
+            <input type="checkbox" class="custom-control-input" id="FILE.RESTORED">
+            <label class="custom-control-label" for="defaultUnchecked">File Restored</label>
+
+            <input type="checkbox" class="custom-control-input" id="FILE.COPIED">
+            <label class="custom-control-label" for="defaultUnchecked">File Copied</label>
+
+            <input type="checkbox" class="custom-control-input" id="FILE.MOVED">
+            <label class="custom-control-label" for="defaultUnchecked">File Moved</label>
+            <input type="checkbox" class="custom-control-input" id="TASK_ASSIGNMENT.UPDATED">
+            <label class="custom-control-label" for="defaultUnchecked">Task Assignment Updated</label>
+          </div>
+  <div class="custom-control custom-checkbox checkboxFolder" style="white-space:nowrap">
+            <input type="checkbox" class="custom-control-input" id="FOLDER.CREATED">
+            <label class="custom-control-label" for="defaultUnchecked">Folder Created</label>
+
+            <input type="checkbox" class="custom-control-input" id="FOLDER.RENAMED">
+            <label class="custom-control-label" for="defaultUnchecked">Folder Renamed</label>
+
+            <input type="checkbox" class="custom-control-input" id="COLLABORATION.ACCEPTED">
+            <label class="custom-control-label" for="defaultUnchecked">Collaboration Accepted</label>
+
+            <input type="checkbox" class="custom-control-input" id="COLLABORATION.REJECTED">
+            <label class="custom-control-label" for="defaultUnchecked">Collaboration Rejected</label>
+
+            <input type="checkbox" class="custom-control-input" id="SHARED_LINK.CREATED">
+            <label class="custom-control-label" for="defaultUnchecked">Shared Link Created</label>
+          </div>
+          <div class="custom-control custom-checkbox checkboxFolder" style="white-space:nowrap">
+            <input type="checkbox" class="custom-control-input" id="FILE.RENAMED">
+            <label class="custom-control-label" for="defaultUnchecked">File Renamed</label>
+
+            <input type="checkbox" class="custom-control-input" id="COMMENT.CREATED">
+            <label class="custom-control-label" for="defaultUnchecked">Comment Created</label>
+
+            <input type="checkbox" class="custom-control-input" id="COMMENT.DELETED">
+            <label class="custom-control-label" for="defaultUnchecked">Comment Deleted</label>
+
+            <input type="checkbox" class="custom-control-input" id="FOLDER.DOWNLOADED">
+            <label class="custom-control-label" for="defaultUnchecked">Folder Downloaded</label>
+            
+            <input type="checkbox" class="custom-control-input" id="FOLDER.COPIED">
+            <label class="custom-control-label" for="defaultUnchecked">Folder Copied</label>
+          </div>
+        <div class="custom-control custom-checkbox checkboxFolder" style="white-space:nowrap">
+            <input type="checkbox" class="custom-control-input" id="FOLDER.RESTORED">
+            <label class="custom-control-label" for="defaultUnchecked">Folder Restored</label>
+
+            <input type="checkbox" class="custom-control-input" id="FOLDER.DELETED">
+            <label class="custom-control-label" for="defaultUnchecked">Folder Deleted</label>
+
+            <input type="checkbox" class="custom-control-input" id="COLLABORATION.REMOVED">
+            <label class="custom-control-label" for="defaultUnchecked">Collaboration Removed</label>
+
+            <input type="checkbox" class="custom-control-input" id="COLLABORATION.UPDATED">
+            <label class="custom-control-label" for="defaultUnchecked">Collaboration Updated</label>
+
+            <input type="checkbox" class="custom-control-input" id="SHARED_LINK.UPDATED">
+            <label class="custom-control-label" for="defaultUnchecked">Shared Link Updated</label>
+
+          </div>
+
+          <button class="btn btn-primary nextBtn pull-right" type="button">Next</button>
+        </div>
+      </div>
+
+      <div class="panel panel-primary setup-content" id="step-4">
+        <div class="panel-heading">
+          <h3 class="panel-title">Try it!</h3>
+        </div>
+        <div class="panel-body">
+          <div class="row mtm mbl">
+            <div class="col col-md-6">
+              <span id="events">Configured events:</span>
+              <!-- Box Content Explorer -->
+              <div class="tab-pane show active mts" style="border: 1px solid #cdd4de; padding: 10px" role="tabpanel" id="explorer">
+                <div class="explorer-a"><img src="../ajax-loader_t.gif" class="eloader"/></div>
+              </div>
+            </div>
+
+            <div class="col col-md-6">
+              <h4 id="webhookC">Webhook (0)</h4>
+              <!-- Box Content Explorer -->
+              <div class="tab-pane show active mts" style="border: 1px solid #cdd4de; padding: 10px" role="tabpanel" >
+
+                <pre id="webhookPayload"><img src="../ajax-loader_t.gif" class="wloader"/></pre>
+              </div>
+            </div>
+            <button class="btn btn-primary resetBtb pull-right" type="button">Reset</button>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    </form>
+  </div>
+</body>
+
+</html>

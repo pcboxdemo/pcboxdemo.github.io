@@ -1,0 +1,59 @@
+var clientId="bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+
+//Main page
+var redirectAfterLoginPage="/stark/main.html";
+
+//Navigation
+var navigation=[
+
+  {
+      "page":"landing.html",
+      "title":"Home"
+  },
+  
+  {
+      "page":"folder2.html",
+      "title":"FOLDER",
+      "boxId":"123972940976"
+  },
+ 
+  {
+    //Templates - https://peter-demo.box.com/s/6uu9k93otq9f53s8stsm4tusbxai48aq
+    "page":"signrequest.html",
+    "title":"SIGN REQ",
+    "boxId":"130954787289",
+    "targetFolderId":"130954426794",
+  },
+  {
+    "page":"signdooku.html",
+    "title":"SIGN DOOKU",
+    "boxId":"130954787289",
+    "targetFolderId":"130954426794",
+  },
+  {
+    "page":"uploader.html",
+    "title":"Uploader",
+    "boxId":"123972940976"
+  },
+  
+  {
+      "page":"mdq.html",
+      "title":"METADATA VIEW",
+      "boxId":"63843176586",
+      "eid":"47757585",
+      "template":"case",
+      "columns":"name,caseStatus,documentType,region",
+      "filters":"caseStatus,region,documentType,name,caseDueDate",
+      "caseid":"A122,A123,A141,A188,B567,C111,D1233,C001,P001,H117",
+      "name":"Arthur Dent,Rick Deckard,Ralph Endymion,Hari Seldon,Salvor Hardin,William Mandella,Peter Christensen"
+  },
+  {
+      "page":"map_folder.html",
+      "title":"MAP",
+      "boxId":"122372116720",
+      "latitude":51.49914033886053,
+      "longitude":-0.2206261519520103,
+      "zoomLevel":10
+    }
+     
+];

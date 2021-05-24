@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+	 crossorigin="anonymous"></script>
+
+	 <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+	 <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+	<!-- Box preview SDK -->
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.css" />
+	<script src="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.js"></script>
+
+	<script>
+		$(document).ready(function () {
+			const fields =[
+				"metadata.enterprise_210762180.hyperion.hyperionId",
+				"metadata.enterprise_210762180.hyperion.company",
+				"metadata.enterprise_210762180.hyperion.documenttype"
+				
+			];
+			const query ="documenttype = :arg1";
+			const query_params={"arg1":"Claim"};
+			const mdQuery = {
+				from: "enterprise_210762180.hyperion",
+				query: query,
+				limit: 20,
+				query_params: query_params,
+				ancestor_folder_id: '0',
+				fields: fields
+			};
+
+			var contentExplorer = new Box.ContentExplorer();
+			contentExplorer.show('0', 'S4ZCt5daMq3GI09em9NLmE09XPGukc49', {
+				container: '#pcontainer',
+				metadataQuery: mdQuery,
+				fieldsToShow: fields,
+				defaultView: "metadata",
+				contentPreviewProps: {
+					contentSidebarProps: {
+						hasMetadata: true,
+						hasSkills: true,
+						hasProperties: true,
+						hasAccessStats: true,
+						hasActivityFeed: true,
+						defaultView: 'activityFeed'
+					}
+				}
+			});
+		});
+		//});
+	</script>
+</head>
+
+<body>
+
+	<div class="container1">
+		<div class="normal-div" id="div-1">
+		  <div style="margin-top:50px;" id="filters">
+	
+	
+		  </div>
+		</div>
+		<div class="normal-div" id="div-2">
+		  <div id="pcontainer" role="tabpanel" aria-labelledby="nav-progress-tab" style="height:750px;">
+	
+		  </div>
+	
+		</div>
+	
+	  </div>
+</body>
+
+</html>

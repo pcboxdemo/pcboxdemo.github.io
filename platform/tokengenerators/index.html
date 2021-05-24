@@ -1,0 +1,85 @@
+<html>
+
+<head>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/explorer.css"/>
+  <script src="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/explorer.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/picker.css" />
+  <script src="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/picker.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/2.1.1/en-US/preview.css"/>
+  <script src="https://cdn01.boxcdn.net/platform/preview/2.1.1/en-US/preview.js"></script>
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+
+  <link href="//netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <link href="/platform/steps.css" rel="stylesheet">
+  <link href="/platform/webhook/webhook.css" rel="stylesheet">
+  <script src="/platform/common.js"></script>
+  <script src="/platform/tokengenerators/tokengenerator.js"></script>
+
+  <script src="/platform/jquery.steps.min.js"></script>
+
+</head>
+
+<body>
+<div id="errorMessage" style="color:red;display-none;"></div>
+  <div class="container" style="margin-left:-50px;">
+    <div class="stepwizard">
+      <div class="stepwizard-row setup-panel">
+        <div class="stepwizard-step col-xs-3">
+          <a id="userClicked" href="#step-1" type="button" class="btn btn-success btn-circle">1</a>
+          <p><small>Select user</small></p>
+        </div>
+        <div class="stepwizard-step col-xs-3">
+          <a id="folderClicked" href="#step-2" type="button" class="btn btn-default btn-circle chooser" disabled="disabled">2</a>
+          <p><small>Select token type</small></p>
+        </div>
+        <div class="stepwizard-step col-xs-3">
+          <a id="scopesClicked" href="#step-3" type="button" class="btn btn-default btn-circle eventsselect" disabled="disabled">3</a>
+          <p><small>Select event(s)</small></p>
+        </div>
+        <div class="stepwizard-step col-xs-3">
+          <a id="tryClicked" href="#step-4" type="button" class="btn btn-default btn-circle" disabled="disabled">4</a>
+          <p><small>Try it!</small></p>
+        </div>
+
+      </div>
+    </div>
+
+    <form role="form">
+      <div style="margin-left:100px;">
+      <div class="panel panel-primary setup-content" id="step-1">
+        <div class="panel-heading">
+          <h3 class="panel-title">Select Box User</h3>
+        </div>
+        <div id="user" class="panel-body">
+          <form>
+            <div class="select">
+              <span>Select user:<img id="uloader" src="../ajax-loader_t.gif" style="display:none;"/></span>
+              <select id="users" class="formelement"></select>
+            </div>
+            <input type="text" id="apps" style="display:none;">
+
+            <!--<div class="select"><span>Select app:</span> <select id="apps" class="formelement"> <option value=""></option> </select> </div>-->
+          </form>
+          <button class="btn btn-primary nextBtn pull-right" type="button">Next</button>
+        </div>
+      </div>
+
+      
+      <div class="panel panel-primary setup-content" id="step-2">
+        <div class="panel-heading">
+          <h3 class="panel-title">Try it!</h3>
+        </div>
+        <div class="panel-body">
+         <span id="token"></span>
+      </div>
+    </div>
+
+
+    </form>
+  </div>
+</body>
+
+</html>

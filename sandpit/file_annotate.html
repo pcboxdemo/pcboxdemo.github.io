@@ -1,52 +1,85 @@
-{{#> base }}
+<html>
 
-{{#*inline "content-block"}}
+<head>
 
-				<!-- Box Content Explorer -->
-				<div class="tab-pane show active mts" role="tabpanel" id="explorer">
-					<p>access token: {{token}}</p>
-					<div style="height:500px" class="pcontainer"></div>
-				</div>
+	<script src="https://cdn01.boxcdn.net/platform/preview/2.57.0/en-US/preview.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/2.57.0/en-US/preview.css" />
 
-				<script src="https://cdn01.boxcdn.net/platform/preview/1.46.0/en-US/preview.js"></script>
-			  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/1.46.0/en-US/preview.css" />
+</head>
 
-<script>
-  var fileId = '{{id}}';
+<body>
 
-  var accessToken = '{{token}}';
-  //var params = new URLSearchParams(window.location.search);
-//	var fileId = params.get('fileId');
-	//var accessToken = params.get('token');
-	        var preview = new Box.Preview();
-	      	preview.show(fileId, accessToken, {
-	            container: '.pcontainer',
-	            showDownload: false,
-	            showAnnotations:true,
-							viewers: {
-        				Image: {
-            			annotations: {
-                		enabled: true,
-                		enabledTypes: ['point','draw']
-            			}
-        			},
-        				Document: {
-            			annotations: {
-                		enabled: true,
-                		enabledTypes: ['point','highlight','draw','highlight-comment']
-            			}
-        			},
-        				Presentation: {
-            			annotations: {
-                		enabled: true,
-                		enabledTypes: ['highlight-comment','point','draw','highligt']
-            		}
-        			}
-    				}
-	       });
-	    </script>
-</script>
+	<div style="width: 100%;height:1000px; display: table;">
+		<div style="display: table-row">
+			<div class="container1" style="width: 50%; display: table-cell;"> User 1 </div>
+			<div class="container2" style="display: table-cell;"> User 2 </div>
+		</div>
+	</div>
 
-{{/inline}}
 
-{{/base}}
+	<script>
+		//var fileId = '{{id}}';
+
+		//var accessToken = '{{token}}';
+		var params = new URLSearchParams(window.location.search);
+		var fileId = params.get('fileId');
+		var accessToken1 = '1!pL_2RPv8WPhrmpP9t_IKmzDBYOk-rDxxwqDQU6OjDDTm8bsNjC0U-ST2KtTWb65vjJ8RA_zFjJK57z6QLtc_xngFpYiiu5oL0K_ZkV8YXjRTxMJW_Gu6eR1KjuxYQ50rC5u2lia__v_sGtyjb_QfH5iavd85O5tnJqERahmoJu9KtiMMEL9dTgGfzlyVM8EqR-_BAAyAkeBPYnllOSv7yLGEomKpJmdlpYZYNS4d_gOwGz37RNdypniyjtdcfB5s8jdigezv05BFrWBytX1X4psi4dMX0RaAZFV5jX6GgUBwgHpP6r6ePasnvFcDFgQrMQF3-oqimB9V3K3Rg0cLpO-8ZpZd_R0x0BlSIGBjOxMG774jlbdlf53StyrcPJyW7C_dsZtj2D8rUxW9Cd3oO6VVVIX2Enu7soKHOCgFbyizTsj-Djg-9T5RP9DcvP24QhQ_VK3MSh4QJT-MVFVgwoZj2G8A2EtIn9yR7AoK7jf0W8UIXAuvUS0Vp4RTf2g_s00kdvD9g4VeYhK6iW8WzTShjuthJusCT6RJ07UaiaSWpNTf-DBBiPMBY4jX4Q8FmSwFih8627odp2fY8lV_dCxfsaZiurny-x9nX21z2hkjWpyJlT0TG3VDpA..';//params.get('token');
+		var accessToken2 = 'YPXumJWBHLUnUQuULB1hDyF7ddX4nM7I';//params.get('token');
+		var preview1 = new Box.Preview();
+		var preview2 = new Box.Preview();
+		preview1.show(fileId, accessToken1, {
+			container: '.container1',
+			showDownload: true,
+			showAnnotations: true,
+			viewers: {
+				Image: {
+					annotations: {
+						enabled: true,
+						enabledTypes: ['point', 'draw']
+					}
+				},
+				Document: {
+					annotations: {
+						enabled: true,
+						enabledTypes: ['point', 'highlight', 'draw', 'highlight-comment']
+					}
+				},
+				Presentation: {
+					annotations: {
+						enabled: true,
+						enabledTypes: ['highlight-comment', 'point', 'draw', 'highligt']
+					}
+				}
+			}
+		});
+		preview2.show(fileId, accessToken2, {
+			container: '.container2',
+			showDownload: false,
+			showAnnotations: true,
+			viewers: {
+				Image: {
+					annotations: {
+						enabled: true,
+						enabledTypes: ['point', 'draw']
+					}
+				},
+				Document: {
+					annotations: {
+						enabled: true,
+						enabledTypes: ['point', 'highlight', 'draw', 'highlight-comment']
+					}
+				},
+				Presentation: {
+					annotations: {
+						enabled: true,
+						enabledTypes: ['highlight-comment', 'point', 'draw', 'highligt']
+					}
+				}
+			}
+		});
+	</script>
+	</script>
+
+</body>
+
+</html>

@@ -9,13 +9,13 @@
 
 
 	<!-- Box preview SDK -->
-	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/explorer.css"/>
-  <script src="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/explorer.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.css"/>
+  <script src="https://cdn01.boxcdn.net/platform/elements/12.0.0/en-US/explorer.js"></script>
 
 	<script>
 		$(document).ready(function() {
 			var contentExplorer = new Box.ContentExplorer();
-				contentExplorer.show('0', sessionStorage.getItem("token"), {
+				contentExplorer.show('0', 'hTBES8OdN9YdOcsicXz6RgHTiJYgWh8I', {
 						container: '.pcontainer',
 						contentPreviewProps: {
 								contentSidebarProps: {
@@ -25,9 +25,6 @@
 									hasAccessStats: true,
 									hasActivityFeed: true,
 								defaultView:'activityFeed'
-							},
-							contentOpenWithProps: {
-								show: true
 							}
 						}
 				});
@@ -40,7 +37,7 @@
 
 	<div class="tab-pane show active mts" role="tabpanel" id="explorer">
 
-		<div style="height:500px" class="pcontainer"></div>
+		<div style="height:800px" class="pcontainer"></div>
 	</div>
 </body>
 

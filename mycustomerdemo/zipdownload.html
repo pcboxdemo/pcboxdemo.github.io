@@ -37,7 +37,8 @@
                 filePicker.hide();
                  getAccessToken().then(function (result) {
                     folderPicker.show(boxId, result, {
-                    container: '.fileChooser'
+                    container: '.fileChooser',
+                    logo: 'img/custom/logo-small.png'
                  });
                 });
                 addListeners();

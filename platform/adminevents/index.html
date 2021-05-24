@@ -1,0 +1,226 @@
+<html>
+
+<head>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/explorer.css"/>
+  <script src="https://cdn01.boxcdn.net/platform/elements/9.1.0/en-US/explorer.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/picker.css" />
+  <script src="https://cdn01.boxcdn.net/platform/elements/9.1.1/en-US/picker.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/2.1.1/en-US/preview.css"/>
+  <script src="https://cdn01.boxcdn.net/platform/preview/2.1.1/en-US/preview.js"></script>
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+
+  <link href="//netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+  <link href="/platform/adminevents/events.css" rel="stylesheet">
+  <link href="/platform/steps.css" rel="stylesheet">
+
+  <script src="/platform/common.js"></script>
+  <script src="/platform/adminevents/events.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+  <script src="/platform/jquery.steps.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/multi-select/0.9.12/js/jquery.multi-select.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/multi-select/0.9.12/css/multi-select.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-multidatespicker/1.6.6/jquery-ui.multidatespicker.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-multidatespicker/1.6.6/jquery-ui.multidatespicker.min.js" integrity="sha512-mMP7O0G5Vv01th+kpYux7RbD89Mx/iQnIvxcKdctiPyADgJzacfQJ8k2AsB8695AAuR2uPuxk7dawb1eehjcuQ==" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/ag-grid-enterprise/dist/ag-grid-enterprise.min.noStyle.js"></script>
+		<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-grid.css">
+		<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-alpine.css">
+
+<style>
+ .uf {
+    list-style-image: url('Folder-32.png');
+ }
+ .pf {
+    list-style-image: url('pers.png');
+    margin-left:-10px;
+ }
+ .panel-body {
+ 	height:auto !important;
+ 	}
+ .remove {
+ 	cursor:pointer;
+ }
+ </style>
+</head>
+
+<body>
+
+  <div class="container" style="margin-left:-50px;">
+    <div class="stepwizard">
+      <div class="stepwizard-row setup-panel">
+        <div class="stepwizard-step col-xs-3">
+          <a id="userClicked" href="#step-1" type="button" class="btn btn-success btn-circle">1</a>
+          <p><small>Select user</small></p>
+        </div>
+     
+        <div class="stepwizard-step col-xs-3">
+          <a id="tryClicked" href="#step-2" type="button" class="btn btn-default btn-circle tryselect" disabled="disabled">2</a>
+          <p><small>Try it!</small></p>
+        </div>
+
+      </div>
+    </div>
+
+    <form role="form">
+      <div style="margin-left:100px;">
+      <div class="panel panel-primary setup-content" id="step-1">
+        <div class="panel-heading">
+          <h3 class="panel-title">Select Box User</h3>
+        </div>
+        <div id="user" class="panel-body">
+          <form>
+            <div class="select">
+              <span>Select user:<img id="uloader" src="/platform/workbench/dt/ajax-loader_t.gif" style="display:none;"/></span>
+              <select id="users" class="formelement"></select>
+            </div>
+            <input type="text" id="apps" style="display:none;">
+
+            <!--<div class="select"><span>Select app:</span> <select id="apps" class="formelement"> <option value=""></option> </select> </div>-->
+          </form>
+          <button class="btn btn-primary nextBtn pull-right" type="button">Next</button>
+        </div>
+      </div>
+
+     
+     
+
+      <div class="panel panel-primary setup-content" id="step-2">
+        <div class="panel-heading">
+          <h3 class="panel-title">Try it!</h3>
+        </div>
+        <div class="panel-body">
+						<div id="startDate"></div>
+						<div id="endDate"></div>
+			 	<div id="selector" class="flex-item" style="font-size:8px !important;">
+        	<select multiple id="selectEvents">
+		  		<option>ACCESS_GRANTED</option>
+				<option>ACCESS_REVOKED</option>
+				<option>ADD_DEVICE_ASSOCIATION</option>
+				<option>ADD_LOGIN_ACTIVITY_DEVICE</option>
+				<option>ADMIN_LOGIN</option>
+				<option>APPLICATION_CREATED</option>
+				<option>APPLICATION_PUBLIC_KEY_ADDED</option>
+				<option>APPLICATION_PUBLIC_KEY_DELETED</option>
+				<option>CHANGE_ADMIN_ROLE</option>
+				<option>CHANGE_FOLDER_PERMISSION</option>
+				<option>COLLABORATION_ACCEPT</option>
+				<option>COLLABORATION_EXPIRATION</option>
+				<option>COLLABORATION_INVITE</option>
+				<option>COLLABORATION_REMOVE</option>
+				<option>COLLABORATION_ROLE_CHANGE</option>
+				<option>COLLAB_ADD_COLLABORATOR</option>
+				<option>COLLAB_INVITE_COLLABORATOR</option>
+				<option>COLLAB_REMOVE_COLLABORATOR</option>
+				<option>COLLAB_ROLE_CHANGE</option>
+				<option>COMMENT_CREATE</option>
+				<option>COMMENT_DELETE</option>
+				<option>CONTENT_ACCESS</option>
+				<option>CONTENT_WORKFLOW_ABNORMAL_DOWNLOAD_ACTIVITY</option>
+				<option>CONTENT_WORKFLOW_AUTOMATION_ADD</option>
+				<option>CONTENT_WORKFLOW_AUTOMATION_DELETE</option>
+				<option>CONTENT_WORKFLOW_POLICY_ADD</option>
+				<option>CONTENT_WORKFLOW_SHARING_POLICY_VIOLATION</option>
+				<option>CONTENT_WORKFLOW_UPLOAD_POLICY_VIOLATION</option>
+				<option>COPY</option>
+				<option>DATA_RETENTION_CREATE_RETENTION</option>
+				<option>DATA_RETENTION_REMOVE_RETENTION</option>
+				<option>DELETE</option>
+				<option>DELETE_USER</option>
+				<option>DEVICE_TRUST_CHECK_FAILED</option>
+				<option>DOWNLOAD</option>
+				<option>EDIT</option>
+				<option>EDIT_USER</option>
+				<option>EMAIL_ALIAS_CONFIRM</option>
+				<option>EMAIL_ALIAS_REMOVE</option>
+				<option>ENABLE_TWO_FACTOR_AUTH</option>
+				<option>ENTERPRISE_APP_AUTHORIZATION_UPDATE</option>
+				<option>FAILED_LOGIN</option>
+				<option>FILE_MARKED_MALICIOUS</option>
+				<option>FILE_WATERMARKED_DOWNLOAD</option>
+				<option>GROUP_ADD_ITEM</option>
+				<option>GROUP_ADD_USER</option>
+				<option>GROUP_CREATION</option>
+				<option>GROUP_DELETION</option>
+				<option>GROUP_EDITED</option>
+				<option>GROUP_REMOVE_ITEM</option>
+				<option>GROUP_REMOVE_USER</option>
+				<option>ITEM_COPY</option>
+				<option>ITEM_CREATE</option>
+				<option>ITEM_DOWNLOAD</option>
+				<option>ITEM_MAKE_CURRENT_VERSION</option>
+				<option>ITEM_MODIFY</option>
+				<option>ITEM_MOVE</option>
+				<option>ITEM_OPEN</option>
+				<option>ITEM_PREVIEW</option>
+				<option>ITEM_RENAME</option>
+				<option>ITEM_SHARED</option>
+				<option>ITEM_SHARED_CREATE</option>
+				<option>ITEM_SHARED_UNSHARE</option>
+				<option>ITEM_SHARED_UPDATE</option>
+				<option>ITEM_SYNC</option>
+				<option>ITEM_TRASH</option>
+				<option>ITEM_UNDELETE_VIA_TRASH</option>
+				<option>ITEM_UNSYNC</option>
+				<option>ITEM_UPLOAD</option>
+				<option>LEGAL_HOLD_ASSIGNMENT_CREATE</option>
+				<option>LEGAL_HOLD_ASSIGNMENT_DELETE</option>
+				<option>LEGAL_HOLD_POLICY_CREATE</option>
+				<option>LEGAL_HOLD_POLICY_DELETE</option>
+				<option>LEGAL_HOLD_POLICY_UPDATE</option>
+				<option>LOCK</option>
+				<option>LOCK_CREATE</option>
+				<option>LOCK_DESTROY</option>
+				<option>LOGIN</option>
+				<option>MASTER_INVITE_ACCEPT</option>
+				<option>MASTER_INVITE_REJECT</option>
+				<option>METADATA_INSTANCE_CREATE</option>
+				<option>METADATA_INSTANCE_DELETE</option>
+				<option>METADATA_INSTANCE_UPDATE</option>
+				<option>METADATA_TEMPLATE_CREATE</option>
+				<option>METADATA_TEMPLATE_DELETE</option>
+				<option>METADATA_TEMPLATE_UPDATE</option>
+				<option>MOVE</option>
+				<option>NEW_USER</option>
+				<option>PREVIEW</option>
+				<option>REMOVE_DEVICE_ASSOCIATION</option>
+				<option>REMOVE_LOGIN_ACTIVITY_DEVICE</option>
+				<option>RENAME</option>
+				<option>RETENTION_POLICY_ASSIGNMENT_ADD</option>
+				<option>SHARE</option>
+				<option>SHARE_EXPIRATION</option>
+				<option>SHIELD_ALERT</option>
+				<option>STORAGE_EXPIRATION</option>
+				<option>TAG_ITEM_CREATE</option>
+				<option>TASK_ASSIGNMENT_CREATE</option>
+				<option>TASK_ASSIGNMENT_DELETE</option>
+				<option>TASK_ASSIGNMENT_UPDATE</option>
+				<option>TASK_CREATE</option>
+				<option>TASK_UPDATE</option>
+				<option>TERMS_OF_SERVICE_ACCEPT</option>
+				<option>TERMS_OF_SERVICE_REJECT</option>
+				<option>UNDELETE</option>
+				<option>UNLOCK</option>
+				<option>UNSHARE</option>
+				<option>UPDATE_COLLABORATION_EXPIRATION</option>
+				<option>UPDATE_SHARE_EXPIRATION</option>
+				<option>UPLOAD</option>
+				<option>USER_AUTHENTICATE_OAUTH2_ACCESS_TOKEN_CREATE</option>
+				<option>WATERMARK_LABEL_CREATE</option>
+				<option>WATERMARK_LABEL_DELETE</option>
+			</select>
+		
+		</div>
+        	<div class="init" id="events"></div>
+        </div>
+      </div>
+    </div>
+
+
+    </form>
+  </div>
+</body>
+
+</html>
