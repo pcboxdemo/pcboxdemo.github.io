@@ -47,7 +47,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
           },
           success : function(response){
             console.log("Success:" + JSON.stringify(response));
-            accessToken = response.userToken;
+            accessToken = response.token;
             getFileName(accessToken,fileId).then(function(result) {
               loadVersions(result);
             });
