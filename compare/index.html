@@ -32,6 +32,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
           method : 'get',
           //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-node-tokengenerator",
           url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+          
           data: {authCode:params.get('auth'),id:params.get('id'),clientId:params.get('clientId')},
           crossDomain: true,
           timeout:120000,
@@ -46,8 +47,10 @@ License URL: http://creativecommons.org/licenses/by/3.0/
           },
           success : function(response){
             console.log("Success:" + JSON.stringify(response));
-            accessToken = response.token;
-            loadVersions();
+            accessToken = response.userToken;
+            getFileName(accessToken,fileId).then(function(result) {
+              loadVersions(result);
+            });
           }
           ,
           error : function(err){
@@ -57,11 +60,22 @@ License URL: http://creativecommons.org/licenses/by/3.0/
           }
       });
    });
-   function loadVersions() {
-     console.log("loadVersions");
+   async function getFileName(accessToken,fileId) {
+    return $.ajax({
+      url: 'https://api.box.com/2.0/files/' + fileId + '?fields=id,name',
+      headers: {"Authorization":"Bearer " + accessToken},
+      type: 'get',
+      data:{},
+      success: function(response) {
+        return response.name;
+      }
+    });
+   }
+   function loadVersions(name) {
+     console.log("loadVersions:"+JSON.stringify(name));
      var url = "https://api.box.com/2.0/files/" + fileId + "/versions";
 
-     $(".fileChooser").append($('<div/>').addClass('checkbox').html('<label><input ext="' + fileExt +'" type="checkbox" value="' + fileId + '" >terms3.doc <o id="mainVersion"></o></label>'));
+     $(".fileChooser").append($('<div/>').addClass('checkbox').html('<label><input ext="' + fileExt +'" type="checkbox" value="' + fileId + '" >' + name.name + ' <o id="mainVersion"></o></label>'));
 
      $.ajax({
       //url: 'https://box-heroku-token-generator.herokuapp.com/jwttokengenerator?',
