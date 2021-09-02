@@ -1,0 +1,40 @@
+var clientId="bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+
+//Main page
+var redirectAfterLoginPage="/plp/main.html";
+
+//Navigation
+var navigation=[
+
+  {
+      "page":"readme.html",
+      "title":"README"
+  },
+  
+  {
+      "page":"formWithFolder.html",
+      "title":"NEW CONTRACT",
+      "boxId":"144789876683"
+  },
+  {
+    "page":"folder2.html",
+    "title":"ALL CONTRACTS",
+    "boxId":"144789876683"
+},
+{
+  "page":"preview2.html",
+  "title":"SELF ANNOTATE",
+  "boxId":"854670686505"
+},
+{
+  "page":"preview3.html",
+  "title":"VIEW ANNOTATE",
+  "boxId":"854670686505"
+},
+{
+  "page":"compare.html",
+  "title":"COMPARE",
+  "boxId":"854426454311"
+}
+     
+];
