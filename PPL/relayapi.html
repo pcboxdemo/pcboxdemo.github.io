@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Cache-control" content="No-Cache">
+    <title>Box Platform - Template Application</title>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+    <!-- polyfill.io only loads the polyfills your browser needs -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=es6,Intl"></script>
+    <script src="config.json"></script>
+    <script src="js/box.js"></script>
+    <!-- Alternatively, use polyfill hosted on the Box CDN
+    <script src="https://cdn01.boxcdn.net/polyfills/core-js/2.5.3/core.min.js"></script>
+    -->
+
+    <!-- Latest version of the explorer css for your locale -->
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/13.0.0/en-US/uploader.css" />
+</head>
+<script src="https://cdn01.boxcdn.net/platform/elements/13.0.0/en-US/uploader.js"></script>
+<script>
+    //var folderId = '73553726252';
+    var pageData = getPageData();
+    var boxId = pageData.boxId;
+    var contentUploader = new Box.ContentUploader();
+    var ids = [];
+    var timer;
+    var accessToken;
+    $(document).ready(function () {
+
+        getAccessToken().then(function (result) {
+            accessToken=result;
+            contentUploader.show(boxId, result, {
+                container: '.uploader',
+                logoUrl: 'img/custom/logo-small.png'
+
+            });
+        });
+        contentUploader.addListener('complete', function(file) {
+            console.log(contentUploader);
+            console.log("complete:" + JSON.stringify(file));
+            var counter = 0;
+            var target = file.length;
+            console.log(target);
+            file.forEach(function(f) {
+                //call metadata with fil
+                var id = f.id;
+                ids.push({"type":"file","id":id});
+                console.log(f);
+                // $("#msg").append("<li type='file' id='l" + f.id + "' class='list-group-item d-flex justify-content-between align-items-center'><span class='glyphicon glyphicon-file'>&nbsp;</span>" + truncateString(f.name, 20) + "<span  class='badge badge-default badge-pill remove'>x</span></li>");
+            });
+        });   
+     
+
+        $(".relay").click(function (event) {
+            var data = { 
+                "type": "workflow_parameters", 
+                "flow": {
+                "id": "172143584",
+                "type": "flow" 
+                }, 
+                "files":ids,
+                "folder": { 
+                "id": "142633014285", 
+                "type": "folder" 
+                }, 
+                "outcomes": [ ] 
+            };
+            $.ajax({
+                url:  "https://api.box.com/2.0/workflows/111032384/start",
+                    headers: {
+                        "Authorization":"Bearer " + accessToken
+                    },
+                    type: 'post',
+                    data:JSON.stringify(data),
+                    success: function (response) {
+                        console.log(response);
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(JSON.stringify(xhr));
+                        console.log("error:" + xhr.responseText);
+
+                    }
+                });
+        });
+
+    });
+        
+
+</script>
+
+<body>
+    <div class="container" style="height:90vh; width:100vw;">
+        <div class="row">
+            <div class="col-md-5">
+
+                <div class="uploader" style="height:500px;">
+                </div>
+
+            </div>
+            <div class="col-md-3">
+                <div width="100%">Files</div>
+                <ul id="msg" style="height:500px;"></ul>
+
+            </div>
+            <div class="col-md-4">
+                <button type="button" class="btn btn-primary relay">Submit workflow</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
