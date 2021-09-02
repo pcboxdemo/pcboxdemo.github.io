@@ -85,7 +85,7 @@
   var newFolderId;
   $(document).ready(function () {
     $(document).ready(function () {
-      $('.js-example-basic-single').select2();
+      $('.collabchooser').select2();
     });
     $("#loader").hide();
 
@@ -161,34 +161,27 @@
 
     $.ajax(settings).done(function (response) {
       newFolderId = response.id;
-      $.ajax({
-        url: 'https://api.box.com/2.0/collaborations/',
-        type: 'post',
-        contentType: 'application/json',
-        headers:{"Authorization":"Bearer " + accessToken},
-        data: JSON.stringify({ "item":{"id":newFolderId,"type":"folder"},"role":"viewer uploader","accessible_by":{"id":"17056182278","type":"user"},"can_view_path":true }),
-        success: function (data, textStatus, jQxhr) {
-          console.log(data);
-        },
-        error: function (jqXhr, textStatus, errorThrown) {
-          console.log(errorThrown);
-        }
-      });
-      $.ajax({
-        url: 'https://api.box.com/2.0/collaborations/',
-        type: 'post',
-        contentType: 'application/json',
-        headers:{"Authorization":"Bearer " + accessToken},
-        data: JSON.stringify({ "item":{"id":newFolderId,"type":"folder"},"role":"viewer uploader","accessible_by":{"id":"17055964038","type":"user"},"can_view_path":true }),
-        success: function (data, textStatus, jQxhr) {
-          console.log(data);
-        },
-        error: function (jqXhr, textStatus, errorThrown) {
-          console.log(errorThrown);
+      var data = $('.collabchooser').select2('data');
+      data.forEach(function (item) {
+        console.log(item.id);
+        if(item.id!='xx') {
+          $.ajax({
+            url: 'https://api.box.com/2.0/collaborations/',
+            type: 'post',
+            contentType: 'application/json',
+            headers: { "Authorization": "Bearer " + accessToken },
+            data: JSON.stringify({ "item": { "id": newFolderId, "type": "folder" }, "role": "viewer uploader", "accessible_by": { "id": item.id, "type": "user" }, "can_view_path": true }),
+            success: function (data, textStatus, jQxhr) {
+              console.log(data);
+            },
+            error: function (jqXhr, textStatus, errorThrown) {
+              console.log(errorThrown);
+            }
+          });
         }
       });
       $(".btn-primary").trigger("click");
-     
+
 
     });
 
@@ -208,9 +201,9 @@
         Name:
         <input type="text" id="folderName" />
         Underwriters:
-        <select class="js-example-basic-single" name="collab" multiple="multiple">
-          <option value="xx">James the Underwriter</option>
-          <option value="yy">Matt the Underwriter</option>
+        <select class="collabchooser" name="collab" multiple="multiple">
+          <option value="17055964038">James the Underwriter</option>
+          <option value="17056182278">Matt the Underwriter</option>
           <option value="zz">Peter the Underwriter</option>
           <option value="cc">Sam the Underwriter</option>
         </select>
