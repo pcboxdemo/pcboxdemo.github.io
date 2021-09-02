@@ -173,6 +173,9 @@
           contentExplorer.addListener('select', (item) => {
             selectedFolder = item[0].id;
             sessionStorage.setItem('selectedId', selectedFolder);
+            var extension = item[0].name.substr((item[0].name.lastIndexOf('.') + 1));
+            sessionStorage.setItem('selectedExt', extension);
+
             //if video file, show transcode button
             console.log("Showing cops?");
 
@@ -238,7 +241,7 @@
     function changeEvent(ev) {
       console.log(ev);
       if (objType == 'Compare') {
-        document.getElementById('myframe').src = 'compare.html?id=' + sessionStorage.getItem('selectedId');
+        document.getElementById('myframe').src = 'compare.html?id=' + sessionStorage.getItem('selectedId') + '&ext='+sessionStorage.getItem('selectedExt');
         document.getElementById('myModal').style.display = "block";
         contentExplorer.clearCache();
 

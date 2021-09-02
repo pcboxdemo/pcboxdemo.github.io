@@ -23,7 +23,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
 var pageData = getPageData();
     var params = new URLSearchParams(window.location.search);
     var boxId=params.get("id");
-    var fileExt="docx";
+    var fileExt=params.get("ext");
     var accessToken;
     $(document).ready(function () {
 
