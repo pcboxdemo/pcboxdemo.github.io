@@ -69,10 +69,9 @@
             }
             var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId + (ptoken != null ? "&token=" + ptoken : "");
               $.ajax({
-                  method: 'post',
+                  method: 'get',
                   url: url + "?" + urlParams, crossDomain: true,
                   cache: false,
-                  data: pageData,
                   success: function (response) {
                       token = response.token;
                       template = response.template;//'abb'
