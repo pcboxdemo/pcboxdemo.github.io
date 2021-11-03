@@ -68,8 +68,6 @@
               boxId = '0';
             }
             var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId + (ptoken != null ? "&token=" + ptoken : "");
-
-              var urlParams = "id=" + boxId + "&token=" + result;
               $.ajax({
                   method: 'post',
                   url: url + "?" + urlParams, crossDomain: true,
@@ -408,8 +406,8 @@
 
     </div>
     <div id='loader' class='center'>
-        <img src='./img/custom/ajax-loader_transparent.gif' />
-    </div>
+      <img src='l.gif' />
+    </div
 
 
 
