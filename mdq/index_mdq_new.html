@@ -31,300 +31,401 @@
     var orderBy;
     var orderByDirection;
     var columns;
+    var allColumns;
+    var chooseColumns=false;
     var dateFormat;
     var loaded = false;
     var firstFilter = null;
     var oldStartDate;
     var oldEndDate;
-    $(document).ready(function () {
-
-
-      $("#loader").show();
-      $(".container1").hide();
-      var params = new URLSearchParams(window.location.search);
-      var code = params.get('auth');
-      var ptoken = params.get('token');
-      var url = params.get('url');
-      if (code == null) {
-        code = params.get('code');
-      }
-      if (url == null) {
-        url = "https://box-tokengenerator-v2.herokuapp.com/mdqtoken";
-      }
-      var clientId = params.get('clientId');//"of926g5v0mqi50dpiislr1avju7h3jl8";
-      boxId = params.get('id');
-      if (boxId == null) {
-        boxId = '0';
-      }
-      var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId + (ptoken != null ? "&token=" + ptoken : "");
-
-      $.ajax({
-        method: 'get',
-        //url:"https://89w694ee39.execute-api.eu-west-2.amazonaws.com/default/box-token-generator-mdq?"+urlParams,
-        //url:"https://box-tokengenerator-v2.herokuapp.com/mdqtoken?"+urlParams,
-        url: url + "?" + urlParams,
-        crossDomain: true,
-        cache: false,
-        success: function (response) {
-          token = response.token;
-          template = response.template;//'abb'
-          filters = response.filters;//{ 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
-          columns = response.columns;//'region,priorityStatus,workflowStatus,owner,contentFormat,responsibleOrganisation';//response.columns;
-          eid = response.eid;//'210762180';//response.eid
-          orderBy = response.orderBy;
-          dateFormat = response.dateFormat;
-          orderByDirection = response.orderByDirection;
-          if (dateFormat == undefined) {
-            dateFormat = 'yy-mm-dd';
-          }
-          loadTab("nav-container", true);
-        },
-        error: function (err) {
-          console.log(JSON.stringify(err));
-          console.log("error:" + err.message);
-          $("#loader").text(err.responseText);
-
-        }
-      });
-
-      $(".filter").change(function () {
-        if (loaded) {
-          contentExplorer.clearCache();
-          contentExplorer.hide();
-        }
-        loadTab(tab, false);
-
-      });
-      $(".datepicker").change(function () {
-
-        if (loaded) {
-          contentExplorer.clearCache();
-          contentExplorer.hide();
-        }
-        loadTab(tab, false);
-
-      });
-
-
-    });
-    function loadTab(tabName, buildFilters) {
-      if (loaded) {
-        $(".form-control").prop("disabled", true);
-      }
-      delim = "";
-      var col = columns.split(',');
-      var query = "";
-
-      var query_params = "";
-      var index;
-      var delim = "";
-
-      var fields = [];
-      var fieldsToShow = [];
-      col.forEach(element => fields.push('metadata.enterprise_' + eid + "." + template + "." + element));
-      col.forEach(element => fieldsToShow.push({ key: 'metadata.enterprise_' + eid + "." + template + "." + element, canEdit: true }));
-      if (buildFilters) {
-        $.each(filters, function (index, filter) {
-          if (firstFilter == null) {
-            firstFilter = filter.key;
-          }
-          $("#filters").append(getHTMLForFilter(filter));
-          if (filter.type == 'date') {
-            $("#" + filter.key).datepicker({ "dateFormat": dateFormat, changeYear: true });
+        var currentColumns = [];
+        $(document).keydown(function(event) { 
+          if (event.keyCode == 27) { 
+            $('#columns').hide();
           }
         });
-      }
-      $(".datepicker").datepicker({ dateFormat: dateFormat, changeYear: true });
-      $(".filter").change(function () {
-        if (loaded) {
-          contentExplorer.clearCache();
-          contentExplorer.hide();
-        }
-        loadTab(tab, false);
-
-      });
-      $(".filterD").change(function () {
-
-        $(".datepicker").val("");
-        if ($(this).val() == 'All') {
-          $(".datepicker").hide();
-          $(".input-containerStart").hide();
-          $(".input-containerEnd").hide();
-
-        }
-        else if ($(this).val() == 'Between') {
-          $(".datepickerEnd").show();
-          $(".datepickerStart").show();
-          $(".input-containerStart").show();
-          $(".input-containerEnd").show();
-        }
-        else if ($(this).val() == 'On' || $(this).val() == 'Before' || $(this).val() == 'After') {
-          $(".datepickerEnd").hide();
-          $(".datepickerStart").show();
-          $(".input-containerStart").show();
-          $(".input-containerEnd").hide();
-        }
-
-      });
-      $(".datepicker").change(function () {
-        if ($(this).val() == $(this).attr("oldVal")) {
-          console.log("Changed but same val");
-        }
-        else {
-          console.log("Changed new val");
-          $(this).attr("oldVal", $(this).val());
-          if ($(".filterD").val() == 'Between') {
-            var fid = $(this).attr("id");
-            if ($("#" + fid + "_end").val() == '' || $("#" + fid).val() == '') {
-              return;
+        $(document).ready(function () {
+            var modal = document.getElementById("columns");
+            var saveBtn = document.getElementsByClassName("close")[0];
+            $("#cols").click(function () {
+                modal.style.display = "block";
+            });
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
             }
-          }
-          if (loaded) {
-            contentExplorer.clearCache();
-            contentExplorer.hide();
-          }
-
-          loadTab(tab, false);
-        }
-      });
-      query_params += '{';
-      $.each(filters, function (k, filter) {
-
-        if (filter.type == 'date') {
-          if ($('#' + filter.key + '_date').val() != '') {
-            query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key + '_date').val() + "T00:00:00Z" + '"';
-            if ($(".filterD").val() == 'Between') {
-              query_params += delim + '"' + filter.key + '_end":"' + $('#' + filter.key + '_date_end').val() + "T00:00:00Z" + '"';
+            $("#loader").show();
+            $(".container1").hide();
+            var params = new URLSearchParams(window.location.search);
+            var code = params.get('auth');
+            var ptoken = params.get('token');
+            var url = params.get('url');
+            if (code == null) {
+              code = params.get('code');
             }
-          }
+            if (url == null) {
+              url = "https://box-tokengenerator-v2.herokuapp.com/mdqtoken";
+            }
+            var clientId = params.get('clientId');//"of926g5v0mqi50dpiislr1avju7h3jl8";
+            boxId = params.get('id');
+            if (boxId == null) {
+              boxId = '0';
+            }
+            var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId + (ptoken != null ? "&token=" + ptoken : "");
+              $.ajax({
+                  method: 'get',
+                  url: url + "?" + urlParams, crossDomain: true,
+                  cache: false,
+                  success: function (response) {
+                      token = response.token;
+                      template = response.template;//'abb'
+                      filters = response.filters;//{ 'region': { 'Region': 'North America' }, 'priorityStatus': { 'Priority Status': 'High,Medium,Low' }, 'workflowStatus': { 'Workflow Status': 'In Progress,Coordinate,Review,Published' } };//response.filters;
+                      columns = response.columns;//'region,priorityStatus,workflowStatus,owner,contentFormat,responsibleOrganisation';//response.columns;
+                      allColumns = response.allColumns;
+                      eid = response.eid;//'210762180';//response.eid
+                      orderBy = response.orderBy;
+                      orderByDirection = response.orderByDirection;
+                      chooseColumns=response.chooseColumns;
+                      chooseColumns?$("#cols").show():$("#cols").hide();
+                      if (dateFormat == undefined) {
+                          dateFormat = 'yy-mm-dd';
+                      }
+                      loadTab("nav-container", true);
+                  },
+                  error: function (err) {
+                      console.log(JSON.stringify(err));
+                      console.log("error:" + err.message);
+                      $("#loader").text(err.responseText);
+
+                  }
+              });
+
+              $(".filter").change(function () {
+                  if (loaded) {
+                      contentExplorer.clearCache();
+                      contentExplorer.hide();
+                  }
+                  loadTab(tab, false);
+
+              });
+              $(".datepicker").change(function () {
+
+                  if (loaded) {
+                      contentExplorer.clearCache();
+                      contentExplorer.hide();
+                  }
+                  loadTab(tab, false);
+
+              });
+
+              $("#saveBtn").click(function () {
+                  //calculate columns
+                  //compare with current columns
+                  //if diff, load tab
+                  modal.style.display = "none";
+                  delim = "";
+                  prevCurCol = currentColumns;
+                  currentColumns = "";
+                  $(".list-group-item").each(function (index) {
+                      var id = $(this).attr("id")
+
+                      if ($("#col_" + id).is(":checked")) {
+                          console.log(id + " is checked");
+                          currentColumns += delim + id;
+                          delim = ",";
+                      }
+                      else {
+                          console.log(id + " is not checked");
+                      }
+                  });
+                  console.log(currentColumns + "+" + prevCurCol);
+                  currentColumns = currentColumns.split(",");
+                  if (prevCurCol != currentColumns) {
+                      if (loaded) {
+                          contentExplorer.clearCache();
+                          contentExplorer.hide();
+                      }
+                      loadTab(tab, false);
+                  }
+                  else {
+                      console.log("no change seen");
+                  }
+              });
+
+
+          });
+      
+        function loadTab(tabName, buildFilters) {
+
+            delim = "";
+            var col = columns.split(',');
+            var query = "";
+
+            var query_params = "";
+            var index;
+            var delim = "";
+
+            var fields = [];
+            var fieldsToShow = [];
+            $("#sortable").empty()
+
+            if (buildFilters) {
+                currentColumns=col;
+                $.each(filters, function (index, filter) {
+                    if (firstFilter == null) {
+                        firstFilter = filter.key;
+                    }
+                    $("#filters").append(getHTMLForFilter(filter));
+                    if (filter.type == 'date') {
+                        $("#" + filter.key).datepicker({ "dateFormat": dateFormat, changeYear: true });
+                    }
+                });
+            }
+            $(".datepicker").datepicker({ dateFormat: dateFormat, changeYear: true });
+            $(".filter").change(function () {
+                if (loaded) {
+                    contentExplorer.clearCache();
+                    contentExplorer.hide();
+                }
+                loadTab(tab, false);
+
+            });
+            $(".filterD").change(function () {
+
+                $(".datepicker").val("");
+                if ($(this).val() == 'All') {
+                    $(".datepicker").hide();
+                    $(".input-containerStart").hide();
+                    $(".input-containerEnd").hide();
+
+                }
+                else if ($(this).val() == 'Between') {
+                    $(".datepickerEnd").show();
+                    $(".datepickerStart").show();
+                    $(".input-containerStart").show();
+                    $(".input-containerEnd").show();
+                }
+                else if ($(this).val() == 'On' || $(this).val() == 'Before' || $(this).val() == 'After') {
+                    $(".datepickerEnd").hide();
+                    $(".datepickerStart").show();
+                    $(".input-containerStart").show();
+                    $(".input-containerEnd").hide();
+                }
+
+            });
+            $(".datepicker").change(function () {
+                if ($(this).val() == $(this).attr("oldVal")) {
+                    console.log("Changed but same val");
+                }
+                else {
+                    console.log("Changed new val");
+                    $(this).attr("oldVal", $(this).val());
+                    if ($(".filterD").val() == 'Between') {
+                        var fid = $(this).attr("id");
+                        if ($("#" + fid + "_end").val() == '' || $("#" + fid).val() == '') {
+                            return;
+                        }
+                    }
+                    if (loaded) {
+                        contentExplorer.clearCache();
+                        contentExplorer.hide();
+                    }
+
+                    loadTab(tab, false);
+                }
+            });
+            allColumns.forEach(element => $("#sortable").append('<li class="list-group-item" id="' + element.key + '"><input id="col_' + element.key + '" type="checkbox"' + isChecked(element.key, currentColumns) + ' class="cb"> ' + element.displayName + '</li>'));
+            currentColumns.forEach(element => fields.push('metadata.enterprise_' + eid + "." + template + "." + element));
+            currentColumns.forEach(element => fieldsToShow.push({ key: 'metadata.enterprise_' + eid + "." + template + "." + element, canEdit: true }));
+
+            query_params += '{';
+            $.each(filters, function (k, filter) {
+
+                if (filter.type == 'date') {
+                    if ($('#' + filter.key + '_date').val() != '') {
+                        query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key + '_date').val() + "T00:00:00Z" + '"';
+                        if ($(".filterD").val() == 'Between') {
+                            query_params += delim + '"' + filter.key + '_end":"' + $('#' + filter.key + '_date_end').val() + "T00:00:00Z" + '"';
+                        }
+                    }
+                }
+                else if (isNaN($('#' + filter.key).val())) {
+                    query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
+                }
+                else {
+                    query_params += delim + '"' + filter.key + '":' + $('#' + filter.key).val() + '';
+                }
+                delim = " , ";
+            });
+            query_params += '}';
+            delim = "";
+            $.each(filters, function (k, filter) {
+                if (filter.type != 'date') {
+                    if ($('#' + filter.key).val() != 'All') {
+                        query += delim + filter.key + "=:" + filter.key;
+                        delim = " AND ";
+                    }
+                }
+                else if (filter.type == 'date' && $('#' + filter.key + '_date').val() != '') {
+
+                    var symbol;
+                    if ($('#' + filter.key).val() == 'On') {
+                        symbol = "=:";
+                        query += delim + filter.key + symbol + filter.key;
+                    }
+                    else if ($('#' + filter.key).val() == 'Before') {
+                        symbol = "<:";
+                        query += delim + filter.key + symbol + filter.key;
+                    }
+                    else if ($('#' + filter.key).val() == 'After') {
+                        symbol = ">:";
+                        query += delim + filter.key + symbol + filter.key;
+                    }
+                    else if ($('#' + filter.key).val() == 'Between') {
+                        query += delim + "(" + filter.key + ">:" + filter.key + " AND " + filter.key + "<:" + filter.key + "_end)";
+                    }
+
+                    //val = "{%22gt%22:\"" + sD + "T00:00:00Z" + "\",%22lt%22:\"" + eD + "T00:00:00Z" + "\"}";
+
+                }
+            });
+            if (query == '') {
+                query = firstFilter + ' IS NOT NULL';
+            }
+
+            const mdQuery = {
+                from: "enterprise_" + eid + "." + template,
+                query: query,
+                limit: 20,
+                query_params: JSON.parse(query_params),
+                ancestor_folder_id: boxId,
+                fields: fields
+            };
+
+            // The metadata fields/columns to view - must be valid field names from the metadata template
+            loaded = true;
+            const defaultView = "metadata";
+            contentExplorer.show(boxId, token, {
+                container: '#nav-container',
+                metadataQuery: mdQuery,
+                fieldsToShow: fieldsToShow,
+                defaultView: defaultView,
+                contentPreviewProps: {
+                    contentSidebarProps: {
+                        detailsSidebarProps: {
+                            hasNotices: true,
+                            hasProperties: true,
+                            hasAccessStats: true,
+                            hasVersions: true
+                        },
+                        hasActivityFeed: true,
+                        hasSkills: true,
+                        hasMetadata: true
+                    }
+                }
+
+            });
+            $("#loader").hide();
+            $(".container1").show();
+            $("#sortable").sortable();
         }
-        else if (isNaN($('#' + filter.key).val())) {
-          query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
-        }
-        else {
-          query_params += delim + '"' + filter.key + '":' + $('#' + filter.key).val() + '';
-        }
-        delim = " , ";
-      });
-      query_params += '}';
-      delim = "";
-      $.each(filters, function (k, filter) {
-        if (filter.type != 'date') {
-          if ($('#' + filter.key).val() != 'All') {
-            query += delim + filter.key + "=:" + filter.key;
-            delim = " AND ";
-          }
-        }
-        else if (filter.type == 'date' && $('#' + filter.key + '_date').val() != '') {
-
-          var symbol;
-          if ($('#' + filter.key).val() == 'On') {
-            symbol = "=:";
-            query += delim + filter.key + symbol + filter.key;
-          }
-          else if ($('#' + filter.key).val() == 'Before') {
-            symbol = "<:";
-            query += delim + filter.key + symbol + filter.key;
-          }
-          else if ($('#' + filter.key).val() == 'After') {
-            symbol = ">:";
-            query += delim + filter.key + symbol + filter.key;
-          }
-          else if ($('#' + filter.key).val() == 'Between') {
-            query += delim + "(" + filter.key + ">:" + filter.key + " AND " + filter.key + "<:" + filter.key + "_end)";
-          }
-
-          //val = "{%22gt%22:\"" + sD + "T00:00:00Z" + "\",%22lt%22:\"" + eD + "T00:00:00Z" + "\"}";
+        function isChecked(key, currentColumns) {
+            for (col in currentColumns) {
+                if (currentColumns[col] == key) {
+                    return "checked";
+                }
+            }
+            return "";
 
         }
-      });
-      if (query == '') {
-        query = firstFilter + ' IS NOT NULL OR ' + firstFilter + ' IS NULL';
-      }
+        function getHTMLForFilter(filter) {
+            var disp = filter.displayName;
+            var key = filter.key;
+            var options = filter.values;
+            var html;
+            var sclass = (filter.type == 'date' ? "filterD" : "filter");
+            html = '<label class="bea" for="' + key + '">' + disp + '</label>' +
+                '<select class="form-control ' + sclass + ' bea1"  style="height:35px" id="' + key + '" required>';
+            html += '<option>All</option>';
 
-      const mdQuery = {
-        from: "enterprise_" + eid + "." + template,
-        query: query,
-        limit: 20,
-        query_params: JSON.parse(query_params),
-        ancestor_folder_id: boxId,
-        fields: fields
-      };
-      console.log("reloading:" + JSON.stringify(mdQuery));
-      // The metadata fields/columns to view - must be valid field names from the metadata template
-      loaded = true;
-      const defaultView = "metadata";
-      contentExplorer.show(boxId, token, {
-        container: '#nav-container',
-        metadataQuery: mdQuery,
-        fieldsToShow: fieldsToShow,
-        defaultView: defaultView,
-        contentPreviewProps: {
-          contentSidebarProps: {
-            detailsSidebarProps: {
-              hasNotices: true,
-              hasProperties: true,
-              hasAccessStats: true,
-              hasVersions: true
-            },
-            hasActivityFeed: true,
-            hasSkills: true,
-            hasMetadata: true
-          }
+            $.each(options, function (k, val) {
+                html += '<option>' + val + '</option>';
+            });
+
+            html += '</select>';
+            if (filter.type == 'date') {
+                html += ' <div class="input-containerStart" style="display:none;"><i class="far fa-calendar-alt icon"></i><input autocomplete="off" class="bea1 input-field form-control datepicker datepickerStart" style="display:none;" type="text" name="' + filter.key + '_date" id="' + filter.key + '_date" ></div>';
+                html += '<div class="input-containerEnd" style="display:none;" > <i class="far fa-calendar-alt icon"></i><input autocomplete="off" class="bea1 input-field form-control datepicker datepickerEnd"  style="display:none;" type="text" name="' + filter.key + '_date_end" id="' + filter.key + '_date_end" ></div>';
+
+            }
+            return html;
+        }
+        function setModalMaxHeight(element) {
+            this.$element = $(element);
+            this.$content = this.$element.find('.modal-content');
+            var borderWidth = this.$content.outerHeight() - this.$content.innerHeight();
+            var dialogMargin = $(window).width() < 768 ? 20 : 60;
+            var contentHeight = $(window).height() - (dialogMargin + borderWidth);
+            var headerHeight = this.$element.find('.modal-header').outerHeight() || 0;
+            var footerHeight = this.$element.find('.modal-footer').outerHeight() || 0;
+            var maxHeight = contentHeight - (headerHeight + footerHeight);
+
+            this.$content.css({
+                'overflow': 'hidden'
+            });
+
+            this.$element
+                .find('.modal-body').css({
+                    'max-height': maxHeight,
+                    'overflow-y': 'auto'
+                });
         }
 
-      });
-      $("#loader").hide();
-      $(".container1").show();
-      $(".form-control").prop("disabled", false);
-    }
 
-    function getHTMLForFilter(filter) {
-      var disp = filter.displayName;
-      var key = filter.key;
-      var options = filter.values;
-      var html;
-      var sclass = (filter.type == 'date' ? "filterD" : "filter");
-      html = '<label class="bea" for="' + key + '">' + disp + '</label>' +
-        '<select class="form-control ' + sclass + ' bea1"  style="height:35px" id="' + key + '" required>';
-      html += '<option>All</option>';
 
-      $.each(options, function (k, val) {
-        html += '<option>' + val + '</option>';
-      });
 
-      html += '</select>';
-      if (filter.type == 'date') {
-        html += ' <div class="input-containerStart" style="display:none;"><i class="fa fa-calendar icon"></i><input autocomplete="off" class="bea1 input-field form-control datepicker datepickerStart" style="display:none;" type="text" name="' + filter.key + '_date" id="' + filter.key + '_date" ></div>';
-        html += '<div class="input-containerEnd" style="display:none;" > <i class="fa fa-calendar icon"></i><input autocomplete="off" class="bea1 input-field form-control datepicker datepickerEnd"  style="display:none;" type="text" name="' + filter.key + '_date_end" id="' + filter.key + '_date_end" ></div>';
-
-      }
-      return html;
-    }
-  </script>
+    </script>
 
 </head>
 
 <body>
-  <div class="container1">
-    <div class="normal-div" id="div-1">
-      <div style="margin-top:50px;" id="filters">
+    <div class="container1">
+        <div class="normal-div" id="div-1">
+            <div style="margin-top:20px;" id="filters">
 
 
-      </div>
+            </div>
+            <div>
+                <button id="cols" class="btn btn-primary">
+                    Columns
+                </button>
+
+            </div>
+        </div>
+        <div class="normal-div" id="div-2">
+            <div id="nav-container" role="tabpanel" aria-labelledby="nav-progress-tab" style="height:750px;">
+
+            </div>
+
+        </div>
+
     </div>
-    <div class="normal-div" id="div-2">
-      <div id="nav-container" role="tabpanel" aria-labelledby="nav-progress-tab" style="height:750px;">
-
-      </div>
-
+    <div id='loader' class='center'>
+      <img src='l.gif' />
     </div>
 
-  </div>
-  <div id='loader' class='center'>
-    <img src='l.gif' />
-  </div>
 
 
+    <div id="columns" class="mdqmodal">
+
+        <!-- Modal content -->
+        <div class="mdqmodal-content">
+
+            <ul id="sortable"></ul>
+            <button class="btn btn-primary" id="saveBtn" value="save" name="Save">Save</button>
+        </div>
+
+    </div>
 
 </html>
