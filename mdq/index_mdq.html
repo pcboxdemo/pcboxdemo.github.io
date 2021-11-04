@@ -32,6 +32,7 @@
     var orderByDirection;
     var columns;
     var allColumns;
+    var chooseColumns=false;
     var dateFormat;
     var loaded = false;
     var firstFilter = null;
@@ -85,6 +86,8 @@
                       eid = response.eid;//'210762180';//response.eid
                       orderBy = response.orderBy;
                       orderByDirection = response.orderByDirection;
+                      chooseColumns=response.chooseColumns;
+                      chooseColumns?$("#cols").show():$("#cols").hide();
                       if (dateFormat == undefined) {
                           dateFormat = 'yy-mm-dd';
                       }
