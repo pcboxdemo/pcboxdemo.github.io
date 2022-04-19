@@ -23,7 +23,7 @@
         var token = JSON.stringify(config.headers.Authorization);
         console.log(token);
         getAccessToken().then(function(result) {
-          //activeToken=result;
+          activeToken=result;
           contentExplorer.component.api.options.token=result;
 
           //console.log(activeToken);
