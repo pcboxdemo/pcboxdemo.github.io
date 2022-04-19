@@ -11,7 +11,7 @@ var navigation=[
     },
     
     {
-        "page":"folder1.html",
+        "page":"folder1_t.html",
         "title":"My Personal Documents",
         "boxId":"122313101714"
     },
