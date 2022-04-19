@@ -7,7 +7,7 @@ async function getAccessToken() {
   console.log("ttl:" + (ttl - now) / 1000);
   var timeLeft = (ttl - now) / 1000;
   //Update token if less than 4 mins left
-  if (timeLeft < 240 && timeLeft > 10) {
+  if (timeLeft < 24000 && timeLeft > 10) {
     console.log("calling normally as we still have time");
     getToken(sessionStorage.getItem("key"), writeUpdate, 'get async');
   }

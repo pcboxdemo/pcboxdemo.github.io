@@ -12,24 +12,49 @@
   <script src="config.json"></script>
   <script src="js/box.js"></script>
   <!-- Latest version of the explorer css for your locale -->
-  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/11.0.0/en-US/explorer.css" />
-  <script src="https://cdn01.boxcdn.net/platform/elements/11.0.0/en-US/explorer.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/14.0.0/en-US/explorer.css" />
+  <script src="https://cdn01.boxcdn.net/platform/elements/14.0.0/en-US/explorer.js"></script>
   <script>
       var pageData = getPageData();
       var boxId=pageData.boxId;
       var contentExplorer = new Box.ContentExplorer();
-   
+      var activeToken = null;
+      var testRequestInterceptor = (config /* https://github.com/axios/axios#response-config */) => {
+        var token = JSON.stringify(config.headers.Authorization);
+        console.log(token);
+        getAccessToken().then(function(result) {
+          //activeToken=result;
+          contentExplorer.component.api.options.token=result;
+
+          //console.log(activeToken);
+        })
+        //config.headers.Authorization = "Bearer " + activeToken;
+        return config;
+
+          
+        
+      };
+      var testResponseInterceptor = (config /* https://github.com/axios/axios#response-config */) => {
+          //console.log(JSON.stringify(config));
+          //var newConfig = config.replace(/api.box.com/g, "api1.box.com");
+  
+          return config;
+      };
       $(document).ready(function() {
 
         getAccessToken().then(function(result) {
+              activeToken = result;
               contentExplorer.show(boxId, result, {
               container: '.container',
               logoUrl: 'img/custom/logo-small.png',
               canDownload: true,
               canDelete: true,
               canRename: true,
-              canShare: false
+              canShare: false,
+              requestInterceptor: testRequestInterceptor,
+					    responseIncerceptor: testResponseInterceptor
           });
+          
         });
       });
      
