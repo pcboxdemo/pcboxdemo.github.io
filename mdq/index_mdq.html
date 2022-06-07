@@ -173,12 +173,14 @@
             if (buildFilters) {
                 currentColumns=col;
                 $.each(filters, function (index, filter) {
-                    if (firstFilter == null) {
-                        firstFilter = filter.key;
-                    }
-                    $("#filters").append(getHTMLForFilter(filter));
-                    if (filter.type == 'date') {
-                        $("#" + filter.key).datepicker({ "dateFormat": dateFormat, changeYear: true });
+                    if(filter!=null) {
+                        if (firstFilter == null) {
+                            firstFilter = filter.key;
+                        }
+                        $("#filters").append(getHTMLForFilter(filter));
+                        if (filter.type == 'date') {
+                            $("#" + filter.key).datepicker({ "dateFormat": dateFormat, changeYear: true });
+                        }
                     }
                 });
             }
