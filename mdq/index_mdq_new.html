@@ -250,12 +250,13 @@
                         }
                     }
                 }
-                else if (isNaN($('#' + filter.key).val())) {
+                else if ($('#' + filter.key).val()!='' && !isNaN($('#' + filter.key).val())) {
+                    query_params += delim + '"' + filter.key + '":' + $('#' + filter.key).val() + '';
+                }
+                else  {
                     query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
                 }
-                else {
-                    query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
-                }
+
                 delim = " , ";
             });
             query_params += '}';
