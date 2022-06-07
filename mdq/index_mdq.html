@@ -243,54 +243,57 @@
 
             query_params += '{';
             $.each(filters, function (k, filter) {
-
-                if (filter.type == 'date') {
-                    if ($('#' + filter.key + '_date').val() != '') {
-                        query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key + '_date').val() + "T00:00:00Z" + '"';
-                        if ($(".filterD").val() == 'Between') {
-                            query_params += delim + '"' + filter.key + '_end":"' + $('#' + filter.key + '_date_end').val() + "T00:00:00Z" + '"';
+                if(filter!=null) {
+                    if (filter.type == 'date') {
+                        if ($('#' + filter.key + '_date').val() != '') {
+                            query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key + '_date').val() + "T00:00:00Z" + '"';
+                            if ($(".filterD").val() == 'Between') {
+                                query_params += delim + '"' + filter.key + '_end":"' + $('#' + filter.key + '_date_end').val() + "T00:00:00Z" + '"';
+                            }
                         }
                     }
-                }
-                else if ($('#' + filter.key).val()!='' && !isNaN($('#' + filter.key).val())) {
-                    query_params += delim + '"' + filter.key + '":' + $('#' + filter.key).val() + '';
-                }
-                else  {
-                    query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
-                }
+                    else if ($('#' + filter.key).val()!='' && !isNaN($('#' + filter.key).val())) {
+                        query_params += delim + '"' + filter.key + '":' + $('#' + filter.key).val() + '';
+                    }
+                    else  {
+                        query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
+                    }
 
-                delim = " , ";
+                    delim = " , ";
+                }
             });
             query_params += '}';
             delim = "";
             $.each(filters, function (k, filter) {
-                if (filter.type != 'date') {
-                    if ($('#' + filter.key).val() != 'All' && $('#' + filter.key).val() != '') {
-                        query += delim + filter.key + "=:" + filter.key;
-                        delim = " AND ";
+                if(filter!=null) {
+                    if (filter.type != 'date') {
+                        if ($('#' + filter.key).val() != 'All' && $('#' + filter.key).val() != '') {
+                            query += delim + filter.key + "=:" + filter.key;
+                            delim = " AND ";
+                        }
                     }
-                }
-                else if (filter.type == 'date' && $('#' + filter.key + '_date').val() != '') {
+                    else if (filter.type == 'date' && $('#' + filter.key + '_date').val() != '') {
 
-                    var symbol;
-                    if ($('#' + filter.key).val() == 'On') {
-                        symbol = "=:";
-                        query += delim + filter.key + symbol + filter.key;
-                    }
-                    else if ($('#' + filter.key).val() == 'Before') {
-                        symbol = "<:";
-                        query += delim + filter.key + symbol + filter.key;
-                    }
-                    else if ($('#' + filter.key).val() == 'After') {
-                        symbol = ">:";
-                        query += delim + filter.key + symbol + filter.key;
-                    }
-                    else if ($('#' + filter.key).val() == 'Between') {
-                        query += delim + "(" + filter.key + ">:" + filter.key + " AND " + filter.key + "<:" + filter.key + "_end)";
-                    }
+                        var symbol;
+                        if ($('#' + filter.key).val() == 'On') {
+                            symbol = "=:";
+                            query += delim + filter.key + symbol + filter.key;
+                        }
+                        else if ($('#' + filter.key).val() == 'Before') {
+                            symbol = "<:";
+                            query += delim + filter.key + symbol + filter.key;
+                        }
+                        else if ($('#' + filter.key).val() == 'After') {
+                            symbol = ">:";
+                            query += delim + filter.key + symbol + filter.key;
+                        }
+                        else if ($('#' + filter.key).val() == 'Between') {
+                            query += delim + "(" + filter.key + ">:" + filter.key + " AND " + filter.key + "<:" + filter.key + "_end)";
+                        }
 
-                    //val = "{%22gt%22:\"" + sD + "T00:00:00Z" + "\",%22lt%22:\"" + eD + "T00:00:00Z" + "\"}";
+                        //val = "{%22gt%22:\"" + sD + "T00:00:00Z" + "\",%22lt%22:\"" + eD + "T00:00:00Z" + "\"}";
 
+                    }
                 }
             });
             if (query == '') {
