@@ -254,7 +254,7 @@
                     query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
                 }
                 else {
-                    query_params += delim + '"' + filter.key + '":' + $('#' + filter.key).val() + '';
+                    query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
                 }
                 delim = " , ";
             });
@@ -262,7 +262,7 @@
             delim = "";
             $.each(filters, function (k, filter) {
                 if (filter.type != 'date') {
-                    if ($('#' + filter.key).val() != 'All') {
+                    if ($('#' + filter.key).val() != 'All' && $('#' + filter.key).val() != '') {
                         query += delim + filter.key + "=:" + filter.key;
                         delim = " AND ";
                     }
