@@ -345,15 +345,19 @@
             var options = filter.values;
             var html;
             var sclass = (filter.type == 'date' ? "filterD" : "filter");
-            html = '<label class="bea" for="' + key + '">' + disp + '</label>' +
-                '<select class="form-control ' + sclass + ' bea1"  style="height:35px" id="' + key + '" required>';
-            html += '<option>All</option>';
-
-            $.each(options, function (k, val) {
-                html += '<option>' + val + '</option>';
-            });
-
-            html += '</select>';
+            html = '<label class="bea" for="' + key + '">' + disp + '</label>';
+            console.log(options.length);
+            if(options.length==0) {
+                html+='<input type="text" class="form-control ' + sclass + ' bea1"  style="height:35px" id="' + key + '" required>';
+            }
+            else {
+                html+='<select class="form-control ' + sclass + ' bea1"  style="height:35px" id="' + key + '" required>';
+                html += '<option>All</option>';
+                $.each(options, function (k, val) {
+                    html += '<option>' + val + '</option>';
+                });
+                html += '</select>';
+            }
             if (filter.type == 'date') {
                 html += ' <div class="input-containerStart" style="display:none;"><i class="far fa-calendar-alt icon"></i><input autocomplete="off" class="bea1 input-field form-control datepicker datepickerStart" style="display:none;" type="text" name="' + filter.key + '_date" id="' + filter.key + '_date" ></div>';
                 html += '<div class="input-containerEnd" style="display:none;" > <i class="far fa-calendar-alt icon"></i><input autocomplete="off" class="bea1 input-field form-control datepicker datepickerEnd"  style="display:none;" type="text" name="' + filter.key + '_date_end" id="' + filter.key + '_date_end" ></div>';
