@@ -293,7 +293,7 @@
             if (query == '') {
                 query = firstFilter + ' IS NOT NULL';
             }
-
+            console.log("Q:" + query_params);
             const mdQuery = {
                 from: "enterprise_" + eid + "." + template,
                 query: query,
