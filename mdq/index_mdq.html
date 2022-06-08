@@ -233,14 +233,13 @@
                         contentExplorer.clearCache();
                         contentExplorer.hide();
                     }
-
                     loadTab(tab, false);
                 }
             });
             allColumns.forEach(element => $("#sortable").append('<li class="list-group-item" id="' + element.key + '"><input id="col_' + element.key + '" type="checkbox"' + isChecked(element.key, currentColumns) + ' class="cb"> ' + element.displayName + '</li>'));
             currentColumns.forEach(element => fields.push('metadata.enterprise_' + eid + "." + template + "." + element));
             currentColumns.forEach(element => fieldsToShow.push({ key: 'metadata.enterprise_' + eid + "." + template + "." + element, canEdit: true }));
-
+            
             query_params += '{';
             $.each(filters, function (k, filter) {
                 if(filter!=null) {
@@ -252,11 +251,11 @@
                             }
                         }
                     }
-                    else if ($('#' + filter.key).val()!='' && !isNaN($('#' + filter.key).val())) {
-                        query_params += delim + '"' + filter.key + '":' + $('#' + filter.key).val() + '';
+                    else if ($('#' + filter.key).val()!='' && filter.type=='string') {
+                        query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
                     }
                     else  {
-                        query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
+                        query_params += delim + '"' + filter.key + '":' + $('#' + filter.key).val() + '';
                     }
 
                     delim = " , ";
