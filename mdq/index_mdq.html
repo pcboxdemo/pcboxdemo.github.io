@@ -254,7 +254,7 @@
                     else if ($('#' + filter.key).val()!='' && filter.type=='string') {
                         query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
                     }
-                    else if($('#' + filter.key).val()!='' && filter.type=='number') {
+                    else if($('#' + filter.key).val()!='' && filter.type=='float') {
                         query_params += delim + '"' + filter.key + '":' + $('#' + filter.key).val() + '';
                     }
 
