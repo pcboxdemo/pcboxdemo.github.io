@@ -28,7 +28,7 @@
                 $("#loader").show();
                 $.ajax({
                     method: 'get',
-                    url: 'https://pcsignrequesttest.herokuapp.com/getsignurl?token=' +accessToken +'&userName=' +userName + '&name=' + userName + '&documentId=' + id + '&folderId='+fid+'&email='+userEmail,
+                    url: 'https://pcsignrequesttest.herokuapp.com/getsignurl?token=' +accessToken +'&userName=' +userName + '&name=' + userName + '&documentId=' + id + '&folderId='+folderId+'&email='+userEmail,
                     //url: 'http://localhost:3000/getsignurl?token=' +accessToken +'&userName=' +sessionStorage.getItem("userName") + '&name=' + data.name + '&documentId=' + data.id + '&folderId='+pageData.targetFolderId+'&email='+sessionStorage.getItem("userLogin"),
                     dataType: 'json',
                     crossDomain: true,
