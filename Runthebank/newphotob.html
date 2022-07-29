@@ -148,7 +148,7 @@
                 url: "https://box-java-sandpit.herokuapp.com/camupload",
                 data: {
                    imgBase64: data,
-                   folderId:folderId
+                   folderId:sessionStorage.getItem("mainFolderId")
                 }
               }).done(function(msg) {
                 console.log("saved");
