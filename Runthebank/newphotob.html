@@ -27,6 +27,7 @@
         var canvas = null;
         var photo = null;
         var startbutton = null;
+
         // ****************************************************************
         // Start capturing video
         function startup() {
@@ -96,11 +97,11 @@
                 }
             }, false);
             // Add click event to #startbutton
-            startbutton.addEventListener('click', function (event) {
+			document.getElementById('startbutton').addEventListener('click', function (event) {
                 event.preventDefault();
                 takePicture(); // Take a picture
             }, false);
-            nextbutton.addEventListener('click', function (event) {
+			document.getElementById('nextButton').addEventListener('click', function (event) {
                 event.preventDefault();
                 savePicture(); // Save a picture
             }, false);
@@ -221,7 +222,7 @@
 										<canvas id="canvas" width=480 height=320></canvas>
 										  <p>Your Picture</p>
 										<!--<img src="/Runthebank/images/john.jpg" height="600" width="600" alt="">-->
-										<button class="btn btn-yellow" id="nextbutton"><i class="far fa-grin fa-lg" aria-hidden="true"></i>      Next    </button>
+										<button id="nextButton" class="btn rolbBtn btn btn-primary marginDownMobile" type="button"> <i class="far fa-grin fa-lg" aria-hidden="true"></i>      Next    </button>
 										<img id="img" src="/Runthebank/placeholder-face.jpeg" style="display:none;"/>
 									  </div>
 								</div>
