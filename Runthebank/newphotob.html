@@ -1,0 +1,113 @@
+<script>
+	$(document).ready(function () {
+		$('#modalpreview').modal('hide');
+		var contentUploader = new Box.ContentUploader();
+		contentUploader.show(sessionStorage.getItem("mainFolderId"), sessionStorage.getItem("accessToken"), {
+			container: '.pcontainer'
+		});
+		
+		contentUploader.addListener('complete', function (response) {
+			$.each(response, function (k, data) {
+			});
+			$("#mainstuff").load("newfiles.html?d="+Math.random());
+
+		});
+
+	});
+	
+</script>
+<style>
+	.checkbox-container,
+	.radio-container {
+		margin: 0 0 20px 3px !important;
+
+	}
+</style>
+
+<body>
+
+	<!-- breadcrumb -->
+	<div class="breadcrumb-w3pvt" style="padding:20px;">
+		<div class="container">
+			<ul class="nav nav-tabs">
+				<li class="active"><a data-toggle="tab" href="#home">Upload photo</a></li>
+				<li><a data-toggle="tab" href="#menu1">Take Photo</a></li>
+			</ul>
+		</div>
+	</div>
+	<!-- //breadcrumb -->
+
+	<!-- advantages and details -->
+	<section class="advantages pt-5">
+		<div class="container pb-lg-5">
+			<div class="row advantages_grids">
+				<div class="col-lg-10 mt-lg-0 mt-4">
+					<form class="border border-light p-5">
+						<div class="container-fluid">
+							<div class="tab-content">
+								<div id="home" class="tab-pane fade in active">
+									<div id="u1" class="custom-file1" style="height:265px;width:800px;">
+
+
+										<label class="custom-file-label1"></label>
+										<div style="height:265px;width:800px;" class="pcontainer"></div>
+
+									</div>
+
+								</div>
+								<div id="menu1" class="tab-pane fade">
+									<p class="mb-sm-4">Thanks for entering your contact details, now we need to see that smile.  Use the camera tool to capture a picture.</p>
+									<p class="mb-sm-4">If you don't like the picture you can retake it.  If the camera is not enabled on you device, you can upload one you have already taken.</p>
+									<p class="mb-sm-4">Click next when done.</p>
+										<div class="row advantages_grids" tyle="display:none;" id="photorow">
+											<div class="col-lg-6 mt-lg-0 mt-4" s>
+								
+								
+										  <div class="camera">
+										<video width="480" height="320" id="video-still">Video stream not available.</video>
+										<p>Camera</p>
+										<!--<img src="/Runthebank/images/jeetu.jpg" height="600" width="600" alt="">-->
+										   <ul>
+											<button id="signbutton" class="btn rolbBtn btn btn-primary marginDownMobile" type="submit" name="submit">
+											<i class="fas fa-camera fa-lg  " aria-hidden="true"></i>      Take photo</button>
+										 </ul>
+										 </div>
+									  </div>
+									  <div class="col-lg-6 mt-lg-0 mt-4">
+										<canvas id="canvas" width=480 height=320></canvas>
+										  <p>Your Picture</p>
+										<!--<img src="/Runthebank/images/john.jpg" height="600" width="600" alt="">-->
+										<button class="btn btn-yellow" id="nextbutton"><i class="far fa-grin fa-lg" aria-hidden="true"></i>      Next    </button>
+										<img id="img" src="/Runthebank/placeholder-face.jpeg" style="display:none;"/>
+									  </div>
+								</div>
+
+							</div>
+
+
+						</div>
+
+
+
+					</form>
+
+
+
+				</div>
+
+			</div>
+	</section>
+	<div class="modal fade bd-example-modal-lg" style="display:none;" id="modalpreview" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content" >
+		
+			<div class="modal-body" >
+			  <div class="previewcontainer" style="width:400px;height:600px;"></div>
+			</div>
+			<div class="modal-footer">
+			  <button type="button" class="btn btn-primary"  data-dismiss="modal" onclick="next();">Use This</button>
+			  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			</div>
+		  </div>
+		</div>
+	  </div>

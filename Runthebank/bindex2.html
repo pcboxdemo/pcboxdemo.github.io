@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+	<html>
+	<head>
+		<title>Welcome to Barclays One</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Cache-Control" content="no-cache">
+		<meta http-equiv="Expires" content="-1">
+
+		<!-- Disable Chrome Frame in IE10 -->
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=IE9"/>
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+		<link rel="stylesheet" type="text/css" href="csslogin/bcss.css" />
+        <style>
+
+            .info-icon {
+                position: relative;
+                display: inline-block;
+                width: 18px;
+                height: 18px;
+                border: 2px solid #00395d;
+                border-radius: 50%;
+                color: #00395d;
+                font-size: 13px;
+                padding-left: 5px;
+                line-height: 16px;
+                box-sizing: border-box;
+                font-weight: bold;
+            }
+
+            .cross-icon {
+                position: relative;
+                width: 18px;
+                height: 18px;
+                cursor: pointer;
+            }
+
+            .cross-icon:before {
+                content: " ";
+                width: 2px;
+                height: 18px;
+                position: absolute;
+                border-bottom-color: transparent;
+                top: 0;
+                left: 8px;
+                background-color: #0074A6;
+                transform: rotate(45deg);
+            }
+
+            .cross-icon:hover:before {
+                background-color: #00395d;
+            }
+
+            .cross-icon:after {
+                content: " ";
+                width: 2px;
+                height: 18px;
+                position: absolute;
+                border-bottom-color: transparent;
+                top: 0;
+                left: 8px;
+                background-color: #0074A6;
+                transform: rotate(-45deg);
+            }
+
+            .cross-icon:hover:after {
+                background-color: #00395d;
+            }
+
+            .cookie-container {
+                font-family: "Expert-Sans-Light", verdana, sans-serif;
+                display: flex;
+                flex-wrap: nowrap;
+                padding: 2em;
+                border: 2px solid #bfebfb;
+                background: #e5f1f6;
+                border-radius: 0.3125em;
+                margin-bottom: 20px;
+            }
+
+            .cookie-title {
+                font-size: 18px;
+                line-height: 1.1428;
+                letter-spacing: 0;
+                color: #00395c;
+                font-weight: normal;
+                padding-bottom: 0;
+                display: block;
+                margin: 0 0 10px 0;
+            }
+
+            .cookie-body {
+                margin: 0;
+                color: #333;
+                font-size: 13px;
+            }
+
+			.info-icon-remember-name {
+				position: relative;
+				display: inline-block;
+				width: 17px;
+				height: 17px;
+				border: 1px solid #007EB6;
+				border-radius: 50%;
+				color: #007EB6;
+				font-size: 13px;
+				padding-left: 5px;
+				font-style: italic;
+				line-height: 16px;
+				box-sizing: border-box;
+				font-weight: bold;
+                cursor: pointer;
+			}
+
+			.privacy-popover {
+                position: absolute;
+                top: 30px;
+                padding: 10px;
+                background: white;
+                border: 1px solid #007EB6;
+                z-index: 1;
+                left: -177px;
+                font-weight: normal;
+                width: 235px;
+                font-size: 11px;
+                box-sizing: border-box;
+                color: #666;
+                display: none;
+                cursor: auto;
+			}
+
+			.privacy-popover:before {
+				position: absolute;
+				content: " ";
+				width: 0;
+				height: 0;
+				right: 41px;
+				top: -16px;
+				/* margin-left: -14px; */
+				background: transparent;
+				border: 8px solid transparent;
+				border-bottom-color: #007EB6;
+			}
+
+			.privacy-popover:after {
+				position: absolute;
+				content: " ";
+				width: 0;
+				height: 0;
+				right: 42px;
+				top: -14px;
+				/* margin-left: -12px; */
+				background: transparent;
+				border: 7px solid transparent;
+				border-bottom-color: white;
+			}
+
+        </style>
+	
+
+
+	</head>
+
+	<body id="pageTop">
+	<img class="background" src="imageslogin/bwlBackground.jpeg">
+	<!-- Header -->
+	<header>
+		<div class="container cf">
+			<h1 class="logo">Barclays</h1>
+		</div>
+	</header>
+	<!-- Header end -->
+	
+
+	<!-- Username/password wrong warning -->
+	<section class="help-message container cf" id="user-pass-wrong">
+		<a href="#" onclick="helpview('empty-view');" class="close-button">Close</a>
+
+		<h3>Sorry, your username or password is wrong.</h3>
+
+		<p>Possible reasons why:</p>
+
+		<ol>
+			<li>Have you mistyped your username or password? Please try again.</li>
+			<li>Does your computer have &lsquo;Auto Complete&rsquo;? This stores usernames and passwords so you don&rsquo;t have to retype them but sometimes it can get them wrong. Please delete any existing usernames or passwords and retype them. </li>
+			<li>Did you cut and paste your temporary password? Sometimes this adds an extra character. Please retype your temporary password. </li>
+			<li>Do you have the &lsquo;Caps Lock&rsquo; button turned on? Your password is case sensitive. So please switch &lsquo;Caps Lock&rsquo; off and retype your username and password. </li>
+		</ol>
+
+		<a href="#" class="problems-logging-in" onclick="helpview('problems-logging-in');">Are you having problems logging in?</a>
+	</section>
+
+	<!-- 'Time Out' warning -->
+	<section class="help-message container cf" id="time-out">
+		<a href="#" onclick="helpview('empty-view');" class="close-button">Close</a>
+
+		<h3>We've logged you out for your security</h3>
+
+		<p>We automatically log you out if you don&#39;t use our site for 20 minutes. Please log in again.</p>
+
+	</section>
+
+
+
+	<!-- 'Change Password Max Tries' warning -->
+	<section class="help-message container cf" id="chng-pwd-max-tries">
+		<a href="#" onclick="helpview('empty-view');" class="close-button">Close</a>
+
+		<h3>We've logged you out for your security.</h3>
+
+		<p>Please log in again.</p>
+
+	</section>
+
+
+
+	<!-- System 'Read Only' warning -->
+	<section class="help-message container cf" id="system-read-only">
+		<a href="#" onclick="helpview('empty-view');" class="close-button">Close</a>
+
+		<h3>Sorry, you can't currently do this</h3>
+
+		<p>This is because we're performing essential maintenance. Please try again later.</p>
+
+	</section>
+
+
+	<!-- 'WOB Affiliate' warning -->
+	<section class="help-message container cf" id="wob-affiliate">
+		<a href="#" onclick="helpview('empty-view');" class="close-button">Close</a>
+
+		<h3><b>Sorry, you need to log in via Wealth Online Banking</b></h3>
+
+		<p>Please go to <a href="http://www.barclayswealth.com/individual/">Wealth Online Banking</a> – and log in using your membership number and passcode.</p><br/><br/>
+		<p>If you have any problems, please call us on +44 (0)20 7574 3001. (Lines are open twenty-four hours a day, seven days a week.)</p>
+
+	</section>
+
+
+
+
+	<!-- 'Generic Error Display' warning -->
+	<!-- 		<section class="help-message container cf" id="error-display"> -->
+	<!-- 			<a href="#" onclick="helpview('empty-view');" class="close-button">Close</a> -->
+
+		
+
+		
+		
+
+	<!-- 		</section> -->
+
+
+	<!-- Problems logging in warning -->
+	<section class="help-message container cf" id="problems-logging-in">
+		<a href="#" onclick="helpview('empty-view');" class="close-button">Close</a>
+		<h3>Need help logging in?</h3>
+
+		<ul>
+			<li><strong>Forgotten your username?</strong><br>
+				Please call your usual Barclays contact.</li>
+			<li><strong>Forgotten your password?</strong><br>
+				<a href="#" onclick="forgotPwd();">Reset your password now</a>. Still having difficulties? Please call your usual Barclays contact.</li>
+			<li><strong>Problems logging in?</strong><br>
+				If you&rsquo;re using your correct username and password and still can&rsquo;t log in, Please call your usual Barclays contact.</li>
+			<li><strong>Do you have a membership number?</strong><br>
+				If you have a membership number, not username, please log in to <a href='https://bank.barclays.co.uk/olb/authlogin/loginAppContainer.do?mbrtyp=pbc#/identification'>Online Banking</a>.</li>
+			<li><strong>Would you like to register?</strong><br>
+				To access Barclays One, please contact your usual Barclays contact.</li>
+			<li><strong>Unsure which username is yours?</strong><br>
+				Please log in using the link: <a href="#"  onclick="navigateLoginPages('loginNoUser')">Username not listed?</a> For the future, it may help you to delete your unwanted usernames.</li>
+
+		</ul>
+	</section>
+
+	<!-- Stay safe online warning -->
+	<section class="help-message container cf" id="stay-safe-online">
+		<a href="#" onclick="helpview('empty-view');" class="close-button">Close</a>
+		<h3>Staying safe online</h3>
+		<p>Your security is our priority. But we also need your help to keep you safe, so please:</p>
+		<ul>
+			<li>Memorise your username and password &ndash; and keep them secret.</li>
+			<li>Don&rsquo;t store your username on a shared computer.</li>
+			<li>Never save any of your security details in your browser since this may allow others to access your account.</li>
+			<li>Don&rsquo;t reply to emails that ask for confidential information. We only ask for your password when you log in. </li>
+			<li>Never follow links to sites claiming to be Barclays One.</li>
+			<li>Be vigilant. When you&rsquo;re logging in, are there unexpected errors, delays or you can&rsquo;t log in? If in doubt, please call your usual Barclays contact.</li>
+		</ul>
+	</section>
+
+	<section class="help-message" id="empty-view">&nbsp;</section>
+
+    <!-- privacy policy banner section -->
+    <section id="cookie-policy-banner" style="display: none;">
+        <div class="container cf cookie-container">
+            <div class="info-icon">i</div>
+            <div style="width: 100%; padding: 0 1.5em;">
+                <p class="cookie-title">Cookie</p>
+                <p class="cookie-body">
+                    In common with most websites, Barclays uses cookies on this site to provide a more robust and
+                    functional browsing experience. Please visit our
+                    <a href="#privacyIntro" onclick="legalview('privacyIntro');">Privacy
+                        and Cookies Policy</a> page for more information.
+                </p>
+            </div>
+            <div>
+                <div class="cross-icon" onclick="cookieBannerClose()"></div>
+            </div>
+        </div>
+    </section>
+
+	<!-- Main login section -->
+	<section class="bwl-content container cf" id="main-page">
+		<article>
+			<header>
+				
+					
+					
+						<h3>Welcome to Barclays One</h3>
+					
+				
+				
+					
+					
+						
+							
+							
+								<p class="instruction">Please type your username and password</p>
+							
+						
+					
+				
+			</header>
+
+			<!-- Display 'user-pass-wrong'section, if the username and password does not match after clicking 'Log in'
+             button on login page -->
+			
+
+			
+
+			
+			
+			
+
+			<form id="bwlLoginForm" action="/UAB/S/bwl_logon" method="POST">
+				<input id="action" name="action" type="hidden" value=""/>
+				<input id="ct_orig_uri" name="ct_orig_uri" type="hidden" value="/"/>
+				<label for="username">Username</label>
+				<span class="username-span"></span>
+				
+					
+					
+					
+						<input type="text" id="username" name="username" placeholder="Username" maxlength="34" autofocus autocomplete="off">
+						<span id="usernameCheckRequiredMsg" class="username-omitted" >
+								Please type your username.
+							</span>
+						<!-- 							<input type="text" id="username" name="username" placeholder="Username" autofocus required> -->
+						<!-- 							<span class="username-omitted">Please type your username</span> -->
+					
+				
+				<hr class="seperator">
+				<label for="password">Password</label>
+				<span class="password-span"></span>
+				<input type="password" id="password" name="password" maxlength="34" placeholder="Password" >
+				<span id="passwordCheckRequiredMsg" class="password-omitted" >
+								Please type your password.
+					</span>
+				<span class="password-omitted">Please type your password</span>
+				<div class="block log-in">
+					<p class="warning"></p>
+					<input type="submit" value="Log in" class="cta" onclick="validateAll();return false;">
+					<!-- 						<div class="bwl-login-button" style="display: inline-block;">							 -->
+					<!-- 										<div class="bwl-button-blue" onclick="validateAll();"> -->
+					<!-- 											<div class="buttons" > -->
+					<!-- 												<div class="left" ></div> -->
+					<!-- 												<div class="center" > -->
+						
+					<!-- 												</div> -->
+					<!-- 											<div class="right" style="display: inline-block;"></div> -->
+					<!-- 											</div> -->
+					<!-- 										</div>								 -->
+					<!-- 						</div> -->
+				</div>
+
+				
+					
+
+						<div class="block username">
+							<input id="rememberUsername" name="rememberUsername" name="rememberUsername" type="checkbox" value="true"/><input type="hidden" name="_rememberUsername" value="on"/>
+							<label for="rememberUsername">Remember my username</label>
+							<!--<input type="checkbox" id="remember-username" name="remember-username">
+                            <label for="remember-username">Remember my username</label>-->
+							<div class="info-icon-remember-name" id="remember-username-info"><span>i</span>
+								<div class="privacy-popover" id="privacy-popover">By ticking this box, you agree to us placing the functionality cookie to remember your username on your PC or device.
+									<a href="#privacyIntro" onclick="legalview('privacyIntro');">See our Privacy Policy and Cookies Policy.</a>
+								</div>
+							</div>
+						</div>
+
+					
+
+					
+
+				
+			</form>
+			
+				<aside>
+					<ul class="support-menu">
+						<li><a href="#" onclick="navigateLoginPages('firstTimeUsers');">First time logging in?</a></li>
+						<li><a href="#" onclick="forgotPwd();">Forgotten your username or password?</a></li>
+						<li><a href='https://bank.barclays.co.uk/olb/authlogin/loginAppContainer.do?mbrtyp=pbc#/identification'>Do you have a membership number?</a></li>
+						<li><a href="#" onclick="helpview('problems-logging-in');">Need help logging in?</a></li>
+						<li><a href="#" onclick="helpview('stay-safe-online');">Staying safe online</a></li>
+					</ul>
+					<!--                     removed link return to barclaysone.com -->
+				</aside>
+			
+		</article>
+	</section>
+	<!-- Main login section end -->
+
+
+
+
+
+	<!-- Legal section -->
+	<footer class="container cf">
+		<ul class="legal-menu">
+			<li><a href="#termsIntro" onclick="legalview('termsIntro');">Terms of use</a></li>
+			<li><a href="#privacyIntro" onclick="legalview('privacyIntro');">Privacy and cookies</a></li>
+			<li><a href="#securityIntro" onclick="legalview('securityIntro');">Security</a></li>
+			<li><a href="#accessibilityIntro" onclick="legalview('accessibilityIntro');">Accessibility</a></li>
+		</ul>
+
+		<p class="disclaimer">
+			Copyright &copy; 2018 Barclays. Products and services on this site may not be available in certain jurisdictions. In particular, these products and services are not being offered in Japan or the United States or to US residents. For full details of exclusions and disclaimers, please see the important information for <a href="https://www.barclays.co.uk/wealth-management/important-information/" target="_blank">Wealth Management clients</a> or <a href="https://privatebank.barclays.com/support-and-information/important-information/" target="_blank">Private Bank clients</a> before proceeding. Each Barclays company reserves the right to make a final determination on whether or not you are eligible for any particular product or service.
+		</p>
+	</footer>
+
+	<!-- Terms and conditions footer -->
+	<article class="legal terms-of-use container cf" id="termsIntro">
+	</article>
+
+	<!-- Privacy footer -->
+	<article class="legal privacy-cookie-policy container cf" id="privacyIntro">
+	</article>
+
+	<!-- Security footer -->
+	<article class="legal security container cf" id="securityIntro">
+	</article>
+
+	<!-- Accessibility footer -->
+	<article class="legal accessibility container cf" id="accessibilityIntro">
+	</article>
+
+	<!-- Information footer -->
+	<article class="legal important-information container cf" id="informationIntro">
+	</article>
+
+	<!-- Empty footer -->
+	<article class="legal empty" id="empty">&nbsp;</article>
+
+
+	<script>
+        $("#termsIntro").load("/WHL_S/BWL/html/UKBWL_FOOTER_TOU.html", function(response, status, xhr) {
+            if (status == "error") {
+                var msg = "Sorry but there was an error reading Terms & Conditions. ";
+                $("#termsIntro").html(msg + xhr.status + " " + xhr.statusText);
+            }
+        });
+
+        $("#privacyIntro").load("/WHL_S/BWL/html/UKBWL_FOOTER_PRIVACY.html", function(response, status, xhr) {
+            if (status == "error") {
+                var msg = "Sorry but there was an error reading privacy policies. ";
+                $("#privacyIntro").html(msg + xhr.status + " " + xhr.statusText);
+            }
+        });
+
+        $("#securityIntro").load("/WHL_S/BWL/html/UKBWL_FOOTER_SECURITY.html", function(response, status, xhr) {
+            if (status == "error") {
+                var msg = "Sorry but there was an error reading security policies. ";
+                $("#privacyIntro").html(msg + xhr.status + " " + xhr.statusText);
+            }
+        });
+
+        $("#accessibilityIntro").load("/WHL_S/BWL/html/UKBWL_FOOTER_ACCESSIBILITY.html", function(response, status, xhr) {
+            if (status == "error") {
+                var msg = "Sorry but there was an error reading accessibility policies. ";
+                $("#accessibilityIntro").html(msg + xhr.status + " " + xhr.statusText);
+            }
+        });
+
+        $("#informationIntro").load("/WHL_S/BWL/html/UKBWL_FOOTER_INFORMATION.html", function(response, status, xhr) {
+            if (status == "error") {
+                var msg = "Sorry but there was an error reading informative policies. ";
+                $("#informationIntro").html(msg + xhr.status + " " + xhr.statusText);
+            }
+        });
+
+		var privacyPolicyCookieName = "barclayscookiepolicy";
+
+		function setCookie(cname, cvalue, exdays) {
+			var d = new Date();
+			d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+			var expires = "expires="+d.toUTCString();
+			document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+		}
+
+		function getCookie(cname) {
+			var name = cname + "=";
+			var ca = document.cookie.split(';');
+			for(var i = 0; i < ca.length; i++) {
+				var c = ca[i];
+				while (c.charAt(0) === ' ') {
+					c = c.substring(1);
+				}
+				if (c.indexOf(name) === 0) {
+					return c.substring(name.length, c.length);
+				}
+			}
+			return "";
+		}
+
+		function removeCookie(name) {
+			setCookie(name, "", -1);
+		}
+
+		function cookieBannerClose() {
+			setCookie(privacyPolicyCookieName, "true", 365);
+			$("#cookie-policy-banner").hide();
+		}
+
+		if (getCookie(privacyPolicyCookieName) !== "true") {
+			$("#cookie-policy-banner").show();
+		}
+
+		$("#remember-username-info").click(privatePolicyPopoverClick);
+        $("body").click(globalClick);
+
+		function generateKey() {
+			return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(
+					c
+			) {
+				var r = (Math.random() * 16) | 0,
+						v = c == "x" ? r : (r & 0x3) | 0x8;
+				return v.toString(16);
+			});
+		}
+
+		var consentExdays = 365;
+
+		var customKey = "barclaysConsent";
+		var _host = document.location.host;
+		var regMatch = /qa|uat|stage/i.exec(_host);
+		var env = regMatch ? regMatch[0].toUpperCase() : "PROD";
+
+		var consentAPIs = {
+			QA: "https://liveqa.barcap.com/consent/",
+			STAGE: "https://livestage.barcap.com/consent/",
+			UAT: "https://livestage.barcap.com/consent/",
+			PROD: "https://live.barcap.com/consent/"
+		};
+
+		function getCurrentConsentCookieObj() {
+			var consentCookie = getCookie(customKey);
+			if (consentCookie) {
+				var obj = JSON.parse(decodeURIComponent(consentCookie));
+				obj.consentDate = new Date().getTime();
+				obj.consentExpiry = new Date().getTime() + (consentExdays * 24 * 60 * 60 * 1000);
+				return obj;
+			} else {
+				return {
+					FunctionalityCookies: "on",
+					consentDate: new Date().getTime(),
+					consentExpiry: new Date().getTime() + (consentExdays * 24 * 60 * 60 * 1000),
+					key: generateKey(),
+					user: "anon-user"
+				};
+			}
+		}
+
+		function saveConsent(consentData, cb) {
+			$.ajax({
+				url: consentAPIs[env],
+				type: "post",
+				dataType: "json",
+				data: JSON.stringify({
+					site: "B1",
+					key: consentData.key,
+					consent: "" + JSON.stringify(consentData),
+					consentDate: consentData.consentDate
+				}),
+				contentType: "application/json",
+				success: function() {
+					setCookie(customKey, encodeURIComponent(JSON.stringify(consentData)), consentExdays);
+					cb();
+				},
+				error: function() {
+					setCookie(customKey, encodeURIComponent(JSON.stringify(consentData)), consentExdays);
+					cb();
+				}
+			});
+		}
+
+		function clearRememberedUserList() {
+			var consentObj = getCurrentConsentCookieObj();
+			consentObj.FunctionalityCookies = "off";
+			saveConsent(consentObj, function () {
+				location.reload();
+			})
+		}
+	</script>
+	</body>
+	</html>
