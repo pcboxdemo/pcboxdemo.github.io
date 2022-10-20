@@ -1,0 +1,1328 @@
+/* Login section CSS for Barclays One Evolution  */
+
+
+/* Webfonts */
+@font-face {
+    font-family: "Expert-Sans-Light";
+    src: url("fonts/expertsans-light-webfont.eot");
+    src: url("fonts/expertsans-light-webfont.eot?#iefix") format("embedded-opentype"), url("fonts/expertsans-light-webfont.svg#expertsans-light-webfont") format("svg"), url("fonts/expertsans-light-webfont.woff") format("woff"), url("fonts/expertsans-light-webfont.ttf") format("truetype");
+    font-style: normal;
+    font-weight: normal;
+  }
+  
+  @font-face {
+    font-family: "Expert-Sans-Regular";
+    src: url("fonts/expertsans-regular-webfont.eot");
+    src: url("fonts/expertsans-regular-webfont.eot?#iefix") format("embedded-opentype"), url("fonts/expertsans-regular-webfont.svg#expertsans-regular-webfont") format("svg"), url("fonts/expertsans-regular-webfont.woff") format("woff"), url("fonts/expertsans-regular-webfont.ttf") format("truetype");
+    font-style: normal;
+    font-weight: normal;
+  }
+  
+  @font-face {
+    font-family: "Expert-Sans-Bold";
+    src: url("fonts/expertsans-bold-webfont.eot");
+    src: url("fonts/expertsans-bold-webfont.eot?#iefix") format("embedded-opentype"), url("fonts/expertsans-bold-webfont.svg#expertsans-bold-webfont") format("svg"), url("fonts/expertsans-bold-webfont.woff") format("woff"), url("fonts/expertsans-bold-webfont.ttf") format("truetype");
+    font-style: normal;
+    font-weight: normal;
+  }
+  
+  /* Base elements */
+  
+  html {
+      margin: 0;
+      padding: 0;
+  }
+  
+  body {
+      margin: 0;
+      padding: 0;
+  }
+  
+  img.background {
+      /* Set rules to fill background */
+    min-height: 100%;
+    min-width: 1024px;
+      
+    /* Set up proportionate scaling */
+    width: 100%;
+    height: auto;
+      
+    /* Set up positioning */
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+  }
+  
+  /* Typography */
+  
+  body {
+      font-family: Verdana, "Helvetica", Helvetica, Arial, sans-serif;
+      font-size: 12px;
+      color: #666666;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+      font-family: "Expert-Sans-Regular", Palatino, Times, serif;
+      font-weight: normal;
+  }
+  
+  h1.logo {
+      display: block;
+      float: left;
+      margin: 0;
+      width: 159px;
+      height: 28px;
+      text-indent: -9999px;
+      background-image: url("../imageslogin/barclays-logo.jpg");
+      background-repeat: no-repeat;
+      background-size: 159px 28px;
+      color: #00AEEF;
+  }
+  
+  .ie8 h1.logo,
+  .ie9 h1.logo,
+  .ie10 h1.logo {
+      background-image: url("../imageslogin/barclays-logo.jpg");
+      background-repeat: no-repeat;
+      background-position: 0 0;
+  }
+  
+  h2.strapline {
+      display: block;
+      float: right;
+      margin: 0.3em 0 0 0;
+      color: #00AEEF;
+  }
+  
+  h3 {
+      color: #494949;
+  }
+  
+  a {
+      color: #007eb6;
+      text-decoration: none;
+  }
+  
+  a:hover {
+      color: #00aeef;
+  }
+  
+  /* Structural */
+  
+  .container {
+      position: relative;
+      margin: 0 auto;
+      max-width: 1024px;
+  }
+  
+  /* Generic */
+  
+  .username-omitted,
+  .password-omitted,
+  .question-omitted,
+  .answer-omitted {
+      position: relative;
+      display: inline-block;
+      margin-top: 4px;
+      padding: 7px 10px 7px 10px;
+      width: 190px;
+      color: white;
+      font-size: 0.8em;
+      background: #cc3333;
+      z-index: 10;
+  }
+  
+  .username-omitted:before,
+  .password-omitted:before,
+  .question-omitted:before,
+  .answer-omitted:before {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: -9px;
+      width: 20px;
+      height: 20px;
+      background: #cc3333;
+      -moz-transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+    z-index: -1;
+  }
+  
+  .help-message {
+      position: relative;
+      margin-bottom: 2em !important;
+      padding: 2.2em;
+      background-color: white;
+      display: none;
+  }
+  
+  .help-message .close-button {
+      position: absolute;
+      top: 1em;
+      right: 1em;
+      width: 18px;
+      height: 18px;
+      text-indent: -9999px;
+      background-image: url("../images/Icon_Sheet_frontpage.png");
+      background-size: 288px 240px;
+      background-position: -72px -24px;
+  }
+  
+  .help-message .close-button:hover {
+      background-image: url("../images/Icon_Sheet_frontpage.png");
+      background-size: 288px 240px;
+      background-position: -48px -24px;
+  }
+  
+  .ie8 .help-message .close-button,
+  .ie9 .help-message .close-button,
+  .ie10 .help-message .close-button {
+      background-image: url("../images/cross-blue-ie8.png");
+      background-repeat: no-repeat;
+      background-position: 0 0;
+  }
+  
+  .help-message h3 {
+      margin: 0 0 0.5em 0;
+      color: #cc3333;
+      font-family: "Expert-Sans-Bold", Palatino, Times, serif;
+      font-size: 1.5em;
+  }
+  
+  .help-message h3 + p {
+      margin: 0.5em 0;
+  }
+  
+  .help-message ol li {
+      margin: 0 0 0.5em 0;
+      max-width: 61em;
+      line-height: 1.5em;
+  }
+  
+  .help-message ul {
+      margin: 0;
+      padding-left: 1.5em;
+      max-width: 61em;
+  }
+  
+  .help-message ul li {
+      margin: 0 0 0.5em 0;
+      max-width: 61em;
+      line-height: 1.5em;
+  }
+  
+  .help-message#problems-logging-in ul {
+      padding-left: 0;
+      -webkit-column-count: 2; /* Chrome, Safari, Opera */
+    -moz-column-count: 2; /* Firefox */
+    column-count: 2;
+    -webkit-column-gap: 20px; /* Chrome, Safari, Opera */
+    -moz-column-gap: 20px; /* Firefox */
+    column-gap: 20px;
+  }
+  
+  .help-message#problems-logging-in ul li.phone-details {
+      position: relative;
+      margin-top: 1em;
+  }
+  
+  .help-message#problems-logging-in ul li.phone-details:before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 3px;
+      width: 48px;
+      height: 48px;
+      background-image: url("../images/Icon_Sheet_frontpage.png");
+      background-repeat: no-repeat;
+      background-size: 288px 240px;
+      background-position: -192px 0;
+  }
+  
+  .ie8 .help-message#problems-logging-in ul li.phone-details:before,
+  .ie9 .help-message#problems-logging-in ul li.phone-details:before,
+  .ie10 .help-message#problems-logging-in ul li.phone-details:before {
+      background-image: url("../images/telephone-blue-ie8.png");
+      background-repeat: no-repeat;
+      background-position: 0 0;
+  }
+  
+  .help-message#problems-logging-in ul li.phone-details span {
+      display: block;
+      width: 295px;
+      font-family: "Expert-Sans-Bold", Palatino, Times, serif;
+      text-align: right;
+  }
+  
+  .help-message#problems-logging-in ul li.phone-details span.contact-banking {
+      font-size: 1.47em;
+  }
+  
+  .help-message#problems-logging-in ul li.phone-details span.contact-number {
+      font-size: 1.95em;
+      line-height: 1.3em;
+  }
+  
+  .help-message#problems-logging-in ul li.phone-details span.contact-open {
+      font-size: 1.1em;
+      line-height: 1.4em;
+  }
+  
+  .help-message#empty-view {
+      height: 1px;
+      width: 1px;
+      margin-bottom: 0 !important;
+      padding: 0;
+  }
+  
+  /* Feature specific tags */
+  
+  header {
+      margin-bottom: 2em;
+      padding: 1.75em;
+      background-color: white;
+      position: relative;
+  }
+  
+  .bwl-content {
+      padding: 1.5em 1.75em 2em 1.75em;
+      background: #D9F3FC;
+      font-size: 1.25em;
+  }
+  
+  .bwl-content header {
+      margin-bottom: 0;
+      padding: 0;
+      background-color: transparent;
+  }
+  
+  .bwl-content .bwl-error-placeholder {
+      margin-bottom: 1em;
+      padding: 1em;
+      background: #494949;
+  }
+  
+  .bwl-content .bwl-error-placeholder h2 {
+      margin: 0;
+      color: #ffe5e5;
+  }
+  
+  .bwl-content .bwl-error-placeholder ul {
+      margin: 1em 0 0 0;
+      padding: 0;
+      font-size: 0.9em;
+  }
+  
+  .bwl-content .bwl-error-placeholder ul div {
+      padding-bottom: 0.5em;
+  }
+  
+  .bwl-content h3 {
+      margin: 0 0 0 0;
+      font-family: "Expert-Sans-Bold", Palatino, Times, serif;
+      font-size: 1.5em;
+  }
+  
+  .bwl-content p.instruction {
+      margin: 0.5em 0 1em;
+      max-width: 22em;
+  }
+  
+  .bwl-content#reset-password-form p.instruction {
+      max-width: 100%;
+  }
+  
+  .bwl-content#choose-password-form p.instruction {
+      max-width: 30em;
+  }
+  
+  .bwl-content form section article {
+      position: relative;
+  }
+  
+  .bwl-content#first-time-form p.instruction,
+  .bwl-content#first-time-login header p {
+      margin: 0.5em 0 0.5em;
+      max-width: 47em;
+  }
+  
+  .bwl-content#first-time-login header p {
+      font-size: 0.85em;
+      line-height: 1.4em;
+  }
+  
+  .bwl-content#first-time-login p.instruction {
+      font-size: 1em;
+  }
+  
+  .bwl-content#terms-and-conditions p.instruction {
+      max-width: 100%;
+      margin-bottom: 0;
+  }
+  
+  .bwl-content#first-time-login p.instruction:last-of-type {
+      margin: 0.5em 0 1em;
+  }
+  
+  .bwl-content form#bwlResetPasswordForm {
+      float: none;
+      margin-bottom: 2em;
+      width: auto;
+  } 
+  
+  .bwl-content form label {
+      display: none;
+  }
+  
+  .bwl-content form input[type="text"],
+  .bwl-content form input[type="password"],
+  .bwl-content form select {
+      display: inline-block;
+      margin: 0 0 0.5em 0;
+      padding: 0.5em 0.3em 0.5em 35px;
+      width: 19.4em;
+      font-size: 1em;
+      border: 1px solid #ABABAB;
+      border-radius: 4px;
+      vertical-align: top;
+  }
+  
+  .bwl-content form input#first-time-username,
+  .bwl-content form input#lost-password-username {
+      width: 19.85em;
+  }
+  
+  .bwl-content form select {
+      width: 22.15em;
+  }
+  
+  .bwl-content form #username-select {
+      display: inline-block;
+      margin: 0 0 0.5em 0;
+      padding: 0.4em 0.3em 0.4em 31px;
+      width: 22.1em;
+      font-size: 1em;
+      border: 1px solid #ABABAB;
+      border-radius: 4px;
+  }
+  
+  .bwl-content form .username-span {
+      content: "";
+      position: absolute;
+      display: block;
+      margin: 8px 0 0 8px;
+      width: 24px;
+      height: 24px;
+      background-image: url("../images/Icon_Sheet_frontpage.png");
+      background-size: 288px 240px;
+      background-position: -72px 0;
+  }
+  
+  .ie8 .bwl-content form .username-span,
+  .ie9 .bwl-content form .username-span,
+  .ie10 .bwl-content form .username-span {
+      background-image: url("../images/person-blue-ie8.png");
+      background-repeat: no-repeat;
+      background-position: 0 0;
+  }
+  
+  .bwl-content form .password-span {
+      content: "";
+      position: absolute;
+      display: block;
+      margin: 8px 0 0 8px;
+      width: 24px;
+      height: 24px;
+      background-image: url("../images/Icon_Sheet_frontpage.png");
+      background-size: 288px 240px;
+      background-position: -166px 0;
+  }
+  
+  .ie8 .bwl-content form .password-span,
+  .ie9 .bwl-content form .password-span,
+  .ie10 .bwl-content form .password-span {
+      background-image: url("../images/padlock-blue-ie8.png");
+      background-repeat: no-repeat;
+      background-position: 0 0;
+  }
+  
+  .bwl-content form input[type="text"]:hover,
+  .bwl-content form input[type="password"]:hover,
+  .bwl-content form select:hover {
+      border: 1px solid #007EB6;
+  }
+  
+  .bwl-content#reset-password-form .security-question {
+      margin: 0 0 0.5em 0;
+      font-size: 0.9em;
+      color: #222222;
+  }
+  
+  .bwl-content form .seperator {
+      margin: 0;
+      padding: 0;
+      opacity: 0;
+  }
+  
+  .ie8 .bwl-content form .seperator,
+  .ie9 .bwl-content form .seperator,
+  .ie10 .bwl-content form .seperator {
+      margin: 0;
+      padding: 0;
+      opacity: 0;
+      border: 0;
+  }
+  
+  .bwl-content .reset-username {
+      font-size: 0.8em;
+  }
+  
+  .bwl-content#first-time-form form {
+      width: auto;
+      float: none;
+  }
+  
+  .bwl-content#first-time-form header {
+      padding: 0;
+  }
+  
+  .bwl-content#first-time-form h4 {
+      margin: 0.5em 0 1em 0;
+      font-family: "Expert-Sans-Bold", Palatino, Times, serif;
+  }
+  
+  .bwl-content#reset-password-form h4,
+  .bwl-content#choose-password-form h4 {
+      margin-bottom: 0.75em;
+  }
+  
+  .bwl-content#choose-password-form h4.new-pass-header {
+      padding-top: 1em;
+  }
+  
+  .bwl-content#reset-password-form #bwlResetPasswordForm h4 {
+      clear: both;
+      padding-top: 0.75em;
+  }
+  
+  .bwl-content#first-time-form section {
+      padding-top: 1em;
+      clear: both;
+  }
+  
+  .bwl-content#main-page article form,
+  .bwl-content#first-time article form,
+  .bwl-content#lost-password article form {
+      display: inline-block;
+      width: 550px;
+      float: left;
+  }
+  
+  .bwl-content#first-time-form section article,
+  .bwl-content#reset-password-form section article,
+  .bwl-content#choose-password-form section article {
+      display: inline-block;
+      width: 550px;
+      float: left;
+  }
+  
+  .bwl-content#reset-password-form section aside {
+      margin-top: 18em;
+  }
+  
+  .bwl-content#first-time-form .support-menu {
+      padding-left: 1.5em;
+      display: block;
+      list-style-type: disc;
+      overflow: hidden;
+  }
+  
+  .bwl-content#first-time-form section#security-questions input[type="text"],
+  .bwl-content#first-time-form section#security-questions input[type="password"] {
+      padding-left: 0.75em;
+      width: 21em;
+  }
+  
+  .bwl-content#first-time-form section#security-questions select {
+      padding-left: 0.5em;
+  }
+  
+  .bwl-content#first-time-form .buttons {
+      width: 22.15em;
+  }
+  
+  .bwl-content#reset-password-form .buttons {
+      margin-top: 1em;
+      width: 22.15em;
+  }
+  
+  .bwl-content#choose-password-form .buttons {
+      clear: both;
+      padding-top: 1em;
+      width: 22.15em;
+  }
+  
+  .bwl-content#first-time-form .buttons .cancel,
+  .bwl-content#terms-and-conditions .buttons .cancel,
+  .bwl-content#reset-password-form .buttons .cancel,
+  .bwl-content#choose-password-form .buttons .cancel {
+      display: inline-block;
+      margin: 0.5em 0em 0.5em 1em;
+      padding: 0.8em 1.2em;
+      vertical-align: top;
+      color: white;
+      font-size: 1em;
+      background-color: #494949;
+      border: 1px solid #494949;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: Verdana, sans-serif;
+  }
+  
+  .bwl-content#first-time-form .buttons input,
+  .bwl-content#first-time-form .buttons a.cancel,
+  .bwl-content#terms-and-conditions .buttons input,
+  .bwl-content#terms-and-conditions .buttons a.cancel,
+  .bwl-content#reset-password-form .buttons input,
+  .bwl-content#reset-password-form .buttons a.cancel,
+  .bwl-content#choose-password-form .buttons input,
+  .bwl-content#choose-password-form .buttons a.cancel,
+  .bwl-content .buttons div.cta,
+  .bwl-content .buttons div.cancel {
+      float: right;
+      margin-right: 0;
+  }
+  
+  .bwl-content#terms-and-conditions form {
+      width: auto;
+  }
+  
+  .bwl-content#terms-and-conditions .terms-window {
+      margin: 1em 0;
+      padding: 1em;
+      height: 400px;
+      font-size: 0.9em;
+      line-height: 1.5em;
+      overflow-y: scroll;
+      background: white;
+  }
+  
+  .bwl-content#terms-and-conditions .terms-window h4 {
+      margin: 0em 0 0.5em;
+      font-family: "Expert-Sans-Bold", Palatino, Times, serif;
+      font-size: 1.6em;
+  }
+  
+  .bwl-content#terms-and-conditions .terms-window h5 {
+      margin: 1em 0 0.5em;
+      font-family: "Expert-Sans-Bold", Palatino, Times, serif;
+      font-size: 1.4em;
+  }
+  
+  .bwl-content#terms-and-conditions .terms-window h5 + p {
+      margin: 0.5em 0;
+  }
+  
+  .bwl-content#terms-and-conditions .terms-window h6 {
+      margin: 1em 0 0.5em;
+      font-family: "Expert-Sans-Bold", Palatino, Times, serif;
+      font-size: 1.15em;
+  }
+  
+  .bwl-content#terms-and-conditions .terms-window h6 + p {
+      margin: 0.5em 0 1em;
+  }
+  
+  .bwl-content#terms-and-conditions .terms-window p {
+      margin: 0.5em 0;
+  }
+  
+  .bwl-content#terms-and-conditions .terms-window ol, 
+  .bwl-content#terms-and-conditions .terms-window li {
+      margin: 0.5em 0 1em 0;
+  }
+  
+  .bwl-content#terms-and-conditions .terms-window li {
+      margin-bottom: 0.5em;
+  }
+  
+  .bwl-content#terms-and-conditions .term:before {
+      content: "\201C";
+  }
+  
+  .bwl-content#terms-and-conditions .term:after {
+      content: "\201D";
+  }
+  
+  .bwl-content#terms-and-conditions .term {
+      color: black;
+  }
+  
+  .bwl-content p.warning {
+      display: inline-block;
+      margin: 0.5em 0;
+      width: 235px;
+      font-size: 0.8em;
+      line-height: 1.3em;
+  }
+  
+  .bwl-content input.cta,
+  .bwl-content div.cta {
+    display: inline-block;
+    margin: 0.5em 1em 0.5em 1em;
+    padding: 0.8em 1.2em;
+    vertical-align: top;
+    color: white;
+    font-size: 1em;
+    line-height: 1.2em;
+    background-color: #007EB6;
+    border: 1px solid #007EB6;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .bwl-content input.cta:hover,
+  .bwl-content div.cta:hover {
+    background-color: #00AEEF;
+    border-color: #00AEEF;
+  }
+  
+  .bwl-content input.cta:active,
+  .bwl-content div.cta:active {
+    color: #007EB6;
+    background-color: white;
+  }
+  
+  .bwl-content input.cta:disabled,
+  .bwl-content div.cta:disabled {
+    color: #f7f7f7;
+    background-color: #cccccc;
+    border: 1px solid #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .bwl-content input.cta[disabled="disabled"],
+  .bwl-content div.cta[disabled="disabled"] {
+    color: #f7f7f7;
+    background-color: #cccccc;
+    border: 1px solid #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .bwl-content input#rememberUsername {
+      display: inline-block;
+      margin: 0;
+      vertical-align: text-bottom;
+      clear: left;
+  }
+  
+  .bwl-content label[for=rememberUsername] {
+      display: inline-block;
+      vertical-align: text-bottom;
+      font-size: 0.8em;
+  }
+  
+  .bwl-content .reset-username {
+      margin: 0.5em 0;
+  }
+  
+  .bwl-content aside {
+      padding: 0;
+      font-size: 0.8em;
+      width: 350px;
+      display: inline-block;
+      overflow: hidden;
+  }
+  
+  .bwl-content aside ul {
+      list-style-type: none;
+      margin: -2px 0 1em 0;
+      padding: 0;
+      width: auto;
+  } 
+  
+  .bwl-content aside ul li {
+      line-height: 1.5em;
+      width: auto;
+  }
+  
+  .bwl-content aside input[type=checkbox] {
+      vertical-align: middle;
+  }
+  
+  
+  .bwl-content aside label {
+      display: inline-block;
+  }
+  
+  .bwl-content#first-time aside ul {
+      display: block;
+      overflow: hidden;
+      padding: 0 2em;
+      max-width: 35em;
+      list-style-type: disc;
+  }
+  
+  .bwl-content#lost-password aside ul,
+  .bwl-content#choose-password-form aside ul {
+      display: block;
+      overflow: hidden;
+      padding: 0 2em;
+      max-width: 35em;
+      list-style-type: disc;
+  }
+  
+  footer {
+      position: relative;
+      margin-top: 2em !important;
+      padding: 2.4em;
+      font-size: 0.9em;
+      background: white;
+  }
+  
+  footer ul.legal-menu {
+      margin: 0 4em 0 0;
+      padding: 0;
+      float: left;
+      list-style-type: none;
+  }
+  
+  footer ul.legal-menu li {
+      line-height: 1.3em;
+  }
+  
+  footer p.disclaimer {
+      float: left;
+      margin: 0;
+      line-height: 1.3em;
+      width: 64em;
+      margin-bottom: 3em;
+  }
+  
+  article.legal {
+      position: relative;
+      display: block;
+      float: none;
+      clear: both;
+      margin-top: 2em !important;
+      padding: 2.1em;
+      font-size: 1.1em;
+      line-height: 1.3em;
+      background: white;
+  }
+  
+  article.legal#empty {
+      margin: 0;
+      padding: 0;
+      width: 1px;
+      height: 1px;
+  }
+  
+  article.legal .close-button {
+      position: absolute;
+      top: 1em;
+      right: 1em;
+      width: 18px;
+      height: 18px;
+      text-indent: -9999px;
+      background-image: url("../images/Icon_Sheet_frontpage.png");
+      background-size: 288px 240px;
+      background-position: -72px -24px;
+  }
+  
+  article.legal .close-button:hover {
+      background-image: url("../images/Icon_Sheet_frontpage.png");
+      background-size: 288px 240px;
+      background-position: -48px -24px;
+  }
+  
+  .ie8 article.legal .close-button,
+  .ie9 article.legal .close-button,
+  .ie10 article.legal .close-button {
+      background-image: url("../images/cross-blue-ie8.png");
+      background-repeat: no-repeat;
+      background-position: 0 0;
+  }
+  
+  article.legal h4 {
+      margin: 0em 0 0.5em;
+      font-family: "Expert-Sans-Bold", Palatino, Times, serif;
+      font-size: 1.6em;
+      line-height: 1.3em;
+  }
+  
+  article.legal h5 {
+      margin: 1em 0 0.5em;
+      font-family: "Expert-Sans-Bold", Palatino, Times, serif;
+      font-size: 1.4em;
+      line-height: 1.3em;
+  }
+  
+  article.legal h5 + p {
+      margin: 0.5em 0;
+  }
+  
+  article.legal h6 {
+      margin: 1em 0 0.5em;
+      font-family: "Expert-Sans-Bold", Palatino, Times, serif;
+      font-size: 1.15em;
+      line-height: 1.3em;
+  }
+  
+  article.legal h6 + p {
+      margin: 0.5em 0 1em;
+  }
+  
+  article.legal p {
+      margin: 0.5em 0;
+      max-width: 61em;
+  }
+  
+  article.legal ol,  article.legal li {
+      margin: 0.5em 0 1em 0;
+      max-width: 58em;
+  }
+  
+  article.legal li,
+  article.legal dd {
+      margin-bottom: 0.5em;
+      max-width: 58em;
+  }
+  
+  article.legal span.term:before {
+      content: "\201C";
+  }
+  
+  article.legal span.term:after {
+      content: "\201D";
+  }
+  
+  article.legal span.term {
+      color: black;
+  }
+  
+  .ie8 .bwl-content aside input,
+  .ie8 .bwl-content aside label {
+      display: none;
+  }
+  
+  
+  /* Clearfix */
+  .cf:before,
+  .cf:after {
+      content: " "; /* 1 */
+      display: table; /* 2 */
+  }
+  
+  .cf:after {
+      clear: both;
+  }
+  
+  /* Responsive */
+  
+  @media screen and (max-width: 1080px) {
+      .container {
+          margin: 0 1em;
+      }
+  
+      header {
+          margin-bottom: 1em;
+      }
+  
+      section.help-message {
+          margin: 0 1.25em 1em !important;
+          padding: 2em;
+      }
+  
+      .help-message#problems-logging-in ul {
+          max-width: none;
+      }
+  
+      .help-message#problems-logging-in ul li {
+          max-width: none;
+      }
+  
+      .help-message .close-button {
+          left: auto;
+          right: 1em;
+      }
+  
+      footer.container {
+          margin: 1em 1.4em 0 !important;
+          padding: 2em;
+      }
+  
+      article.legal {
+          margin-top: 1em !important;
+      }
+  }
+  
+  @media screen and (max-width: 984px) {
+      .bwl-content form {
+          float: none;
+          margin-bottom: 2em;
+          width: auto;
+      }
+  
+      .bwl-content#reset-password-form section aside {
+          margin-top: 0em;
+      }
+  }
+  
+  @media screen and (max-width: 920px) and (min-width: 520px) {
+  
+      .help-message#problems-logging-in ul {
+          list-style-type: none;
+          -webkit-column-count: 1; /* Chrome, Safari, Opera */
+        -moz-column-count: 1; /* Firefox */
+        column-count: 1;
+        -webkit-column-gap: 0px; /* Chrome, Safari, Opera */
+        -moz-column-gap: 0px; /* Firefox */
+        column-gap: 0px;
+      }
+  
+      .bwl-content#first-time-form section article {
+          float: none;
+          margin-bottom: 1em;
+      }
+  
+      footer p.disclaimer {
+          width: auto;
+      }
+  
+      footer ul.legal-menu {
+          margin: 0 0 2em 0;
+      }
+  
+  }
+  
+  @media screen and (max-width: 636px) {
+      .username-omitted,
+      .password-omitted,
+      .question-omitted,
+      .answer-omitted {
+          width: auto;
+          margin-left: 25px;
+          margin-bottom: 20px;
+          padding: 7px 10px;
+      }
+  
+      .bwl-content form .seperator {
+          margin-top: 10px;
+      }
+  
+      .username-omitted:before,
+      .password-omitted:before,
+      .question-omitted:before,
+      .answer-omitted:before {
+          top: -6px;
+          left: 8px;
+      }
+  }
+  
+  @media screen and (max-width: 520px) {
+      header {
+          padding: 1em;
+      }
+      
+      h1.logo {
+      }
+  
+      h2.strapline {
+          display: none;
+      }
+  
+  
+      
+      section.help-message {
+          padding: 1.25em;
+      }
+  
+      .help-message .close-button {
+          left: auto;
+          right: 1em;
+      }
+  
+      .help-message#problems-logging-in ul {
+        list-style-type: none;
+        -webkit-column-count: 1; /* Chrome, Safari, Opera */
+        -moz-column-count: 1; /* Firefox */
+        column-count: 1;
+        -webkit-column-gap: 0px; /* Chrome, Safari, Opera */
+        -moz-column-gap: 0px; /* Firefox */
+        column-gap: 0px;
+      }
+  
+      .help-message#problems-logging-in ul {
+          padding: 0;
+      }
+      
+      .help-message#problems-logging-in ul li.phone-details {
+          margin-left: -10px;
+      }
+  
+      .help-message#problems-logging-in ul li.phone-details span {
+          width: 258px;
+      }
+  
+      .help-message#problems-logging-in ul li.phone-details span.contact-banking {
+          font-size: 1.25em;
+      }
+  
+      .help-message#problems-logging-in ul li.phone-details span.contact-number {
+          font-size: 1.7em;
+          line-height: 1.4em;
+      }
+  
+      .help-message#problems-logging-in ul li.phone-details span.contact-open {
+          font-size: 0.9em;
+          line-height: 1.4em;
+      }
+      
+      .bwl-content {
+          padding: 1em 1em 2em 1em;
+      }
+  
+      .bwl-content header h3 {
+          font-size: 1.4em;
+      } 
+  
+      .bwl-content article header p.instruction {
+          font-size: 1em;
+      } 
+  
+      .bwl-content form {
+          float: none;
+          margin-bottom: 2em;
+          width: auto;
+      }
+  
+      .bwl-content aside {
+          width: auto;
+      }
+  
+      .bwl-content#main-page article form,
+      .bwl-content#first-time article form,
+      .bwl-content#reset-password-form section article,
+      .bwl-content#lost-password article form {
+          display: inline-block;
+          width: auto;
+          float: left;
+      }
+  
+      .bwl-content#first-time-form section article,
+      .bwl-content#choose-password-form section article,
+      .bwl-content#reset-password-form form input[type="text"],
+      .bwl-content#reset-password-form section article {
+          float: none;
+          width: 100%;
+      }
+  
+      .bwl-content#first-time-form .buttons,
+      .bwl-content#reset-password-form .buttons,
+      .bwl-content#choose-password-form .buttons {
+          margin-top: 2em;
+          width: auto;
+      }
+  
+      .bwl-content#first-time-form section#security-questions input[type=password],
+      .bwl-content#first-time-form section#security-questions input[type=text] {
+          width: 100%;
+      }
+  
+      .bwl-content#terms-and-conditions {
+          font-size: 1.1em;
+      }
+      
+      .bwl-content#terms-and-conditions .terms-window {
+          height: 250px;
+      }
+  
+      .bwl-content#terms-and-conditions .buttons input.cancel {
+          margin: 0.5em 0.25em;
+      }
+  
+      .bwl-content#first-time-form .buttons a.cancel,
+      .bwl-content#reset-password-form .buttons a.cancel,
+      .bwl-content#choose-password-form .buttons a.cancel {
+          margin-right: 1em;
+      }
+  
+      .bwl-content form input[type="text"],
+      .bwl-content form input[type="password"],
+      .bwl-content form select,
+      .bwl-content#first-time-form section#security-questions input[type="text"],
+      .bwl-content form input#first-time-username {
+          display: block;
+          margin: 0 0 0.5em 0;
+          padding: 0.5em 0.3em 0.5em 35px;
+          width: 100%;
+          -moz-box-sizing: border-box;
+          -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+          font-size: 1em;
+          border: 1px solid #ABABAB;
+          border-radius: 4px;
+      }
+  
+      .bwl-content#first-time-form section#security-questions input[type="text"] {
+          padding-left: 0.7em;
+      }
+  
+      .bwl-content form #username-select {
+          display: block;
+          width: 100%;
+          -moz-box-sizing: border-box;
+          -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+      }
+  
+      .username-omitted,
+      .password-omitted,
+      .question-omitted,
+      .answer-omitted {
+          width: auto;
+          margin-left: 25px;
+          padding: 7px 10px;
+      }
+  
+      .bwl-content form .seperator {
+          margin-top: 10px;
+      }
+  
+      .username-omitted:before,
+      .password-omitted:before,
+      .question-omitted:before,
+      .answer-omitted:before {
+          top: -6px;
+          left: 8px;
+      }
+  
+      .bwl-content p.warning {
+          display: inline-block;
+          margin: 0.5em 0;
+          width: auto;
+          font-size: 0.8em;
+          line-height: 1.3em;
+      }
+  
+      .bwl-content input.cta {
+          margin-right: 0;
+          margin-left: 0;
+      }
+      
+      footer.container {
+          margin: 1em 1.25em 0 !important;
+          padding: 1.25em;
+      }
+  
+      footer p.disclaimer {
+          width: auto;
+          margin-bottom: 0;
+      }
+  
+      footer ul.legal-menu {
+          margin: 0 0 2em 0;
+      }
+      
+      article.legal {
+          padding: 1.25em;
+      }
+      
+      article.legal ul,
+      article.legal ol {
+          padding-left: 1.75em;
+      }
+  }
+  
+  /* Switches to control visibility */
+  
+  #first-time {
+      
+  }
+  
+  #lost-password {
+      
+  }
+  
+  #user-pass-wrong {
+      display: none;
+  }
+  
+  #problems-logging-in {
+      display: none;
+  }
+  
+  #stay-safe-online {
+      display: none;
+  }
+  
+  .bwl-content form input#username {
+      /*display: none;*/
+  }
+  
+  .bwl-content form #username-select {
+      display: none;
+  }
+  
+  .username-omitted,
+  .password-omitted,
+  .question-omitted,
+  .answer-omitted {
+      display: none;
+  }
+  
+  article.legal#termsIntro {
+      display: none;
+  }
+  
+  article.legal#privacyIntro {
+      display: none;
+  }
+  
+  article.legal#securityIntro {
+      display: none;
+  }
+  
+  article.legal#accessibilityIntro {
+      display: none;
+  }
+  
+  article.legal#informationIntro {
+      display: none;
+  }
+  
+  .accordion{
+      padding: 1em 1.75em 1em 1.75em;
+      background: white;
+      font-size: 1.25em;
+      position: relative;
+      margin: 0 auto;
+      max-width: 1024px;
+      color: grey;
+      cursor: pointer;
+  }
+  
+  .accordion:after {
+      content: '\02C5';
+      float: right;
+  }
+  
+  .accordion-active{
+      background: #007EB6 !important;
+      color:white !important;
+  }
+  
+  .accordion-active:after{
+      content: "\02C4";
+      float: right;
+  
+  }
+  
+  section.closed {
+      /*padding: 0 18px;
+      background-color: white;*/
+      display:none;
+  
+  }

