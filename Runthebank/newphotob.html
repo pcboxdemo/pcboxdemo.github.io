@@ -168,13 +168,19 @@
 		margin: 0 0 20px 3px !important;
 
 	}
+  .bo {
+    border: 1px solid #dee2e6!important;
+  }
 </style>
 
 <body>
-
+  <p class="h4 mb-4 text-left" style="margin-left:98px;margin-top:25px;">Share Your Photo</p>
 	<!-- breadcrumb -->
-	<div class="breadcrumb-w3pvt" style="padding:20px;">
-		<div class="container">
+	<div class="breadcrumb-w3pvt" style="padding:20px;margin-top:20px;">
+    
+
+		<div class="container" style="width:1000px;margin-left:60px;">
+      Upload a recent photo of yourself or use your webcam to take a photo      <br/><br/>
 			<ul class="nav nav-tabs">
 				<li class="active"><a data-toggle="tab" href="#home">Upload photo</a></li>
 				<li><a data-toggle="tab" href="#menu1" onclick="startup();">Take Photo</a></li>
@@ -190,13 +196,13 @@
 				<div class="col-lg-10 mt-lg-0 mt-4">
 					<form class="border border-light p-5">
 						<div class="container-fluid">
-							<div class="tab-content">
+							<div class="tab-content ">
 								<div id="home" class="tab-pane fade in active ">
 									<div id="u1" class="custom-file1" style="height:265px;width:800px;">
 
 
 										<label class="custom-file-label1"></label>
-										<div style="height:265px;width:800px;" class="pcontainer"></div>
+										<div style="height:350px;width:800px;" class="pcontainer"></div>
 
 									</div>
 
@@ -210,7 +216,7 @@
 								
 								
 										  <div class="camera">
-										<video width="480" height="320" id="video-still">Video stream not available.</video>
+										<video width="480" height="320" class="bo" id="video-still">Video stream not available.</video>
 										<p>Camera</p>
 										   <ul>
 											<button id="startButton" class="btn rolbBtn btn btn-primary marginDownMobile" type="button" name="startButton">
@@ -223,7 +229,7 @@
 										  <p>Your Picture</p>
 										<!--<img src="/Runthebank/images/john.jpg" height="600" width="600" alt="">-->
 										<button id="nextButton" class="btn rolbBtn btn btn-primary marginDownMobile" type="button"> <i class="far fa-grin fa-lg" aria-hidden="true"></i>      Next    </button>
-										<img id="img" src="/Runthebank/placeholder-face.jpeg" style="display:none;"/>
+										<img id="img" src="/Runthebank/placeholder-face.jpeg" style="width:477px;height:324px;display:none;"/>
 									  </div>
 								</div>
 

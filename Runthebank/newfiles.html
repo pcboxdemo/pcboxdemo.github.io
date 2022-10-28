@@ -26,7 +26,8 @@
 				var previewer = new Box.Preview();
 				selectedFile=data.id;
 				previewer.show(data.id, sessionStorage.getItem("accessToken"), {
-					container: '.previewcontainer'
+					container: '.previewcontainer',
+					logoUrl: '/Runthebank/box.svg'
 				});
 
 				$('#modalpreview').modal('show');
@@ -44,14 +45,22 @@
 		margin: 0 0 20px 3px !important;
 
 	}
+	.be-share-access-select {
+		display:none;
+	}
 </style>
 
 <body>
+	<p class="h4 mb-4 text-left" style="margin-left:98px;margin-top:25px;">Share Your Passport</p>
 
 	<!-- breadcrumb -->
-	<div class="breadcrumb-w3pvt" style="padding:20px;">
-		<div class="container">
-			<ul class="nav nav-tabs">
+	<div class="breadcrumb-w3pvt" style="padding:20px;margin-top:20px;">
+    
+
+		<div class="container" style="width:1000px;margin-left:60px;">
+			Upload a copy of your passport or re-use one that is already in your Digital Vault
+			<br/><br/>
+			<ul class="nav nav-tabs" style="width:800px;">
 				<li class="active"><a data-toggle="tab" href="#home">Upload Passport</a></li>
 				<li><a data-toggle="tab" href="#menu1">Select Passport from Vault</a></li>
 			</ul>
@@ -65,20 +74,20 @@
 			<div class="row advantages_grids">
 				<div class="col-lg-10 mt-lg-0 mt-4">
 					<form class="border border-light p-5">
-						<div class="container-fluid">
+						<div class="container-fluid" style="margin-left:-60px;">
 							<div class="tab-content">
 								<div id="home" class="tab-pane fade in active">
 									<div id="u1" class="custom-file1" style="height:265px;width:800px;">
 
 
 										<label class="custom-file-label1"></label>
-										<div style="height:265px;width:800px;" class="pcontainer"></div>
+										<div style="height:350px;width:800px;" class="pcontainer"></div>
 
 									</div>
 
 								</div>
 								<div id="menu1" class="tab-pane fade">
-									<div style="height:600px;width:500px;" class="scontainer"></div>
+									<div style="height:500px;width:800px;" class="scontainer"></div>
 
 								</div>
 

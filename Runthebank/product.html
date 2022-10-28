@@ -2,7 +2,7 @@
   <script>
     var int;
     function setLoader() {
-        $("#text").html('<img src="/Runthebank/find-docs-old.gif" width="300" height="225"/ >Performing ID checks');
+        $("#text").html('<img src="/Runthebank/find-docs-old.gif" width="300" height="225"/ ><br/>Performing ID checks');
       
     }
     function showResult(productType, idVerified,url) {
@@ -18,10 +18,14 @@
       var idVerified = "No";
       $.ajax(settings).done(function (response) {
         idVerified = response.metadata.enterprise.kycClient.idVerified;
+        $("#text").hide();
         if (idVerified == 'Yes') {
-          $("#text").html("We have received your documents and we are pleased to say your identity has been confirmed<br/><br/>");
+          
+          $("#text1").html("We have received your documents and we are pleased to say your identity has been confirmed<br/><br/>");
+          $("#text1").show();
         } else {
-          $("#text").html("We have received your documents and we have found an issue.<br/><br/> An advisor from the bank will contact you shortly<br/><br/>");
+          $("#text1").show();
+          $("#text1").html("We have received your documents and we have found an issue.<br/><br/> An advisor from the bank will contact you shortly<br/><br/>");
         }
         
       });
@@ -43,15 +47,16 @@
     <div id="cc" style="display:block;margin-left:150px;">
       <form id="creditloan" class="border border-light p-5" action="#" method="get">
 
-        <p class="h4 mb-4 text-left">Emerging Funds Application</p>
+        <p class="h4 mb-4 text-left"><br/>Verifying Your Identity</p><br/>
 
-        <div id="text"></div> 
+        <div id="text" align="center" style="width:300px"></div> 
+        <div id="text1"  style="width:300px;display:none;"></div> 
         <br/>
 
 
         <ul>
           <br/>
-          <button id="signbutton" class="btn rolbBtn btn btn-primary marginDownMobile" type="button" onclick-"nextFinal()" name="submit">Complete Application</button>
+          <button id="signbutton" class="btn rolbBtn btn btn-primary marginDownMobile" style="margin-left:-35px;" type="button" onclick-"nextFinal()" name="submit">Complete Application</button>
             
 
 
