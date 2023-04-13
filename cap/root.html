@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<!-- polyfill.io only loads the polyfills your browser needs -->
+	<script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Promise"></script>
+	<!-- Alternatively, use polyfills hosted on the Box CDN
+     <script src="https://cdn01.boxcdn.net/polyfills/bluebird/3.5.1/bluebird.min.js"></script>
+     -->
+
+	<!-- Latest version of Box Content Preview for en-US locale -->
+	<script src="https://cdn01.boxcdn.net/platform/elements/16.0.0/en-US/explorer.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/16.0.0/en-US/explorer.css" />
+	<script type="module" src="annotations.js"></script>
+	 <link rel="stylesheet" href="annotations.css" />
+	<script>
+		var clientId = "1menn2x5yoj7jqdqerspfgy9pvnzs489";
+
+
+		var folderId='202937599396';
+		$(document).ready(function() {
+			var userLogin = 'serviceaccount@boxdemo.com';
+			var urlParams = "clientId=1menn2x5yoj7jqdqerspfgy9pvnzs489&userEmail=" + userLogin +"&password=boxdemo12!";
+			console.log(urlParams);
+			var settings = {
+				"async": true,
+				"crossDomain": true,
+				//"url": "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-jwt-tokengenerator?" + urlParams,
+				"url": "https://box-tokengenerator-v2.herokuapp.com/tokengenerator?" + urlParams,
+				//"url": "http://localhost:7000/jwttokengenerator?" + urlParams,
+				"method": "GET",
+				"headers": {}
+			};
+			$.ajax(settings).done(function(response) {
+				accessToken = response.userToken;
+				var contentSidebarProps = {
+					hasActivityFeed: true,
+					features: {
+					  activityFeed: {
+						annotations: {
+						  enabled: true
+						}
+					  }
+					}
+				  };
+				  var annotations = new BoxAnnotations();
+				  var contentPreviewProps = {
+					enableAnnotationsDiscoverability: true,
+					enableAnnotationsImageDiscoverability: true,
+					showAnnotations: true,
+					showAnnotationsControls: true,
+					showAnnotationsDrawingCreate: true,
+					boxAnnotations:annotations,
+					contentSidebarProps: contentSidebarProps
+				  };
+				  
+				  var options = {
+					container: ".pcontainer",
+					canShare: false,
+					canSetShareAccess: false,
+					contentPreviewProps:contentPreviewProps,
+					logoUrl:"white.png"
+					/* Enable annotations in preview */
+					
+				  };
+				  
+				  /* BoxAnnotations */
+				
+				  
+				  /* Box Preview */
+				  var contentExplorer = new Box.ContentExplorer();
+				  
+				  /* Set annotation into previewer */
+				 // options["boxAnnotations"] = annotations;
+				  
+				  contentExplorer.show(folderId, accessToken, options);
+
+			});
+
+		});
+		
+	</script>
+</head>
+
+<body>
+	<div class="tab-pane show active mts" role="tabpanel" id="explorer">
+
+		<div style="height:800px;width:1000px;display:block" class="pcontainer"></div>
+	</div>
+</body>
+
+</html>
