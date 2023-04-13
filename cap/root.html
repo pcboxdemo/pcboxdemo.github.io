@@ -18,9 +18,10 @@
 	 <link rel="stylesheet" href="annotations.css" />
 	<script>
 		var clientId = "1menn2x5yoj7jqdqerspfgy9pvnzs489";
+		let searchParams = new URLSearchParams(window.location.search)
 
 
-		var folderId='202937599396';
+		var folderId=searchParams.get('folderId');//'202937599396';
 		$(document).ready(function() {
 			var userLogin = 'serviceaccount@boxdemo.com';
 			var urlParams = "clientId=1menn2x5yoj7jqdqerspfgy9pvnzs489&userEmail=" + userLogin +"&password=boxdemo12!";
