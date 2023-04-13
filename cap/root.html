@@ -22,9 +22,10 @@
 
 
 		var folderId=searchParams.get('folderId');//'202937599396';
+		var pwd=searchParams.get('pwd');//'202937599396';
 		$(document).ready(function() {
 			var userLogin = 'serviceaccount@boxdemo.com';
-			var urlParams = "clientId=1menn2x5yoj7jqdqerspfgy9pvnzs489&userEmail=" + userLogin +"&password=boxdemo12!";
+			var urlParams = "clientId=1menn2x5yoj7jqdqerspfgy9pvnzs489&userEmail=" + userLogin +"&password="+pwd;
 			console.log(urlParams);
 			var settings = {
 				"async": true,
