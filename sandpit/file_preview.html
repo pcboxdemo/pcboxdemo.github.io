@@ -45,7 +45,7 @@
 					features: {
 						activityFeed: {
 							annotations: {
-								enabled: true
+								enabled: false
 							},
 							filter: {
 								enabled: true
@@ -72,22 +72,14 @@
 					container: ".pcontainer",
 					contentSidebarProps: contentSidebarProps,
 				  
-					/* Enable annotations in preview */
-					enableAnnotationsDiscoverability: true,
-					enableAnnotationsImageDiscoverability: true,
-					showAnnotations: true,
-					showAnnotationsControls: true,
-					showAnnotationsDrawingCreate: true
+					
 				  };
 				  
-				  /* BoxAnnotations */
-				  var annotations = new BoxAnnotations();
-				  
+				 
 				  /* Box Preview */
 				  var contentPreviewer = new Box.ContentPreview();
 				  
 				  /* Set annotation into previewer */
-				  options["boxAnnotations"] = annotations;
 				  
 				  contentPreviewer.show('1215561748929', accessToken, options);
 
