@@ -246,19 +246,23 @@
                     if (filter.type == 'date') {
                         if ($('#' + filter.key + '_date').val() != '') {
                             query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key + '_date').val() + "T00:00:00Z" + '"';
+                            delim = " , ";
                             if ($(".filterD").val() == 'Between') {
                                 query_params += delim + '"' + filter.key + '_end":"' + $('#' + filter.key + '_date_end').val() + "T00:00:00Z" + '"';
+                                delim = " , ";
                             }
                         }
                     }
                     else if ($('#' + filter.key).val()!='' && filter.type=='string') {
                         query_params += delim + '"' + filter.key + '":"' + $('#' + filter.key).val() + '"';
+                        delim = " , ";
                     }
                     else if($('#' + filter.key).val()!='' && filter.type=='float') {
                         query_params += delim + '"' + filter.key + '":' + $('#' + filter.key).val() + '';
+                        delim = " , ";
                     }
 
-                    delim = " , ";
+                    
                 }
             });
             query_params += '}';
