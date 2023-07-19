@@ -271,7 +271,7 @@
                             delim = " AND ";
                         }
                     }
-                    else if (filter.type == 'date' && $('#' + filter.key + '_date').val() != '') {
+                    else if (filter.type == 'date' && $('#' + filter.key).val() != 'All' && $('#' + filter.key + '_date').val() != '') {
 
                         var symbol;
                         if ($('#' + filter.key).val() == 'On') {
