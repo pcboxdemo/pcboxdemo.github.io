@@ -109,6 +109,7 @@
                   loadTab(tab, false);
 
               });
+              
               $(".datepicker").change(function () {
 
                   if (loaded) {
@@ -196,10 +197,15 @@
             $(".filterD").change(function () {
 
                 $(".datepicker").val("");
-                if ($(this).val() == 'All') {
+                if ($(".filterD").val() == 'All') {
                     $(".datepicker").hide();
                     $(".input-containerStart").hide();
                     $(".input-containerEnd").hide();
+                    if (loaded) {
+                        contentExplorer.clearCache();
+                        contentExplorer.hide();
+                    }
+                    loadTab(tab, false);
 
                 }
                 else if ($(this).val() == 'Between') {
