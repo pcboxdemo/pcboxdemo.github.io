@@ -1,9 +1,0 @@
-
-  {
-      "page":"metadataform.html",
-      "title":"Form Upload",
-      "templateKey":"workOrders",
-      "eid":"284349379",
-      "boxId":"103861207039",
-      "hideFields":"confidenceScore,status"
-  }
