@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Box Demo</title>
+    <script src="https://code.jquery.com/jquery-3.5.0.min.js"></script>
+
+    <!-- Bootstrap icons-->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="css/styles.css" rel="stylesheet" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css"
+    />
+
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+       //Add Box Folder ID here     
+      var folderID = "";
+      //Add Box Access Token here - you can use https://developer.box.com/guides/authentication/tokens/developer-tokens/
+      var accessToken = "";
+    
+        // !! important !! 
+        //
+        //Remember to add your host to the CORS exceptions in your app
+        // See https://developer.box.com/guides/security/cors/#enabling-cors-for-your-domain
+
+
+      $(document).ready(function () {
+        //Load Box folder items 
+        $.ajax({
+          url:
+            "https://api.box.com/2.0/folders/" +
+            folderID +
+            "/items?fields=id,name,size,modified_at,owned_by",
+          method: "get",
+          headers: {
+            Authorization: "Bearer " + accessToken,
+          },
+        }).done(function (data) {
+            //Load the items returned in the data table
+          $("#dtBasicExample").dataTable({
+            aaData: data.entries,
+            columns: [
+              { data: "name" },
+              {
+                data: null,
+                render: function (data, type, row) {
+                    //Render file size human readable
+                  return humanFileSize(row.size, true);
+                },
+              },
+              {
+                data: null,
+                render: function (data, type, row) {
+                    //Render date human readable
+                  return humanDate(row.modified_at);
+                },
+              },
+              {
+                data: null,
+                render: function (data, type, row) {
+                  return row.owned_by.name;
+                },
+              },
+            ],
+            columnDefs: [
+              {
+                targets: 0,
+                className: "dt-body-left",
+              },
+              {
+                targets: 1,
+                className: "dt-body-right",
+              },
+              {
+                targets: 2,
+                className: "dt-body-right",
+              },
+              {
+                targets: 3,
+                className: "dt-body-left",
+              },
+            ],
+          });
+        });
+      });
+
+      function humanDate(string) {
+        const justNow = Date.parse(string);
+        var date = new Date(justNow);
+        return date.toLocaleDateString();
+      }
+      function humanFileSize(bytes, dp = 1) {
+        const thresh = 1000;
+
+        if (Math.abs(bytes) < thresh) {
+          return bytes + " B";
+        }
+
+        const units = ["KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+        let u = -1;
+        const r = 10 ** dp;
+
+        do {
+          bytes /= thresh;
+          ++u;
+        } while (
+          Math.round(Math.abs(bytes) * r) / r >= thresh &&
+          u < units.length - 1
+        );
+
+        return bytes.toFixed(dp) + " " + units[u];
+      }
+    </script>
+    <style>
+      .dataTables_wrapper {
+        padding-top: 5px !important;
+        padding-bottom: 5px !important;
+      }
+    </style>
+  </head>
+  <body class="d-flex flex-column h-100">
+    <table
+      id="dtBasicExample"
+      class="table table-striped table-bordered"
+      cellspacing="0"
+      width="100%"
+    >
+      <thead>
+        <tr>
+          <th class="th-sm">Name</th>
+          <th class="th-sm">Size</th>
+          <th class="th-sm">Modified</th>
+          <th class="th-sm">Owner</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </body>
+</html>

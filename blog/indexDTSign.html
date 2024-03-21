@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <title>Box Demo</title>
+        <script src="https://code.jquery.com/jquery-3.5.0.min.js"></script>
+
+        <!-- Favicon-->
+        <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+        <!-- Bootstrap icons-->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" />
+        <!-- Core theme CSS (includes Bootstrap)-->
+        <link href="css/styles.css" rel="stylesheet" />
+
+        
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css" />
+  
+  <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
+  <script>
+    $(document).ready(function () {
+        $.ajax({
+            url: 'https://api.box.com/2.0/sign_requests',
+            method:'get',
+            headers: {
+                'Authorization':'Bearer 1!Ax21CrUQMWc9wjdG_O0YFaoEusTfpIrMnRVEASFQqV1w2eCQqEgGwGzDKgkSy-U7O9XmEefEdR3PPh_JLzQPT6xZqx0NcCBP99iXdVAMiipPSY2jCRsyQdQ9-2FmY1oDdSYOvzTFbDym2fLTPtH_zXELCDSnt6KNczZZgb7sOKyBEkv21udIL2wXQWDxwIcCHBfPgTeS6Wgxpus7KqoJlm-HZ4YlVpRuK9GK2Op6LwOazgTFgimt6OJL6d6rLN_7amHnAa3UxyR7c6l1Z1qhIkHztb51MjQZaUxcDki-BUKuvw2_iUBJoLaVr6Qi9Ix9Ycgm4vBHzqcvyjpMPIdEL3RxuqcuYYCm0x9HsaLy9LzF2VRtWaxyrLwHOh2er_UGPbbAMVFdE-khkx1hXA_foadgCXmSgVHN1TgIX0mKssXDLB98QrVhitxsI8WMxoyt6fiW1ZT9ekKvoHD2AuIZY5UVF57vZwesFWt4lJP6snnj5KYRfjPMcJ0SRbimatIi14D4_N10xBIiM0ic5A__U0FeskEmTkRetZRF4HTlwVtvQLktOf4xOUGGnlLxKRL9L2pUHC4q9It5evAz35MqRX6yoIJQxPEZv-tuLUELFgpYmrMGxXkRyB8wJkmGQX9j7TaMi_AL0N0P42Edt6tN9fsPNkBhRw2tN8elzNoh9apaDgtXB9Rjs6fmCjxQSUl2Crke-Y5A1xnfs_7Bl4j0AqQGmiKuOBBEFZDgBtyKwTFZ-aV2sF05_koktrKLYX2Ef0SfPXfduR3mtcfxQjV8sPlp3_KUP28Wt40Xs93j45tuY6D9t3O9SKswrmM.'
+            }
+        }).done( function(data) {
+            $('#dtBasicExample').dataTable( {
+                
+                "aaData": data.entries,
+                "columns": [
+                    { "data": "name" },
+                    
+                    { "data": "status" },
+
+                    {  data: 'sign_files.files[]',
+                    render: function ( data , row ) {
+                            var output='';
+                             $.each(data, function(index,item) {
+                              
+                              output+= data[index].name;
+                            });
+                           return output;
+                         } },
+                         {  data: 'signers[]',
+                         render: function ( data , row ) {
+                                 var output='';
+                                  $.each(data, function(index,item) {
+                                   let dec ="empty";
+                                   if(data[index].signer_decision!=null) {
+                                    if(data[index].signer_decision.type=='signed') {
+                                        dec='signed (' + data[index].signer_decision.finalized_at + ')';
+                                    }
+                                    else {
+                                        dec='declined (' + data[index].signer_decision.finalized_at + ')';
+                                    }
+                                   }
+                                   else {
+                                        if(data[index].has_viewed_document) {
+                                            dec = 'viewed';
+                                        }
+                                        else {
+                                            dec = 'not viewed';
+                                        }
+                                   }
+                                   output+= 'Email:' + data[index].email+'<br/>Role:'+data[index].role + '<br/>Signer Status:' + dec + '<br/><br/>';;
+                                 });
+                                return output;
+                              } },
+                ],
+                columnDefs: [
+                    {
+                        targets: 0,
+                        className: 'dt-body-left'
+                    },
+                    {
+                        targets: 1,
+                        className: 'dt-body-left'
+                    },
+                    
+                    {
+                        targets: 2,
+                        className: 'dt-body-left'
+                    },
+                    {
+                        targets: 3,
+                        className: 'dt-body-left smaller'
+                    }
+                ]
+            })
+        })
+    });
+
+        function humanDate(string) {
+            const justNow = Date.parse(string);
+            var date = new Date(justNow)
+            return date.toLocaleDateString();
+        }
+       
+  </script>
+  <style>
+    .dataTables_wrapper {
+        padding-top:5px !important;
+        padding-bottom:5px !important
+    }
+    .smaller {
+        font-size:small;
+    }
+  </style>
+    </head>
+    <body class="">
+        <main class="flex-shrink-0">
+            <!-- Navigation-->
+          
+            <!-- Header-->
+            <header class="bg-dark py-5">
+                <div class="container px-5">
+                    <div class="container px-5">
+                        <div class="row gx-5 align-items-center justify-content-center">
+                            <div class="col-lg-8 col-xl-8 col-xxl-86">
+                                <div class="my-7 text-center text-xl-start">
+                                    <h1 class="display-6 fw-bolder text-white mb-3">Box Sign Requests in custom table</h1>
+                               
+                            </div>
+                        </div>
+                        <div class="col-xl-12 col-xxl-12 d-none d-xl-block text-center" style="background-color:white !important">   
+                            <table id="dtBasicExample" class="table table-striped table-bordered" cellspacing="0" width="100%" >
+                                <thead>
+                                  <tr>
+                                    <th class="th-sm">Name
+                                    </th>
+                                    <th class="th-sm">Status
+                                    </th>
+                                    <th class="th-sm">File Name
+                                    </th>
+                                    <th class="th-sm">Signers
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                 
+                                  
+                              </table>                            
+                        </div>
+                    </div>
+                </div>
+            </header>
+          
+        <!-- Bootstrap core JS-->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Core theme JS-->
+        <script src="js/scripts.js"></script>
+    </body>
+</html>
