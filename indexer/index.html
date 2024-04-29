@@ -33,7 +33,7 @@ var sl;
     var params = new URLSearchParams(window.location.search);
     var id = params.get('id');
     $.ajax({
-      method: 'post',
+      method: 'get',
       url:"https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
       data: { authCode: params.get('auth'), id: params.get('id'), clientId: params.get('clientId') },
       crossDomain: true,
