@@ -55,11 +55,13 @@ var sl;
         token = response.token;
       }
     });
-
+    $("#pdfgen").click(function() {
+      const element = document.getElementById('index');
+      // Choose the element and save the PDF for your user.
+      html2pdf().from(element).save();
+    })
     $("#generate").click( function () {
       var radioValue = $("input[name='sl']:checked").val();
-      $("#buttons").hide();
-      $("#pdfbutton").show();
       
       sl=radioValue;
       getItems(id,id)
@@ -139,11 +141,7 @@ var sl;
           }
         });
 
-        $("#pdfgen").click(function() {
-          const element = document.getElementById('index');
-				  // Choose the element and save the PDF for your user.
-				  html2pdf().from(element).save();
-        })
+       
    
     }
     
@@ -184,9 +182,8 @@ var sl;
 
   <div class="container" >
     <div class="row">
-      <div id="pdfbutton" style="display:none;">
-        <input class="form-check-input" type="button" type="button" id="pdfgen" value="Download PDF"/>
-      </div>
+  
+      
       <div id="buttons">
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" checked value="None" />None
@@ -206,6 +203,10 @@ var sl;
         </div>
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="button" type="button" id="generate" value="Generate"/>
+          <label class="form-check-label" for="flexCheckChecked"></label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="button" type="button" id="pdfgen" value="Download PDF"/>
           <label class="form-check-label" for="flexCheckChecked"></label>
         </div>
       </div>
