@@ -56,22 +56,9 @@ var sl;
       var radioValue = $("input[name='sl']:checked").val();
       $("#buttons").hide();
       sl=radioValue;
-      $.ajax({
-          method: 'get',
-          url: url + "?" + urlParams, crossDomain: true,
-          cache: false,
-          success: function (response) {
-              token = response.userToken;
-              getItems(id,0)
-          },
-          error: function (err) {
-              console.log(JSON.stringify(err));
-              console.log("error:" + err.message);
-              $("#loader").text(err.responseText);
-
-          }
-        });
-      });
+      getItems(id,0)
+    });
+     
   });
 	  function getItems(folderId,parentId) {
       console.log("get " + folderId + " with parent:" + parentId);
