@@ -1,0 +1,217 @@
+<html>
+
+<head>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+<style>
+ .uf {
+    list-style-image: url('Folder-32.png');
+    list-style-type: none;
+ }
+ .pf {
+  list-style-image: none;
+    margin-left:-10px;
+    list-style-type: none;
+ }
+ .file {
+  list-style-image: none;
+    
+    list-style-type: none;
+ }
+ .panel-body {
+ 	height:auto !important;
+ 	}
+ .remove {
+ 	cursor:pointer;
+ }
+ </style>
+ <script>
+var token;
+var sl;
+  $(document).ready(function () {
+    var params = new URLSearchParams(window.location.search);
+    $.ajax({
+      method: 'post',
+      url:"https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+      data: { authCode: params.get('auth'), id: params.get('id'), clientId: params.get('clientId') },
+      crossDomain: true,
+      cache: false,
+      beforeSend: function () {
+        $('#loader').show();
+        $(".container-fluid").hide();
+      },
+      complete: function () {
+        $('#loader').hide();
+        $(".container-fluid").show();
+
+      },
+      success: function (response) {
+        token = response.userToken;
+      }
+    });
+
+    $("#generate").click( function () {
+      var radioValue = $("input[name='sl']:checked").val();
+      $("#buttons").hide();
+      sl=radioValue;
+      $.ajax({
+          method: 'get',
+          url: url + "?" + urlParams, crossDomain: true,
+          cache: false,
+          success: function (response) {
+              token = response.userToken;
+              getItems(id,0)
+          },
+          error: function (err) {
+              console.log(JSON.stringify(err));
+              console.log("error:" + err.message);
+              $("#loader").text(err.responseText);
+
+          }
+        });
+      });
+  });
+	  function getItems(folderId,parentId) {
+      console.log("get " + folderId + " with parent:" + parentId);
+       $.ajax({
+         url: 'https://api.box.com/2.0/folders/' + folderId + '/items?fields=id,name,type,owned_by',
+         type: 'get',
+         headers: {
+           "Authorization":"Bearer " + token,
+           "Content-Type":"application/json"
+         },
+         dataType: 'json',
+         success: function(response) {
+          var pf = $("<ul class='file'></ul");
+           $.each(response.entries, function(k, data) {
+            //console.log(data.name + "::" + data.id);
+             if(data.type=='folder') {
+               
+               var p = $("<ul id="  +data.id + "></ul");
+               p.append($("<li class='uf'  parent=" + parentId + ">"+data.name + "</li>"));
+               console.log("appending " + data.name + " to " + folderId);
+               $("#" + folderId).append(p);
+               window.setTimeout(100,getItems(data.id,folderId));
+               window.setTimeout(200,getFiles(data.id,folderId));
+             }
+           
+           });
+           
+         }});
+     }
+
+     function  getFiles(folderId,parentId) {
+      $.ajax({
+        url: 'https://api.box.com/2.0/folders/' + folderId + '/items?fields=id,name,type,shared_link',
+        type: 'get',
+        headers: {
+          "Authorization":"Bearer " + token
+        },
+        success: function(response) {
+          var p = $("<ul></ul");
+          var appendIt=false;
+          $.each(response.entries, function(k, data) {
+   
+            if(data.type=='file') {
+              appendIt=true;
+              if(sl=='None') {
+
+                p.append($("<li class='pf' id='u_" + folderId + "'><img height=16 width=16 src='iconsbox/" + data.name.split('.').pop().toLowerCase() + ".svg'/> "+data.name +"</li>"));
+              }
+              else {
+                //generate shared link then apply?Rate limits?
+                var link;                
+                if(data.shared_link==null || data.shared_link.access!=sl) {
+                  link = createSharedLink(data.id,sl,data.name);
+                  p.append($("<li class='pf' id='u_" + folderId + "'><img height=16 width=16 src='iconsbox/" + data.name.split('.').pop().toLowerCase() + ".svg'/> "+
+                    "<a id=l_"+data.id + " href=" + link + " target=_blank>Generating link..</li>"));
+                }
+                else {
+                  link = data.shared_link.url;
+                  p.append($("<li class='pf' id='u_" + folderId + "'><img height=16 width=16 src='iconsbox/" + data.name.split('.').pop().toLowerCase() + ".svg'/> "+
+                    "<a id=l_"+data.id + " href=" + link + " target=_blank>" + data.name +"</li>"));
+                }
+                
+
+              }
+            }
+            });
+            if(appendIt) {
+              $("#" + folderId).append(p);
+            }
+            
+          }
+        });
+   
+    }
+    
+    function getIcon(element) {
+      if (element.type == 'file') {
+        return "list-style-image: url('iconsbox/'" + element.name.split('.').pop().toLowerCase() + "'.svg')";
+      }
+      else if (element.type == 'folder') {
+        
+          return ',"icon":"./img/iconsbox/folder.svg"';
+        
+      }
+      
+      return '';
+    }
+    function createSharedLink(fileId,type,name) {
+      $.ajax({
+        url: 'https://api.box.com/2.0/files/' + fileId + '?fields=shared_link',
+        data: JSON.stringify({"shared_link":{
+          "access":type}
+        }),
+        method:"put",
+        headers: {
+          "Authorization":"Bearer " + token
+        },
+        success: function(response) {
+          console.log("seting link " + response.shared_link.url);
+          $("#l_" + fileId).attr("href",response.shared_link.url);
+          $("#l_" + fileId).text(name);
+        }
+      })
+    };
+    
+ </script>
+</head>
+
+<body>
+
+  <div class="container" >
+    <div class="row" id="buttons">
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" checked value="None" />None
+        <label class="form-check-label" for="flexCheckChecked"></label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" value="collaborators" />Only collaborators
+        <label class="form-check-label" for="flexCheckChecked"></label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" value="company" />Company
+        <label class="form-check-label" for="flexCheckChecked"></label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" value="open" />Public
+        <label class="form-check-label" for="flexCheckChecked"></label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="button" type="button" id="generate" value="Generate"/>
+        <label class="form-check-label" for="flexCheckChecked"></label>
+      </div>
+
+    </div>
+       <div class="row">
+        <div class="panel-body">
+        	<ul class="init uf" id="260890922027">Deal rooms</ul>
+        </div>
+      
+    
+
+   </div>
+</body>
+
+</html>
