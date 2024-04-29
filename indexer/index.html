@@ -32,6 +32,7 @@ var sl;
   $(document).ready(function () {
     var params = new URLSearchParams(window.location.search);
     var id = params.get('id');
+    $("#TopLevel").attr("id",id);
     $.ajax({
       method: 'get',
       url:"https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
@@ -56,7 +57,7 @@ var sl;
       var radioValue = $("input[name='sl']:checked").val();
       $("#buttons").hide();
       sl=radioValue;
-      getItems(id,0)
+      getItems(id,id)
     });
      
   });
@@ -195,7 +196,7 @@ var sl;
     </div>
        <div class="row">
         <div class="panel-body">
-        	<ul class="init uf" id="260890922027">Top Level</ul>
+        	<ul class="init uf" id="TopLevel">Top Level</ul>
         </div>
       
     
