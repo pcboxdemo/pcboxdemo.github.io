@@ -3,6 +3,9 @@
 <head>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
 <style>
  .uf {
     list-style-image: url('Folder-32.png');
@@ -56,12 +59,15 @@ var sl;
     $("#generate").click( function () {
       var radioValue = $("input[name='sl']:checked").val();
       $("#buttons").hide();
+      $("#pdfbutton").show();
+      
       sl=radioValue;
       getItems(id,id)
     });
      
   });
 	  function getItems(folderId,parentId) {
+      var i =0;
       console.log("get " + folderId + " with parent:" + parentId);
        $.ajax({
          url: 'https://api.box.com/2.0/folders/' + folderId + '/items?fields=id,name,type,owned_by',
@@ -132,6 +138,12 @@ var sl;
             
           }
         });
+
+        $("#pdfgen").click(function() {
+          const element = document.getElementById('index');
+				  // Choose the element and save the PDF for your user.
+				  html2pdf().from(element).save();
+        })
    
     }
     
@@ -171,31 +183,37 @@ var sl;
 <body>
 
   <div class="container" >
-    <div class="row" id="buttons">
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" checked value="None" />None
-        <label class="form-check-label" for="flexCheckChecked"></label>
+    <div class="row">
+      <div id="pdfbutton" style="display:none;">
+        <input class="form-check-input" type="button" type="button" id="pdfgen" value="Download PDF"/>
       </div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" value="collaborators" />Only collaborators
-        <label class="form-check-label" for="flexCheckChecked"></label>
+      <div id="buttons">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" checked value="None" />None
+          <label class="form-check-label" for="flexCheckChecked"></label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" value="collaborators" />Only collaborators
+          <label class="form-check-label" for="flexCheckChecked"></label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" value="company" />Company
+          <label class="form-check-label" for="flexCheckChecked"></label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" value="open" />Public
+          <label class="form-check-label" for="flexCheckChecked"></label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="button" type="button" id="generate" value="Generate"/>
+          <label class="form-check-label" for="flexCheckChecked"></label>
+        </div>
       </div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" value="company" />Company
-        <label class="form-check-label" for="flexCheckChecked"></label>
-      </div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="sl" id="flexCheckChecked" value="open" />Public
-        <label class="form-check-label" for="flexCheckChecked"></label>
-      </div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="button" type="button" id="generate" value="Generate"/>
-        <label class="form-check-label" for="flexCheckChecked"></label>
-      </div>
+
 
     </div>
        <div class="row">
-        <div class="panel-body">
+        <div class="panel-body" id="index">
         	<ul class="init uf" id="TopLevel">Top Level</ul>
         </div>
       
