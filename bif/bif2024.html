@@ -32,7 +32,7 @@
             var params = new URLSearchParams(window.location.search);
             boxId = params.get('id');
             $.ajax({
-            url:'<URL TO TOKEN EXCHANGE FUNCTION>',
+            url:'https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator',
             data: { authCode: params.get('auth'), id: params.get('id'), clientId: params.get('clientId') },
                 cache: false,
                 success: function (response) {
@@ -90,14 +90,14 @@
                         response.entries.forEach(function(entry) {
                             let row = [];
                             row.push(entry.created_at);
-                            row.push(entry.metadata.enterprise_<eid>.boxImpactFundApplication.approvalStage1);
+                            row.push(entry.metadata.enterprise_47757585.boxImpactFundApplication.approvalStage1);
                             row.push(entry.uploader_display_name);
                             row.push('=HYPERLINK("https://app.box.com/file/' + entry.id + '")');
-                            row.push(entry.metadata.enterprise_<eid>.boxImpactFundApplication.applicantName);
-                            row.push(entry.metadata.enterprise_<eid>.boxImpactFundApplication.organizationCategory);
-                            row.push(entry.metadata.enterprise_<eid>.boxImpactFundApplication.organizationName);
-                            row.push(entry.metadata.enterprise_<eid>.boxImpactFundApplication.regions);
-                            row.push(entry.metadata.enterprise_<eid>.boxImpactFundApplication.totalBudgetFromLastYear);
+                            row.push(entry.metadata.enterprise_47757585.boxImpactFundApplication.applicantName);
+                            row.push(entry.metadata.enterprise_47757585.boxImpactFundApplication.organizationCategory);
+                            row.push(entry.metadata.enterprise_47757585.boxImpactFundApplication.organizationName);
+                            row.push(entry.metadata.enterprise_47757585.boxImpactFundApplication.regions);
+                            row.push(entry.metadata.enterprise_47757585.boxImpactFundApplication.totalBudgetFromLastYear);
                             csv.push(row);
                         });
                         let csvContent = "data:text/csv;charset=utf-8,";
@@ -127,17 +127,17 @@
                 "created_at",
                 "name",
                 "uploader_display_name",
-                "metadata.enterprise_<eid>.boxImpactFundApplication.applicantName",
-                "metadata.enterprise_<eid>.boxImpactFundApplication.approvalStage",
-                "metadata.enterprise_<eid>.boxImpactFundApplication.organizationName",
-                "metadata.enterprise_<eid>.boxImpactFundApplication.organisationCategory",
-                "metadata.enterprise_<eid>.boxImpactFundApplication.totalBudgetFromLastYear",
-                "metadata.enterprise_<eid>.boxImpactFundApplication.regions",
-                "metadata.enterprise_<eid>.boxImpactFundApplication.approvalStage1",
+                "metadata.enterprise_47757585.boxImpactFundApplication.applicantName",
+                "metadata.enterprise_47757585.boxImpactFundApplication.approvalStage",
+                "metadata.enterprise_47757585.boxImpactFundApplication.organizationName",
+                "metadata.enterprise_47757585.boxImpactFundApplication.organisationCategory",
+                "metadata.enterprise_47757585.boxImpactFundApplication.totalBudgetFromLastYear",
+                "metadata.enterprise_47757585.boxImpactFundApplication.regions",
+                "metadata.enterprise_47757585.boxImpactFundApplication.approvalStage1",
                 ]
            //Actual query, filtering on approval stage
             mdQuery = {
-                from: "enterprise_<eid>.boxImpactFundApplication",
+                from: "enterprise_47757585.boxImpactFundApplication",
                 query: "approvalStage1=:approvalStageArg",
                 limit: 100,
                 query_params: {"approvalStageArg":approvalStage},
@@ -148,11 +148,11 @@
             const fieldsToShow = [
                 { key: 'created_at', displayName:'Submission Date',canEdit: false },
                 { key: 'uploader_display_name', displayName:'Email',canEdit: false },
-                { key: 'metadata.enterprise_<eid>.boxImpactFundApplication.applicantName',displayName:'Applicant Name', canEdit: false },
-                { key: 'metadata.enterprise_<eid>.boxImpactFundApplication.organizationName',displayName:'Organization Name',  canEdit: false },
-                { key: 'metadata.enterprise_<eid>.boxImpactFundApplication.organisationCategory',displayName:'Organization Category',  canEdit: false },
-                { key: 'metadata.enterprise_<eid>.boxImpactFundApplication.totalBudgetFromLastYear',displayName:'Last years budget',  canEdit: false },
-                { key: 'metadata.enterprise_<eid>.boxImpactFundApplication.regions',displayName:'Regions',  canEdit: false },
+                { key: 'metadata.enterprise_47757585.boxImpactFundApplication.applicantName',displayName:'Applicant Name', canEdit: false },
+                { key: 'metadata.enterprise_47757585.boxImpactFundApplication.organizationName',displayName:'Organization Name',  canEdit: false },
+                { key: 'metadata.enterprise_47757585.boxImpactFundApplication.organisationCategory',displayName:'Organization Category',  canEdit: false },
+                { key: 'metadata.enterprise_47757585.boxImpactFundApplication.totalBudgetFromLastYear',displayName:'Last years budget',  canEdit: false },
+                { key: 'metadata.enterprise_47757585.boxImpactFundApplication.regions',displayName:'Regions',  canEdit: false },
             ];
             loaded = true;
             const defaultView = "metadata";
