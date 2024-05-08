@@ -37,6 +37,8 @@
                 cache: false,
                 success: function (response) {
                     token = response.token;
+                    $("#loader").hide();
+                    $(".container-fluid").show();
                     //Load the initial data - defaults to new applications
                     loadData('Not Screened');
                 },
