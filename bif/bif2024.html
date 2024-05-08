@@ -36,7 +36,7 @@
             data: { authCode: params.get('auth'), id: params.get('id'), clientId: params.get('clientId') },
                 cache: false,
                 success: function (response) {
-                    token = response.userToken;
+                    token = response.token;
                     //Load the initial data - defaults to new applications
                     loadData('Not Screened');
                 },
