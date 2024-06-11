@@ -10,8 +10,9 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script>
         $(document).ready(function () {
-            localStorage.setItem("id","124092627842");
-            sessionStorage.setItem("id","124092627842");
+            var params = new URLSearchParams(window.location.search);
+            
+            sessionStorage.setItem("id",params.get("id"));
             window.location='https://account.box.com/api/oauth2/authorize?client_id=fgyfleigrxou1kxqd619hx9afqc9nxty&response_type=code&id=124092627842'
         });
     </script>
