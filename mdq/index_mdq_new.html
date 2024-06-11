@@ -67,10 +67,10 @@
             if (url == null) {
               url = "https://box-tokengenerator-v2.herokuapp.com/mdqtoken";
             }
-            var clientId = params.get('clientId');//"of926g5v0mqi50dpiislr1avju7h3jl8";
+            var clientId = params.get('clientId');
             boxId = params.get('id');
             if (boxId == null) {
-              boxId = '0';
+                boxId = sessionStorage.getItem("id");
             }
             var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId + (ptoken != null ? "&token=" + ptoken : "");
               $.ajax({
