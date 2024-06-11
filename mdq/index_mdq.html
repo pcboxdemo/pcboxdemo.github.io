@@ -70,7 +70,7 @@
             var clientId = params.get('clientId');//"of926g5v0mqi50dpiislr1avju7h3jl8";
             boxId = params.get('id');
             if (boxId == null) {
-              boxId = '0';
+              boxId = sessionStorage.getItem("id");
             }
             var urlParams = "id=" + boxId + "&code=" + code + "&clientId=" + clientId + (ptoken != null ? "&token=" + ptoken : "");
               $.ajax({
