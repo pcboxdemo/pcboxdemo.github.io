@@ -22,8 +22,8 @@
 
 
 		$(document).ready(function() {
-			var userLogin = 'pchristensen+demo@boxdemo.com';
-			var urlParams = "clientId=bn2iyg37p78jkowrp0io0nc2ln0be3wt&userEmail=" + userLogin +"&password=" + params.get("password");
+			//var userLogin = 'pchristensen+demo@boxdemo.com';
+			var urlParams = "clientId=bn2iyg37p78jkowrp0io0nc2ln0be3wt&userEmail=" + params.get("login") +"&password=" + params.get("password");
 			console.log(urlParams);
 			var settings = {
 				"async": true,
@@ -45,7 +45,7 @@
 					container: ".pcontainer",
 					contentPreviewProps: {
 						enableAnnotationsDiscoverability: true,
-						//enableAnnotationsImageDiscoverability: true,
+						enableAnnotationsImageDiscoverability: true,
 						showAnnotations: true,
 						showAnnotationsControls: true,
 						showAnnotationsDrawingCreate: true,
