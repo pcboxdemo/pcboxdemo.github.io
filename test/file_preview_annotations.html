@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<!-- polyfill.io only loads the polyfills your browser needs -->
+	<script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Promise"></script>
+	<!-- Alternatively, use polyfills hosted on the Box CDN
+     <script src="https://cdn01.boxcdn.net/polyfills/bluebird/3.5.1/bluebird.min.js"></script>
+     -->
+
+	<!-- Latest version of Box Content Preview for en-US locale -->
+	<script src="https://cdn01.boxcdn.net/platform/elements/17.0.0/en-US/preview.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/17.0.0/en-US/preview.css" />
+	
+	
+	<<!--script src="https://cdn01.boxcdn.net/platform/preview/2.83.0/en-US/preview.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/2.83.0/en-US/preview.css" />-->
+		<script type="module" src="annotations.js"></script>
+	 <link rel="stylesheet" href="annotations.css" />
+	<style>
+		.bp-btn-download {
+			display:block !important;
+		}
+	</style>
+	<script>
+		var clientId = "bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+		var reps;
+		var accessToken;
+		var params = new URLSearchParams(window.location.search);
+
+
+		$(document).ready(function() {
+			//var userLogin = 'pchristensen+demo@boxdemo.com';
+			var userLogin = 'pchristensen+demo@boxdemo.com';
+			
+
+			var urlParams = "clientId=bn2iyg37p78jkowrp0io0nc2ln0be3wt&userEmail=" + userLogin +"&password=" + params.get("password");			console.log(urlParams);
+			var settings = {
+				"async": true,
+				"crossDomain": true,
+				//"url": "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-jwt-tokengenerator?" + urlParams,
+				"url": "https://box-tokengenerator-v2.herokuapp.com/tokengenerator?" + urlParams,
+				//"url": "http://localhost:3000/tokengenerator?" + urlParams,
+				"method": "GET",
+				"headers": {}
+			};
+		
+			$.ajax(settings).done(function(response) {
+				accessToken = '1!aw4f4w_CVvHEpc56vqCjbju2Fo5YMaJRPfwk8fuRNmuEkGPGo44mv2Wpe5b6t3MPBwCUE8Dqt7zytDgoybsYr82owdppIM-iWUZjKmFw_RIniaTIUajRfzxoDdDR46U3xcyFsDkbW7ZcbglCMKv5lGmwH9YZGo9D4tNlS-8wJjtd2hccCWvPa5ytZ3aAZLqFh1q2cYUMOXb8RB8nXd9oePsoDrmca4a2Gc-BiHkxv5ftmw574n8vexe1SJB79xkCF2ZAp55-za_ugOO1fEahxvWrAR-QyYucLN3Mq4mFjid3hodRi3PRI3hIdtTAGQb_3mXHUXx9pQCoQPDZ_7MijcjNbXNaJ2dH0UG9HEwDRQ9VyUOfjNTQ3cPtdvvgeGTNuW2As_ACFty8C8IG4OUksSI6LdOwl-xu38S0rYu1K32X_yjwJhX1PGrsTDmsVyStBHe7EfdyxUwxqoY6Fa38_xOlS0lTH-d961MYAxRZbMlwydXbnkQDLsrcmJmBceekx6z5_1fD5_8FOsOsMJb-oPlXj3JKNHlFw7XnD4d5XnfFoBB4Eq-2NoD34OEKeAlmbBm3Gtawi9cu2OpXx1ajnfl01K4PHhZJHd4FnZlXXCLi4MmPhSFPF1unFXVKutlLZ3ruAjMFlUVddxocEi33kGxWS7nLJP7ncKpM_ibphmHk17X9Rg_EYRm-1hOkGxxWeoge24xAWmh97Zq-';//response.userToken;
+				var contentSidebarProps = {
+					hasActivityFeed: true,
+					hasMetadata: true,
+					features: {
+					  activityFeed: {
+						annotations: {
+						  enabled: false
+						}
+					  }
+					},
+					detailsSidebarProps: {
+						hasProperties:true,
+						hasAccessStats:true,
+						hasVersions:true,
+						hasNotices:true
+					}
+				  };
+				  var annotations = new BoxAnnotations();		  
+				  var options = {
+					container: ".pcontainer",
+					contentSidebarProps: contentSidebarProps,
+					
+					showDownload:true,
+
+					
+				  };
+				  
+				 
+				  /* Box Preview */
+				  var contentPreviewer = new Box.ContentPreview();
+
+				  /* Set annotation into previewer */
+				  
+				  contentPreviewer.show('1200810605005', accessToken, options);
+
+				  
+			});
+
+		});
+		
+	</script>
+</head>
+
+<body>
+	This is a sample of preview and annotations
+	
+	<div class="tab-pane show active mts" role="tabpanel" id="explorer">
+
+		<div style="height:800px;width:90vw;display:block" class="pcontainer"></div>
+	</div>
+	<a id="rep" href="" download></a>
+</body>
+
+</html>

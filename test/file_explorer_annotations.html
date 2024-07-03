@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<!-- polyfill.io only loads the polyfills your browser needs -->
+	
+	<!-- Alternatively, use polyfills hosted on the Box CDN
+     <script src="https://cdn01.boxcdn.net/polyfills/bluebird/3.5.1/bluebird.min.js"></script>
+     -->
+
+	<!-- Latest version of Box Content Preview for en-US locale -->
+	<script src="https://cdn01.boxcdn.net/platform/elements/20.0.0/en-US/explorer.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/20.0.0/en-US/explorer.css" />
+	<script type="module" src="annotations.js"></script>
+	 <link rel="stylesheet" href="annotations.css" />
+	<script>
+		var clientId = "bn2iyg37p78jkowrp0io0nc2ln0be3wt";
+		var params = new URLSearchParams(window.location.search);
+
+
+		$(document).ready(function() {
+			var userLogin = 'pchristensen+demo@boxdemo.com';
+			var urlParams = "clientId=bn2iyg37p78jkowrp0io0nc2ln0be3wt&userEmail=" + userLogin +"&password=" + params.get("password");
+			console.log(urlParams);
+			var settings = {
+				"async": true,
+				"crossDomain": true,
+				//"url": "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-jwt-tokengenerator?" + urlParams,
+				"url": "https://box-tokengenerator-v2.herokuapp.com/tokengenerator?" + urlParams,
+				//"url": "http://localhost:7000/jwttokengenerator?" + urlParams,
+				"method": "GET",
+				"headers": {}
+			};
+			$.ajax(settings).done(function(response) {
+				accessToken = response.userToken;
+				  var annotations = new BoxAnnotations();
+				  
+				  
+				  /* Box Preview */
+				  var contentExplorer = new Box.ContentExplorer();
+				  contentExplorer.show('207825401684', accessToken, {
+					container: ".pcontainer",
+					contentPreviewProps: {
+						enableAnnotationsDiscoverability: true,
+						//enableAnnotationsImageDiscoverability: true,
+						showAnnotations: true,
+						showAnnotationsControls: true,
+						showAnnotationsDrawingCreate: true,
+						boxAnnotations:annotations,
+						contentSidebarProps: {
+							detailsSidebarProps: {
+							  hasNotices: true,
+							  hasProperties: true,
+							  hasAccessStats: true,
+							  hasVersions: true
+							},
+							hasActivityFeed: true,
+							hasSkills: true,
+							hasMetadata: true
+						  },features: {
+							  activityFeed: {
+								annotations: {
+								  enabled: true
+								}
+							  }
+							}
+					  	}
+					}
+				 
+				  
+				 
+				  );
+
+			});
+
+		});
+		
+	</script>
+</head>
+
+<body>
+	This is a sample of preview and annotations
+	<div class="tab-pane show active mts" role="tabpanel" id="explorer">
+
+		<div style="height:800px;width:95vw;display:block" class="pcontainer"></div>
+	</div>
+</body>
+
+</html>
