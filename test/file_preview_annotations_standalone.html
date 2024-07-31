@@ -9,15 +9,16 @@
 	<!-- polyfill.io only loads the polyfills your browser needs -->
 
 	<!-- Latest version of Box Content Preview for en-US locale -->
-	<script src="https://cdn01.boxcdn.net/platform/elements/20.0.0/en-US/preview.js"></script>
-	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/20.0.0/en-US/preview.css" />
-	<script type="module" src="./script.js"></script>
-
+	<script src="https://cdn01.boxcdn.net/platform/preview/2.108.0/en-US/preview.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/2.108.0/en-US/preview.css" />
+	
 	
 	<<!--script src="https://cdn01.boxcdn.net/platform/preview/2.83.0/en-US/preview.js"></script>
 	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/2.83.0/en-US/preview.css" />-->
 	
 	<script>
+		import boxAnnotations from 'https://cdn.skypack.dev/box-annotations@latest';
+
 		var clientId = "bn2iyg37p78jkowrp0io0nc2ln0be3wt";
 		var params = new URLSearchParams(window.location.search);
 
@@ -38,19 +39,19 @@
 			$.ajax(settings).done(function(response) {
 				accessToken = response.userToken;
 				
-				  var annotations = new BoxAnnotations();		  
+				    
 				
 				 
 				  /* Box Preview */
-				  var contentPreviewer = new Box.ContentPreview();
-									
+				  var contentPreviewer = new Box.Preview();
+				  var annotations = new Box.Annotations();							
 				
 					
 				  /* Set annotation into previewer */
 				  
 				  contentPreviewer.show('1200810605005', accessToken, {
 					container: ".pcontainer",
-					
+
 					enableAnnotationsDiscoverability: true,
 						enableAnnotationsImageDiscoverability: true,
 						showAnnotations: true,
@@ -74,14 +75,7 @@
 								}
 							  }
 							}
-						},
-						features: {
-							advancedContentInsights: {
-								isActive: true,
-								ownerEId: "47757585",
-								userId: "3561743217",
-							}
-						},
+						}
 				  });
 				  contentPreviewer.addListener('viewer', previewerViewer);
 				  contentPreviewer.addListener('load', previewerLoad);
