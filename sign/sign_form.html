@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Sign Form tester</title>
+	<!-- Bootstrap CSS -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>	<!-- polyfill.io only loads the polyfills your browser needs -->
+	<script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Promise"></script>
+	<!-- Latest version of Box Content Preview for en-US locale -->
+	<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css" />
+  <style>
+    code {
+      white-space: pre;
+      font-family: Consolas, monospace;
+    
+      .string {
+        color: maroon;
+      }
+      .number {
+        color: black;
+      }
+      .boolean,
+      .null {
+        color: blue;
+      }
+      .key {
+        color: teal;
+      }
+    }
+    .json {
+      resize: both;
+  overflow: hidden;
+      border-width: 1px;;
+      border-color: black;
+    }
+    .nav-tabs{
+      margin-bottom: 10px;;
+    }
+    html,body{
+      width:100%;
+      height:100%;
+      margin:0;
+      padding:0;
+    }
+    #block,#blockTwo{
+      
+      margin:0 auto;
+      
+    }
+    #block{
+      z-index:100;
+    }
+    #blockTwo{
+      background-color:green;
+    }
+    
+  </style>
+  <script src="defaultValues.js"></script>
+	<script>
+    var searchParams = new URLSearchParams(window.location.search);
+    var templateFieldMap = [];
+  var accessToken;
+  var parentFolderId;
+
+  var isFullscreen = false;
+
+		$(document).ready(function() {
+      $("#resp").click(function (){ 
+        console.log("clicked");
+          var prop = {};
+          var speed = 910;
+          if(!isFullscreen){ // MAXIMIZATION
+             prop.width = "100%";
+             prop.height = "100vh";
+             isFullscreen = true;
+            $("#resp").animate(prop,speed); 
+            setTimeout(function() { 
+              $("#resp").css("position","absolute");
+            }, 920);
+          }
+          else{         
+            prop.width = "50%";
+            prop.height = "250px";            
+            isFullscreen = false;
+            $("#resp").animate(prop,speed); 
+            setTimeout(function() { 
+              $("#resp").css("position","relative"); 
+            }, 920);
+          }
+          
+      });
+      $('#prefill').on('click', function() {
+        var filled = [];
+        $('input').each(function(index,data) {
+          if($(this).hasClass("nofill")) {
+
+          }
+          else {
+            var fl = $(this).attr('label');
+            if(fl!=null) {
+              fl = fl.trim(); 
+            }
+            var id = $(this).attr('id').trim();
+
+            if($(this).attr('type')=='text') {
+              defaultValues.forEach(function(val) {
+                console.log(val.field + '=' + fl);
+                if(!filled.includes(fl)) {
+                  if(val.field.toLowerCase()==fl.toLocaleLowerCase() || val.field.toLowerCase().replace(/\s/g,'')==fl.toLocaleLowerCase().replace(/\s/g,'')) {
+                    filled.push(fl);
+                    $("#" + id).val(val.value[Math.floor(Math.random() * val.value.length)]);
+                  } else if(val.field.toLowerCase().includes(fl.toLocaleLowerCase()) || fl.toLowerCase().includes(val.field.toLocaleLowerCase())) {
+                    $("#" + id).val(val.value[Math.floor(Math.random() * val.value.length)]);
+                  }
+                }
+              })
+            }
+          }
+        })
+      });
+      $('#templateChooser').on('change', function() {
+        console.log("change");
+        $(".jsoner").empty();
+        templateFieldMap.forEach(function(templateField) {
+          
+          if(templateField.id==$("#templateChooser").find(":selected").val()) {
+            //find the signers - add tab for each
+            parentFolderId=templateField.parentFolderId;
+            console.log(parentFolderId);
+            $(".tab-content").empty();
+            $("#elements").empty();
+            fillDefaultValues();
+            let active='notActive'
+            templateField.signers.forEach(function(signer) {
+              var foundEmail = false;
+              if(signer.role=='signer') {
+                $("#elements").append('<li class="' + active + '"><a class="nav-link" aria-current="page" data-bs-toggle="tab"  href="#signer' + signer.order + '">Signer ' +signer.order +  '</a></li>');
+                
+                $(".tab-content").append('<div id="signer' +signer.order +  '" class="tab-pane fade ' + active + '"></div>');
+                $("#signer" +  + signer.order).append('<div class="mb-3"><label for="signeremail_' + signer.order + '" class="form-label">Signer Email</label><input type="text" class="nofill form-control" required id="signeremail_' + signer.order + '" placeholder="" value="" label="Signer Email"></div>');
+
+                signer.inputs.forEach(function(input) {
+                  console.log(input);
+                  if(input.type=='checkbox') {
+                    let checked="checked";
+                    $("#signer" + signer.order).append('<div class="mb-3"><input type="' + input.type + '" class="form-check-input" id="' + input.document_tag_id.trim() + '" placeholder="" ' + checked + '><label for="' + input.document_tag_id.trim() + '" class="form-label" style="margin-left:5px;">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim())) + '</label></div>');
+                  }
+                  else if(input.type=='text') {
+                    $("#signer" +  + signer.order).append('<div class="mb-3"><label for="' +input.document_tag_id.trim() + '" class="form-label">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '</label><input type="' + input.type + '" class="form-control" id="' + input.document_tag_id.trim() + '" placeholder="" value="' + '' + '" label="' +(input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '"></div>');
+                  }
+                })
+                active='notActive';
+              }
+
+            })
+
+          }
+        })
+
+        
+          
+      });
+      accessToken = searchParams.get("token");
+      populateTemplateDropDown();
+			
+			$('#form').on('submit', (async function (ev) {
+        ev.preventDefault();
+        console.log('submitting')
+        //get the key value pairs
+        let prefilltags = [];
+        $('input').each(function(index,data) {
+          var value = $(this).val();
+          var type=$(this).attr('type');
+          var id = $(this).attr('id');
+          
+            if(type=='text') {
+              prefilltags.push({"document_tag_id":id,"text_value":value,"read_only":true})
+            }
+            else if(type=='checkbox') {
+              let boolVal = value=="on"?true:false;
+              prefilltags.push({"document_tag_id":id,"checkbox_value":boolVal,"read_only":true})
+            }
+
+          
+       });
+        //send to box sign 
+        let actualSigners = [];
+        templateFieldMap.forEach(function(templateField) {
+        let sendEmail = $('#sendEmail').is(":checked");  
+        console.log(sendEmail);
+          if(templateField.id==$("#templateChooser").find(":selected").val()) {
+            templateField.signers.forEach(function(signer) {
+              let externalId =$("#signeremail_" + signer.order).val();
+              if(signer.role=='signer') {
+                actualSigners.push(sendEmail?{"role":"signer",email:$("#signeremail_" + signer.order).val(),order:signer.order}:{"role":"signer",email:$("#signeremail_" + signer.order).val(),order:signer.order,embed_url_external_user_id:externalId})
+              }
+            })
+          }
+        });
+
+        let data = {
+          //file_from_url: "your_url_here",
+          name:$("#name").val(),
+          signers: actualSigners,
+          "are_attachments_enabled": false,
+           "are_text_signatures_enabled": true,
+           "is_text_enabled": true,
+           "are_dates_enabled": true,
+          email_subject: $("#customEmailSubject").val(),
+          email_message:$("#customEmailMessage").val(),
+          redirect_url: encodeURI("https://pcsignrequesttest.herokuapp.com/thanks?folderId="),
+          declined_redirect_url: encodeURI("https://pcsignrequesttest.herokuapp.com/shame"),
+          template_id: $('#templateChooser').find(":selected").val(),
+          parent_folder: {
+              type: "folder",
+              id: parentFolderId
+              },
+             prefill_tags:prefilltags
+        };
+        $("#source").html(syntaxHighlight(data));
+        //send box sign request
+        $("#loader").show();
+        $.ajax({
+					url:"https://api.box.com/2.0/sign_requests",
+					data: JSON.stringify(data),
+					headers: {
+					  Authorization: "Bearer " + accessToken,
+					  "Content-Type": "application/json",
+					  Accept: "application/json",
+					},
+					type: "post",
+					success: function (response) {
+            console.log(response);
+            $("#loader").hide();
+
+            $("#response").html(syntaxHighlight(response));
+          }
+          ,
+          error: function(xhr, status, error) {
+            //$("#response").text(JSON.stringify(xhr,null,2));
+						console.log('stat' + JSON.stringify(xhr.statusCode()));
+            console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
+            $("#loader").hide();
+            $("#response").html(xhr.getAllResponseHeaders());
+          }
+        });
+
+			}));
+
+		
+		});
+
+    function toNiceText(text) {
+      const result = text.replace(/([A-Z])/g, " $1");
+      const finalResult = result.charAt(0).toUpperCase() + result.slice(1);
+      return finalResult;
+    }
+    
+    function populateTemplateDropDown() {
+      $("#msg").text("")
+      
+      $("#templateChooser").attr("disabled",true);
+      $.ajax({
+        url: "https://api.box.com/2.0/sign_templates",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        type: "GET",
+        success: function (response) {
+          response.entries.forEach(function(template) {
+            $('#templateChooser').append($('<option>', {
+              value: template.id,
+              text: template.name
+            }));
+            templateFieldMap.push({
+              id:template.id,
+              signers:template.signers,
+              parentFolderId:template.parent_folder.id
+            });
+
+          })
+          $("#templateChooser").attr("disabled",false);
+          
+        }
+        ,
+        error: function(XMLHttpRequest, textStatus, errorThrown) { 
+          $("#msg").text("Looks like your token has expired. Grab a new one and pop it in address bar")
+
+        }
+  
+      })
+    }
+    function syntaxHighlight(json) {
+      if (typeof json != "string") {
+        json = JSON.stringify(json, null, "\t");
+      }
+      
+      json = json
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      
+      return json.replace(
+        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        function(match) {
+          var cls = "number";
+          if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+              cls = "key";
+            } else {
+              cls = "string";
+            }
+          } else if (/true|false/.test(match)) {
+            cls = "boolean";
+          } else if (/null/.test(match)) {
+            cls = "null";
+          }
+          return '<span class="' + cls + '">' + match + "</span>";
+        }
+      );
+    }
+
+    function fillDefaultValues() {
+      $("#elements").append('<li class="active"><a class="nav-link active" aria-current="page" data-bs-toggle="tab"  href="#custom">Custom values</a></li>');
+
+      $(".tab-content").append('<div id="custom" class="tab-pane active"></div>');
+      
+      
+      $("#custom").append('<div class="mb-3"><input type="checkbox" class="form-check-input" id="sendEmail" placeholder="" checked ><label for="sendEmail" class="form-label" style="margin-left:5px;">Send Email?</label></div>');
+      $("#custom").append('<div class="mb-3"><label for="customEmailSubject" class="form-label">Custom Email Subject</label><input type="text" class="form-control" id="customEmailSubject" placeholder="Custom Email Subject" value="" label="Custom Email Subject"></div>');
+      $("#custom").append('<div class="mb-3"><label for="customEmailSubject" class="form-label">Custom Email Message</label><input type="text" class="form-control" id="customEmailMessage" placeholder="Custom Email Message" value="" label="Custom Email Message"></div>');
+        
+      
+    }
+
+    
+
+		
+	</script>
+</head>
+
+  <div class="container mt-2">
+    <div class="row">
+      <div class="col-md-4">
+        <h3 class="mb-4">Box Sign Templates Demonstrator</h3>
+        <span style="color:red" id="msg"></span>
+        <form id="form">
+          <select class="form-select"  id="templateChooser">
+            <option>Select template</option>
+            
+
+            
+
+            </select><br/>
+
+            <ul class="nav nav-tabs" id="elements">
+              
+
+              
+            </ul>
+            <div class="tab-content">
+              <div id="custom" class="tab-pane active"></div>
+            </div>
+          <!-- First Name -->
+          
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary">Submit</button>
+          <button type="button" class="btn btn-primary" id="prefill">Prefill default values</button>
+        </form>
+      </div>
+    
+    <div class="col-md-4">
+      <div class="mt-5 json" id="req">Request<br/><code style="font-size:10px;" id="source" class="jsoner"></code></div>
+    </div>
+    <div class="col-md-4">
+      
+      <div class="mt-5 json" id="resp">Response<br/><code style="font-size:10px;"  id="response"  class="jsoner"></code>
+      
+        <div id="loader" style="display: none;"><img src="ajax-loader.gif"/></div>
+      </div>
+    </div>
+  </div>
+</div>
+  <!-- Bootstrap JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+
+</html>
