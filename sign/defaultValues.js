@@ -12,6 +12,10 @@ var defaultValues = [
     "value": ["contact@acmecorp.com", "info@globalsolutions.com", "support@innovatex.com", "admin@bluehorizon.com", "sales@vertexindustries.com"]
   },
   {
+    "field": "Email",
+    "value": ["pchristensen+email1@boxdemo.com", "pchristensen+email2@boxdemo.com", "pchristensen+email3@boxdemo.com", "pchristensen+email4@boxdemo.com", "pchristensen+email5@boxdemo.com"]
+  },
+  {
     "field": "Website URL",
     "value": ["www.acmecorp.com", "www.globalsolutions.com", "www.innovatex.com", "www.bluehorizon.com", "www.vertexindustries.com"]
   },
