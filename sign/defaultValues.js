@@ -1,3 +1,6 @@
+
+
+
 var defaultValues = [
   {
     "field": "Company Name",
@@ -20,15 +23,51 @@ var defaultValues = [
     "value": ["www.acmecorp.com", "www.globalsolutions.com", "www.innovatex.com", "www.bluehorizon.com", "www.vertexindustries.com"]
   },
   {
-    "field": "Address",
+    "field": "AddressUnitedKingdom",
     "value": [
-      "123 Main St, Springfield, IL 62701",
-      "456 Elm St, Los Angeles, CA 90001",
-      "789 Oak Ave, Miami, FL 33101",
-      "101 Pine Rd, New York, NY 10001",
-      "202 Cedar Blvd, Austin, TX 73301"
+      "123 High Street, London, SW1A 1AA",
+      "456 Oxford Road, Manchester, M1 2AB",
+      "789 King Street, Edinburgh, EH1 1YZ",
+      "101 Queen Avenue, Birmingham, B1 2JP",
+      "202 Park Lane, Liverpool, L1 1AA"
     ]
   },
+  {
+    "field": "AddressGermany",
+  "value": [
+    "123 Hauptstraße, Berlin",
+    "456 Lindenstraße, Munich",
+    "789 Berliner Allee, Düsseldorf",
+    "101 Königstraße, Stuttgart",
+    "202 Rheinstraße, Frankfurt"
+  ]},
+  {    "field": "AddressIreland",
+
+    "value": [
+      "123 Grafton Street, Dublin",
+    "456 O'Connell Street, Limerick",
+    "789 Patrick Street, Cork",
+    "101 Eyre Square, Galway",
+    "202 Main Street, Kilkenny"
+  ]},
+  {    "field": "AddressDenmark",
+    "value":[
+    "123 Strøget, Copenhagen",
+    "456 Nørrebrogade, Aarhus",
+    "789 H. C. Andersens Boulevard, Odense",
+    "101 Kongensgade, Esbjerg",
+    "202 Ny Munkegade, Aalborg"
+  ]},
+  {
+     "field": "AddressFrance",
+    "value": [
+    "123 Avenue des Champs-Élysées, Paris",
+    "456 Rue de la République, Lyon",
+    "789 Boulevard de la Croisette, Cannes",
+    "101 Rue Saint-Catherine, Bordeaux",
+    "202 Place du Capitole, Toulouse"
+  ]}
+  ,
   {
     "field": "Contract Date",
     "value": ["2024-10-01", "2024-09-15", "2024-08-30", "2024-07-10", "2024-06-20"]
@@ -976,3 +1015,33 @@ var defaultValues = [
 ]
 
   
+function prefillDefaultValues(attrToUse) {
+  var filled = [];
+  $('input').each(function(index,data) {
+    if($(this).hasClass("nofill")) {
+      //don't fill
+    }
+    else {
+      //use
+      var fl = $(this).attr(attrToUse);
+      if(fl!=null) {
+        fl = fl.trim(); 
+      }
+      var id = $(this).attr('id').trim();
+
+      if($(this).attr('type')=='text') {
+        defaultValues.forEach(function(val) {
+          console.log(val.field + '=' + fl);
+          if(!filled.includes(fl)) {
+            if(val.field.toLowerCase()==fl.toLocaleLowerCase() || val.field.toLowerCase().replace(/\s/g,'')==fl.toLocaleLowerCase().replace(/\s/g,'')) {
+              filled.push(fl);
+              $("#" + id).val(val.value[Math.floor(Math.random() * val.value.length)]);
+            } else if(val.field.toLowerCase().includes(fl.toLocaleLowerCase()) || fl.toLowerCase().includes(val.field.toLocaleLowerCase())) {
+              $("#" + id).val(val.value[Math.floor(Math.random() * val.value.length)]);
+            }
+          }
+        })
+      }
+    }
+  })
+}
