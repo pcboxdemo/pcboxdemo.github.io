@@ -1017,6 +1017,23 @@ var defaultValues = [
   
 function prefillDefaultValues(attrToUse) {
   var filled = [];
+  let country;
+  $('select').each(function() {
+    if($(this).hasClass("nofill")) {
+      //don't fill
+    }
+    else {
+      var length = $(this).children('option').length;
+      var index = Math.floor(Math.random() * length)+1;
+      var id = $(this).attr('id');
+      
+      $('#' + id + ' option')[index].selected=true; // To select via index
+      if(id=='country') {
+        country =$("#country").find(":selected").val();
+      }
+    }
+    
+  });
   $('input').each(function(index,data) {
     if($(this).hasClass("nofill")) {
       //don't fill
@@ -1031,8 +1048,10 @@ function prefillDefaultValues(attrToUse) {
 
       if($(this).attr('type')=='text') {
         defaultValues.forEach(function(val) {
-          console.log(val.field + '=' + fl);
           if(!filled.includes(fl)) {
+            if(fl=='address' && country!=null) {
+              fl = fl + country
+            }
             if(val.field.toLowerCase()==fl.toLocaleLowerCase() || val.field.toLowerCase().replace(/\s/g,'')==fl.toLocaleLowerCase().replace(/\s/g,'')) {
               filled.push(fl);
               $("#" + id).val(val.value[Math.floor(Math.random() * val.value.length)]);

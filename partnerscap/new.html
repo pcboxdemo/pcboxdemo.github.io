@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Partners Capital Client Dashboard</title>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Bootstrap Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- jQuery CDN -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="./lib/bundle.js"></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f1f1f1;
+    }
+
+    /* Header Section */
+    header {
+      background-color: white;
+      padding: 20px 0;
+      border-bottom: 2px solid #ddd;
+      height: 100px; /* Set header height to 100px */
+    }
+
+    header h2 {
+      font-weight: 500;
+    }
+
+    header nav a {
+      font-size: 1.1rem;
+      color: #333;
+      margin-left: 20px;
+      transition: color 0.3s ease;
+    }
+
+    header nav a:hover {
+      color: #007bff;
+    }
+
+    .icon {
+      margin-right: 8px;
+    }
+
+    /* Sections */
+    .container {
+      margin-bottom: 40px;
+    }
+
+    .section-outer {
+      padding: 5px;
+      flex: 1; /* Make each section grow equally */
+      display: flex; /* Enable Flexbox */
+      flex-direction: column; /* Align content vertically */
+    }
+
+    .section-box {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 5px; /* Adjusting the margin to 5px between sections */
+      flex-grow: 1; /* Allow the section box to grow */
+    }
+
+    .section-box:nth-child(odd) {
+      background-color: #f8f9fa;
+    }
+
+    h5 {
+      font-weight: 500;
+      margin-bottom: 15px;
+    }
+
+    /* Task List */
+    .task-list {
+      padding-left: 0;
+      list-style-type: none;
+    }
+
+    .task-list li {
+      padding: 10px 0;
+      display: flex;
+      align-items: center;
+      cursor: pointer; /* Change cursor to pointer for clickable items */
+    }
+
+    .task-pills {
+      display: inline-block;
+      margin-right: 10px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      color: white;
+      font-size: 0.9rem;
+    }
+
+    .completed-task {
+      background-color: #28a745;
+    }
+
+    .not-started {
+      background-color: red;
+    }
+
+    .in-progress {
+      background-color: #007bff;
+    }
+
+    /* News Section */
+    .news-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .news-item:last-child {
+      border-bottom: none; /* Remove border from last item */
+    }
+    .file-widget {
+      height: 600px;
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- Header Section -->
+<header class="bg-light py-3 mb-4">
+  <div class="container d-flex justify-content-between align-items-center">
+    <img src="images.png" height="80" alt="Logo" class="me-3">
+    <h2 class="m-0">Client Dashboard</h2>
+    <nav>
+        <ul class="nav">
+            <li class="nav-item">
+              <a class="nav-link active" href="index.html">
+                <i class="bi bi-house icon"></i> Home
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="team.html">
+                <i class="bi bi-people icon"></i> Team
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="tasks.html">
+                <i class="bi bi-list-task icon"></i> Tasks
+              </a>
+            </li>
+          </ul>
+    </nav>
+  </div>
+</header>
+
+<!-- Full Width Row Spanning All Three Columns -->
+<div class="container">
+  <div class="row section-box">
+    <div class="col d-flex align-items-center">
+      <img src="hands1.png" alt="Welcome" class="img-fluid me-3" style="width: 100px; height: auto;"> <!-- Placeholder image -->
+      <div>
+        <h5>Welcome to the Partners Capital!</h5>
+        <p>We are glad to have you here. Please ensure you have all the required documents before proceeding with the next steps.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Section -->
+<div class="container">
+  <div class="row">
+    <!-- Onboarding Progress Column -->
+    <div class="col-md-4 section-outer">
+      <div class="section-box">
+        <h5>Onboarding Progress</h5>
+        <div id="onboarding-progress"></div> <!-- Placeholder for Onboarding Progress -->
+      </div>
+    </div>
+
+    <!-- Task List Column -->
+    <div class="col-md-4 section-outer">
+      <div class="section-box">
+        <h5>Task List</h5>
+        <ul id="task-list" class="task-list"></ul> <!-- Placeholder for Task List -->
+      </div>
+    </div>
+
+    <!-- News Section Column -->
+    <div class="col-md-4 section-outer">
+      <div class="section-box">
+        <h5>Latest News</h5>
+        <div id="news-list"></div> <!-- Placeholder for News Items -->
+      </div>
+    </div>
+  </div>
+  
+  <!-- File Widget Row -->
+  <div class="row">
+    <div class="col-12 section-box">
+      <h5>Box Files</h5>
+      <div class="file-widget text-center">
+        <!-- Box Content Explorer placeholder -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="taskModal" tabindex="-10" aria-labelledby="taskModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taskModalLabel">Submit Financial Information</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="formFile" class="form-label">Upload your financial documents</label>
+            <input class="form-control" type="file" id="formFile">
+          </div>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
+<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css" />
+
+<!-- jQuery Script to Dynamically Generate Onboarding Progress, Task List, and News Items -->
+<script>
+  const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
+    var client;
+  $(document).ready(async function () {
+    var searchParams = new URLSearchParams(window.location.search);
+    var accessToken = searchParams.get("token");
+    var folderId = searchParams.get("folderId");
+    if(accessToken!=null) {
+      try {
+          //Create a Box client using the token
+          client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
+      });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+    var contentExplorer = new Box.ContentExplorer();
+    contentExplorer.show(folderId, accessToken,
+      {
+        container: ".file-widget",
+        canDownload: true,
+        logoUrl:'images.png'
+      }
+    );
+
+    // Data for onboarding progress
+    //get country from folder
+    let metadata = await client.folderMetadata.getFolderMetadataById(
+      folderId,'enterprise','partnersCapitalClientRegistration'
+    );
+    console.log(metadata.extraData.country);    
+    //get required docs from metadata
+    //check which ones are set/not set
+    const onboardingData = [
+      { step: 1, label: 'Identity Documents', status: 'completed' },
+      { step: 2, label: 'Financial Documents', status: 'completed' },
+      { step: 3, label: 'Other', status: 'pending' },
+      { step: 4, label: 'Terms & Conditions', status: 'pending' }
+    ];
+
+    // Data for task list
+    const taskData = [
+      { label: 'Submit Identity Document', status: 'completed' },
+      { label: 'Submit Financial Information', status: 'not-started' },
+      { label: 'Agree to Terms & Conditions', status: 'in-progress' }
+    ];
+
+    // Data for news section
+    const newsData = [
+      { title: 'Company Updates', date: 'October 1, 2024', description: 'Our company has launched a new portfolio management tool.' },
+      { title: 'Market Insights', date: 'September 15, 2024', description: 'Latest market trends and financial forecasts for Q4 2024.' },
+      { title: 'Client Webinar', date: 'September 5, 2024', description: 'Join our live webinar on new investment strategies.' },
+    ];
+
+    // Generate Onboarding Progress
+    onboardingData.forEach(function (item) {
+      let statusClass = item.status === 'completed' ? 'bi-check2-circle text-success' : 'bi-clock text-primary';
+      let stepHtml = `
+        <div class="step-indicator d-flex align-items-center mb-2">
+          <i class="bi ${statusClass}" style="font-size: 24px;"></i>
+          <div class="ms-2">${item.label}</div>
+        </div>
+        <div class="step-line"></div>
+      `;
+      $('#onboarding-progress').append(stepHtml);
+    });
+
+    // Generate Task List
+    taskData.forEach(function (task) {
+      let pillClass = '';
+      let statusIcon = '';
+
+      switch (task.status) {
+        case 'completed':
+          pillClass = 'completed-task';
+          statusIcon = '✔ Completed';
+          break;
+        case 'not-started':
+          pillClass = 'not-started';
+          statusIcon = '✖ Not Started <span class="badge bg-danger ms-2" data-bs-toggle="modal" data-bs-target="#taskModal">Start</span>';
+          break;
+        case 'in-progress':
+          pillClass = 'in-progress';
+          statusIcon = '↻ In Progress';
+          break;
+      }
+
+      let taskHtml = `
+        <li class="mb-3" data-bs-toggle="modal" data-bs-target="#taskModal">
+          <div class="task-pills ${pillClass}">${statusIcon}</div>
+          <span>${task.label}</span>
+        </li>
+      `;
+
+      $('#task-list').append(taskHtml);
+    });
+
+    // Generate News Items
+    newsData.forEach(function (newsItem) {
+      let newsHtml = `
+        <div class="news-item">
+          <h6>${newsItem.title}</h6>
+          <small class="text-muted">${newsItem.date}</small>
+          <p>${newsItem.description}</p>
+        </div>
+      `;
+      $('#news-list').append(newsHtml);
+    });
+  });
+</script>
+
+</body>
+</html>

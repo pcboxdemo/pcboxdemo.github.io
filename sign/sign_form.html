@@ -95,35 +95,7 @@
           }
           
       });
-      $('#prefill').on('click', function() {
-        var filled = [];
-        $('input').each(function(index,data) {
-          if($(this).hasClass("nofill")) {
-
-          }
-          else {
-            var fl = $(this).attr('label');
-            if(fl!=null) {
-              fl = fl.trim(); 
-            }
-            var id = $(this).attr('id').trim();
-
-            if($(this).attr('type')=='text') {
-              defaultValues.forEach(function(val) {
-                console.log(val.field + '=' + fl);
-                if(!filled.includes(fl)) {
-                  if(val.field.toLowerCase()==fl.toLocaleLowerCase() || val.field.toLowerCase().replace(/\s/g,'')==fl.toLocaleLowerCase().replace(/\s/g,'')) {
-                    filled.push(fl);
-                    $("#" + id).val(val.value[Math.floor(Math.random() * val.value.length)]);
-                  } else if(val.field.toLowerCase().includes(fl.toLocaleLowerCase()) || fl.toLowerCase().includes(val.field.toLocaleLowerCase())) {
-                    $("#" + id).val(val.value[Math.floor(Math.random() * val.value.length)]);
-                  }
-                }
-              })
-            }
-          }
-        })
-      });
+      
       $('#templateChooser').on('change', function() {
         console.log("change");
         $(".jsoner").empty();
@@ -161,6 +133,7 @@
             })
 
           }
+          $(".btn").attr("disabled",false);
         })
 
         
@@ -266,6 +239,10 @@
       $("#msg").text("")
       
       $("#templateChooser").attr("disabled",true);
+      $('#templateChooser').append($('<option>', {
+        value: '...loading',
+        text: '...loading'
+      }));
       $.ajax({
         url: "https://api.box.com/2.0/sign_templates",
         headers: {
@@ -288,7 +265,9 @@
 
           })
           $("#templateChooser").attr("disabled",false);
-          
+          $('select option:contains("loading")').text('Select template');
+          $('select option:contains("loading")').text('Select template');
+          $(".btn").attr("disabled",true);
         }
         ,
         error: function(XMLHttpRequest, textStatus, errorThrown) { 
@@ -348,13 +327,15 @@
 </head>
 
   <div class="container mt-2">
+    <h3 class="mb-4">Box Sign Templates Demonstrator</h3>
     <div class="row">
+
       <div class="col-md-4">
-        <h3 class="mb-4">Box Sign Templates Demonstrator</h3>
+        
         <span style="color:red" id="msg"></span>
         <form id="form">
           <select class="form-select"  id="templateChooser">
-            <option>Select template</option>
+            
             
 
             
@@ -373,7 +354,7 @@
           
           <!-- Submit Button -->
           <button type="submit" class="btn btn-primary">Submit</button>
-          <button type="button" class="btn btn-primary" id="prefill">Prefill default values</button>
+          <button type="button" class="btn btn-primary" id="prefill" onclick="prefillDefaultValues('label')">Prefill default values</button>
         </form>
       </div>
     
