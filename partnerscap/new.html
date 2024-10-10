@@ -127,6 +127,17 @@
       height: 600px;
     }
 
+     /* Modal 90% size */
+     .modal-90 {
+      width: 90%;
+      max-width: 90%;
+    }
+
+    .modal-content-90 {
+      height: 90vh; /* 90% height of the viewport */
+      width: 75vh; /* 90% height of the viewport */
+    }
+
   </style>
 </head>
 <body>
@@ -139,7 +150,7 @@
     <nav>
         <ul class="nav">
             <li class="nav-item">
-              <a class="nav-link active" href="index.html">
+              <a class="nav-link active" href="new.html">
                 <i class="bi bi-house icon"></i> Home
               </a>
             </li>
@@ -164,8 +175,10 @@
     <div class="col d-flex align-items-center">
       <img src="hands1.png" alt="Welcome" class="img-fluid me-3" style="width: 100px; height: auto;"> <!-- Placeholder image -->
       <div>
-        <h5>Welcome to the Partners Capital!</h5>
-        <p>We are glad to have you here. Please ensure you have all the required documents before proceeding with the next steps.</p>
+        <h5 id="welcome"></h5>
+        <p>Here you can complete your onboarding progress. Once you are fully onboarded as a client you will use this dashboard to 
+        stay up to date with your investments and for getting in touch with your investment team.
+        </p>
       </div>
     </div>
   </div>
@@ -203,7 +216,7 @@
   <div class="row">
     <div class="col-12 section-box">
       <h5>Box Files</h5>
-      <div class="file-widget text-center">
+      <div class="file-widget">
         <!-- Box Content Explorer placeholder -->
       </div>
     </div>
@@ -211,21 +224,39 @@
 </div>
 
 <!-- Modal -->
-<div class="modal fade" id="taskModal" tabindex="-10" aria-labelledby="taskModalLabel" aria-hidden="true">
+<div style='display:none;' class="modal fade" id="taskModal" tabindex="-10" aria-labelledby="taskModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="taskModalLabel">Submit Financial Information</h5>
+        <h5 class="modal-title" id="taskModalLabel">...loading</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <form>
-          <div class="mb-3">
-            <label for="formFile" class="form-label">Upload your financial documents</label>
-            <input class="form-control" type="file" id="formFile">
+          <div class="mb-3 pcontainer">
+            
           </div>
-          <button type="submit" class="btn btn-primary">Submit</button>
+        
         </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="signModal" tabindex="-1" aria-labelledby="signModalLabel" aria-hidden="true" style='display:none;' >
+  <div class="modal-dialog modal-dialog-centered modal-xl"> <!-- modal-xl for large modals -->
+    <div class="modal-content" style="width: 90vw; height: 90vh;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="signModalLabel">Sign</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <img id="loader" src="ajax-loader.gif" style="display:none"/>
+        <!-- Your content goes here -->
+        <iframe style="display:none;" frameborder=0 src="" id="sign" height="800px" width="1000px"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
       </div>
     </div>
   </div>
@@ -233,120 +264,279 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
+<script src="https://cdn01.boxcdn.net/platform/elements/20.0.0/en-US/explorer.js"></script>
 <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css" />
-
+<script src="https://cdn01.boxcdn.net/platform/elements/20.0.0/en-US/uploader.js"></script>
+<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/uploader.css" />
 <!-- jQuery Script to Dynamically Generate Onboarding Progress, Task List, and News Items -->
 <script>
   const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
-    var client;
+  var client;
+  var name;
+  var folderId = sessionStorage.getItem("folderId");
+  var email;
+  var accessToken;
   $(document).ready(async function () {
-    var searchParams = new URLSearchParams(window.location.search);
-    var accessToken = searchParams.get("token");
-    var folderId = searchParams.get("folderId");
-    if(accessToken!=null) {
-      try {
-          //Create a Box client using the token
-          client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
-      });
-        } catch (e) {
-          console.error(e);
-        }
-      }
+    console.log('read');
+    var urlParams = "clientId=bn2iyg37p78jkowrp0io0nc2ln0be3wt&userEmail=" + sessionStorage.getItem("userLogin") +"&password=" + sessionStorage.getItem("pwd");
+    var settings = {
+      "async": true,
+      "crossDomain": true,
+      "url": "https://box-tokengenerator-v2.herokuapp.com/tokengenerator?" + urlParams,
+      "method": "GET",
+      "headers": {}
+    };
+    $.ajax(settings).done(async function(response) {
+          accessToken = response.userToken;;
+          if(accessToken!=null) {
+            try {
+                //Create a Box client using the token
+                client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
+            });
 
-    var contentExplorer = new Box.ContentExplorer();
-    contentExplorer.show(folderId, accessToken,
-      {
-        container: ".file-widget",
-        canDownload: true,
-        logoUrl:'images.png'
-      }
-    );
+            var contentExplorer = new Box.ContentExplorer();
+            contentExplorer.show(folderId, accessToken,
+              {
+                container: ".file-widget",
+                canDownload: true,
+                logoUrl:'images.png',
+                contentPreviewProps: {
+                  contentSidebarProps: {
+                    detailsSidebarProps: {
+                      hasNotices: true,
+                      hasProperties: true,
+                      hasAccessStats: true,
+                      hasVersions: true
+                    },
+                    hasActivityFeed: true,
+                    hasSkills: true,
+                    hasMetadata: true
+                  }
+                }
+              }
+            );
+              // Data for onboarding progress
+            let clientFolder = await client.folders.getFolderById(
+              folderId
+            );
+            name = clientFolder.name.split(' (')[0];
+            $("#welcome").text(name + ". Welcome to your Partners Capital client dashboard");
+            //get country from folder
+            let metadata = await client.folderMetadata.getFolderMetadataById(
+              folderId,'enterprise','partnersCapitalClientRegistration'
+            );
+            email = metadata.extraData.emailAddress;
+            let country = metadata.extraData.country;    
+            let requiredDocs = await client.folderMetadata.getFolderMetadataById(
+              folderId,'enterprise','requiredDocuments'
+            );
+            console.log(requiredDocs);
+            let template = await client.metadataTemplates.getMetadataTemplate(
+              'enterprise',
+              'requiredDocuments'
+            );
+            const onboardingData = [];  
+            const taskData = [];
+            let i = 1;
+            var allCompleted = true;
+            template.fields.forEach(function(field) {
+              if(field.displayName==country) {
+                field.options.forEach(function(option) {
+                  var status = getStatus(requiredDocs,field.key,option.key);
+                  
+                  if(status=='pending') {
+                    allCompleted=false;
+                    taskData.push({ label: 'Submit ' +  option.key, status: 'not-started' });
+                  }
+                  onboardingData.push({'step':i,'label':option.key,'status':status})
+                })
+              
+              }
+              else if(field.displayName=='Default') {
+                field.options.forEach(function(option) {
+                  var status = getStatus(requiredDocs,field.key,option.key);
+                  if(status=='pending') {
+                    if(option.key.startsWith('Sign')) {
+                      //only show if all completed
+                      if(allCompleted) {
+                        taskData.push({ label: '' +  option.key, status: 'not-started' });  
+                      }
+                    }
+                    else {
+                      taskData.push({ label: 'Submit ' +  option.key, status: 'not-started' });
+                    }
+                  }
+                  onboardingData.push({'step':i,'label':option.key,'status':status})
+                })
+              }
+            })
+            //get required docs from metadata
+            //check which ones are set/not set
+            //const onboardingData = [
+            //  { step: 1, label: 'Identity Documents', status: 'completed' },
+            //  { step: 2, label: 'Financial Documents', status: 'completed' },
+            //  { step: 3, label: 'Other', status: 'pending' },
+            //  { step: 4, label: 'Terms & Conditions', status: 'pending' }
+            //];
 
-    // Data for onboarding progress
-    //get country from folder
-    let metadata = await client.folderMetadata.getFolderMetadataById(
-      folderId,'enterprise','partnersCapitalClientRegistration'
-    );
-    console.log(metadata.extraData.country);    
-    //get required docs from metadata
-    //check which ones are set/not set
-    const onboardingData = [
-      { step: 1, label: 'Identity Documents', status: 'completed' },
-      { step: 2, label: 'Financial Documents', status: 'completed' },
-      { step: 3, label: 'Other', status: 'pending' },
-      { step: 4, label: 'Terms & Conditions', status: 'pending' }
-    ];
+            // Data for task list
+            //const taskData = [
+            //  { label: 'Submit Identity Document', status: 'completed' },
+            //  { label: 'Submit Financial Information', status: 'not-started' },
+            //  { label: 'Agree to Terms & Conditions', status: 'in-progress' }
+            //];
 
-    // Data for task list
-    const taskData = [
-      { label: 'Submit Identity Document', status: 'completed' },
-      { label: 'Submit Financial Information', status: 'not-started' },
-      { label: 'Agree to Terms & Conditions', status: 'in-progress' }
-    ];
+            // Data for news section
+            const newsData = [
+              { title: 'Company Updates', date: 'October 1, 2024', description: 'Our company has launched a new portfolio management tool.' },
+              { title: 'Market Insights', date: 'September 15, 2024', description: 'Latest market trends and financial forecasts for Q4 2024.' },
+              { title: 'Client Webinar', date: 'September 5, 2024', description: 'Join our live webinar on new investment strategies.' },
+            ];
 
-    // Data for news section
-    const newsData = [
-      { title: 'Company Updates', date: 'October 1, 2024', description: 'Our company has launched a new portfolio management tool.' },
-      { title: 'Market Insights', date: 'September 15, 2024', description: 'Latest market trends and financial forecasts for Q4 2024.' },
-      { title: 'Client Webinar', date: 'September 5, 2024', description: 'Join our live webinar on new investment strategies.' },
-    ];
+            // Generate Onboarding Progress
+            onboardingData.forEach(function (item) {
+              let statusClass = item.status === 'completed' ? 'bi-check2-circle text-success' : 'bi-clock text-primary';
+              let stepHtml = `
+                <div class="step-indicator d-flex align-items-center mb-2">
+                  <i class="bi ${statusClass}" style="font-size: 24px;"></i>
+                  <div class="ms-2">${item.label}</div>
+                </div>
+                <div class="step-line"></div>
+              `;
+              $('#onboarding-progress').append(stepHtml);
+            });
 
-    // Generate Onboarding Progress
-    onboardingData.forEach(function (item) {
-      let statusClass = item.status === 'completed' ? 'bi-check2-circle text-success' : 'bi-clock text-primary';
-      let stepHtml = `
-        <div class="step-indicator d-flex align-items-center mb-2">
-          <i class="bi ${statusClass}" style="font-size: 24px;"></i>
-          <div class="ms-2">${item.label}</div>
-        </div>
-        <div class="step-line"></div>
-      `;
-      $('#onboarding-progress').append(stepHtml);
+            // Generate Task List
+            taskData.forEach((task, index) => {
+              const pillClass = task.status === 'completed' ? 'completed-task' : (task.status === 'not-started' ? 'not-started' : 'in-progress');
+              const ident = task.label.replace(/\s/g, '');
+              const targetModal = task.label.startsWith("Sign")?"signModal":"taskModal";
+              let taskHtml;
+              if(sessionStorage.getItem(ident)=='In Progress') {
+                taskHtml = `
+                <li class="mb-3" data-bs-toggle="modal" data-bs-target="#taskModal"  id="task-${index}">
+                    
+                  <span id="${ident}" label="${task.label}" class="badge bg-primary ms-2" data-bs-toggle="modal" data-bs-target="#${targetModal}">In Progress</span>
+                  <span style="margin-left:5px;">${task.label}</span>
+                  
+                </li>`;
+              }
+              else {
+                taskHtml = `
+                <li class="mb-3" data-bs-toggle="modal" data-bs-target="#taskModal"  id="task-${index}">
+                    
+                  <span id="${ident}" label="${task.label}" class="badge bg-danger ms-2" data-bs-toggle="modal" data-bs-target="#${targetModal}">Start</span>
+                  <span style="margin-left:5px;">${task.label}</span>
+                  
+                </li>`;
+              }
+              
+              $('#task-list').append(taskHtml);
+          
+              // Add click event to trigger the modal
+              $(`#task-${index} .task-pills`).on('click', function () {
+                $('#taskModal').modal('show'); // Show the modal
+              });
+            });
+
+            // Generate News Items
+            newsData.forEach(function (newsItem) {
+              let newsHtml = `
+                <div class="news-item">
+                  <h6>${newsItem.title}</h6>
+                  <small class="text-muted">${newsItem.date}</small>
+                  <p>${newsItem.description}</p>
+                </div>
+              `;
+              $('#news-list').append(newsHtml);
+            });
+
+            } catch (e) {
+              console.error(e);
+            }
+          }
+    });
+    
+   
+    $('#taskModal').on('shown.bs.modal', async function (e) {
+      $('#taskModalLabel').text($(e.relatedTarget).attr('label')); // Update modal title dynamically
+      //if starts with submit, show uploader
+        $(e.relatedTarget).addClass('bg-primary').removeClass('bg-danger').text("In progress");
+        sessionStorage.setItem($(e.relatedTarget).attr("id"),"In Progress");
+        var contentUploader = new Box.ContentUploader();
+			    contentUploader.show(folderId, accessToken, {
+				  container: '.pcontainer'
+			  });
+        contentUploader.addListener('complete', async function(file) {
+          file.forEach(function(f) {
+            console.log(f.id);
+            console.log(transformString($(e.relatedTarget).attr('label')));
+            let md = client.fileMetadata.createFileMetadataById(f.id,'enterprise_47757585',transformString($(e.relatedTarget).attr('label')),{});
+          });
+        });
+    });
+    $('#signModal').on('shown.bs.modal', async function (e) {
+      $('#signModalLabel').text($(e.relatedTarget).attr('label')); // Update modal title dynamically
+      //if starts with submit, show uploader
+        $(e.relatedTarget).addClass('bg-primary').removeClass('bg-danger').text("In progress");
+        sessionStorage.setItem($(e.relatedTarget).attr("id"),"In Progress");
+        let signRequestEmbedUrl = await createSignRequest();
     });
 
-    // Generate Task List
-    taskData.forEach(function (task) {
-      let pillClass = '';
-      let statusIcon = '';
-
-      switch (task.status) {
-        case 'completed':
-          pillClass = 'completed-task';
-          statusIcon = '✔ Completed';
-          break;
-        case 'not-started':
-          pillClass = 'not-started';
-          statusIcon = '✖ Not Started <span class="badge bg-danger ms-2" data-bs-toggle="modal" data-bs-target="#taskModal">Start</span>';
-          break;
-        case 'in-progress':
-          pillClass = 'in-progress';
-          statusIcon = '↻ In Progress';
-          break;
-      }
-
-      let taskHtml = `
-        <li class="mb-3" data-bs-toggle="modal" data-bs-target="#taskModal">
-          <div class="task-pills ${pillClass}">${statusIcon}</div>
-          <span>${task.label}</span>
-        </li>
-      `;
-
-      $('#task-list').append(taskHtml);
-    });
-
-    // Generate News Items
-    newsData.forEach(function (newsItem) {
-      let newsHtml = `
-        <div class="news-item">
-          <h6>${newsItem.title}</h6>
-          <small class="text-muted">${newsItem.date}</small>
-          <p>${newsItem.description}</p>
-        </div>
-      `;
-      $('#news-list').append(newsHtml);
-    });
   });
+
+  async function createSignRequest() {
+    $("#loader").show();
+
+    //create the rqeuest with no email and load embed URL in frame
+    $.ajax({
+      method: 'get',
+      //url: 'https://pcsignrequesttest.herokuapp.com/getsignurl?token=' +accessToken +'&userName=' +sessionStorage.getItem("userName") + '&name=' + data.name + '&documentId=' + data.id + '&folderId='+pageData.targetFolderId+'&email='+sessionStorage.getItem("userLogin"),
+      //url: 'https://box-tokengenerator-v2.herokuapp.com/getsignurl?token=' +accessToken +'&userName=' +name + '&name=' + name + '&templateId=6f11b199-bdcb-4587-beb5-1d2b6b61f886&folderId='+folderId+'&email='+email,
+      url: 'http://localhost:3001/getsignurl?token=' +accessToken +'&userName=' +name + '&name=' + name + '&templateId=6f11b199-bdcb-4587-beb5-1d2b6b61f886&folderId='+folderId+'&email='+email,
+      dataType: 'json',
+      crossDomain: true,
+      cache: false,
+      success: function (response) {
+          console.log("success:" + response);
+          $("#loader").hide();
+          $("#sign").show();
+          $("#sign").attr("src", response.url);
+
+      }
+  });
+
+  }
+
+  function getStatus(metadata,field,key) {
+    console.log(JSON.stringify(metadata.extraData) + "::" + field + "::" + key)
+    if(metadata.extraData[field]!=null) {
+      if(metadata.extraData[field].includes(key)) {
+        return 'completed';
+      }
+      
+    }
+    return 'pending';
+  }
+  function transformString(str) {
+    // Remove "Submit" and trim any leading/trailing spaces
+    let cleanedStr = str.replace("Submit", "").trim();
+    
+    // Split the string into words
+    let words = cleanedStr.split(" ");
+
+    // Convert the first word to lowercase, and capitalize the first letter of subsequent words
+    let transformed = words.map((word, index) => {
+        if (index === 0) {
+            return word.toLowerCase(); // First word in lowercase
+        } else {
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(); // Capitalize the rest
+        }
+    });
+
+    // Join the words back together
+    return transformed.join("");
+}
 </script>
 
 </body>
