@@ -407,6 +407,9 @@
             });
 
             // Generate Task List
+            if(taskData.length==0) {
+              $('#task-list').html('No tasks found');
+            }
             taskData.forEach((task, index) => {
               const pillClass = task.status === 'completed' ? 'completed-task' : (task.status === 'not-started' ? 'not-started' : 'in-progress');
               const ident = task.label.replace(/\s/g, '');
@@ -481,6 +484,16 @@
         $(e.relatedTarget).addClass('bg-primary').removeClass('bg-danger').text("In progress");
         sessionStorage.setItem($(e.relatedTarget).attr("id"),"In Progress");
         let signRequestEmbedUrl = await createSignRequest();
+        await client.folderMetadata.updateFolderMetadataById(folderId,'enterprise_47757585','requiredDocuments',
+        [
+        {
+          op: 'add',
+          path: '/default',
+          value: ['Sign Terms and Conditions'],
+        } ,
+      ]
+);
+        //set the default value
     });
 
   });
@@ -504,7 +517,7 @@
           $("#sign").attr("src", response.url);
 
       }
-  });
+    }) ;
 
   }
 
