@@ -169,6 +169,7 @@
         console.log(sendEmail);
           if(templateField.id==$("#templateChooser").find(":selected").val()) {
             templateField.signers.forEach(function(signer) {
+              console.log(signer);
               let externalId =$("#signeremail_" + signer.order).val();
               if(signer.role=='signer') {
                 actualSigners.push(sendEmail?{"role":"signer",email:$("#signeremail_" + signer.order).val(),order:signer.order}:{"role":"signer",email:$("#signeremail_" + signer.order).val(),order:signer.order,embed_url_external_user_id:externalId})
@@ -327,14 +328,14 @@
 </head>
 
   <div class="container mt-2">
-    <h3 class="mb-4">Box Sign Templates Demonstrator</h3>
+    <h3 class="mb-4">Box Sign API Templates Demonstrator</h3>
     <div class="row">
 
       <div class="col-md-4">
         
         <span style="color:red" id="msg"></span>
         <form id="form">
-          <select class="form-select"  id="templateChooser">
+          <select class="form-select nofill"  id="templateChooser">
             
             
 
