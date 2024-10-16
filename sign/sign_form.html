@@ -122,11 +122,11 @@
 
                 signer.inputs.forEach(function(input) {
                   console.log(input);
-                  if(input.type=='checkbox') {
+                  if(input.type=='checkbox' && input.document_tag_id!=null) {
                     let checked="checked";
                     $("#signer" + i).append('<div class="mb-3"><input type="' + input.type + '" class="form-check-input" id="' + input.document_tag_id.trim() + '" placeholder="" ' + checked + '><label for="' + input.document_tag_id.trim() + '" class="form-label" style="margin-left:5px;">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim())) + '</label></div>');
                   }
-                  else if(input.type=='text') {
+                  else if(input.type=='text' && input.document_tag_id!=null) {
                     $("#signer" +  +i).append('<div class="mb-3"><label for="' +input.document_tag_id.trim() + '" class="form-label">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '</label><input type="' + input.type + '" class="form-control" id="' + input.document_tag_id.trim() + '" placeholder="" value="' + '' + '" label="' +(input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '"></div>');
                   }
                 })
