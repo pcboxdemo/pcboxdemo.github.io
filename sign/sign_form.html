@@ -109,27 +109,31 @@
             $("#elements").empty();
             fillDefaultValues();
             let active='notActive'
+            var i =1;
             templateField.signers.forEach(function(signer) {
+              
               var foundEmail = false;
               if(signer.role=='signer') {
-                $("#elements").append('<li class="' + active + '"><a class="nav-link" aria-current="page" data-bs-toggle="tab"  href="#signer' + signer.order + '">Signer ' +signer.order +  '</a></li>');
+                let signLabel = signer.label?signer.label:'Signer ' + i;
+                $("#elements").append('<li class="' + active + '"><a class="nav-link" aria-current="page" data-bs-toggle="tab"  href="#signer' + i + '">' + signLabel +  '</a></li>');
                 
-                $(".tab-content").append('<div id="signer' +signer.order +  '" class="tab-pane fade ' + active + '"></div>');
-                $("#signer" +  + signer.order).append('<div class="mb-3"><label for="signeremail_' + signer.order + '" class="form-label">Signer Email</label><input type="text" class="nofill form-control" required id="signeremail_' + signer.order + '" placeholder="" value="" label="Signer Email"></div>');
+                $(".tab-content").append('<div id="signer' +i +  '" class="tab-pane fade ' + active + '"></div>');
+                $("#signer" +  + i).append('<div class="mb-3"><label for="signeremail_' + i + '" class="form-label">Signer Email</label><input type="text" class="nofill form-control" required id="signeremail_' + i + '" placeholder="" value="" label="Signer Email"></div>');
 
                 signer.inputs.forEach(function(input) {
                   console.log(input);
                   if(input.type=='checkbox') {
                     let checked="checked";
-                    $("#signer" + signer.order).append('<div class="mb-3"><input type="' + input.type + '" class="form-check-input" id="' + input.document_tag_id.trim() + '" placeholder="" ' + checked + '><label for="' + input.document_tag_id.trim() + '" class="form-label" style="margin-left:5px;">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim())) + '</label></div>');
+                    $("#signer" + i).append('<div class="mb-3"><input type="' + input.type + '" class="form-check-input" id="' + input.document_tag_id.trim() + '" placeholder="" ' + checked + '><label for="' + input.document_tag_id.trim() + '" class="form-label" style="margin-left:5px;">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim())) + '</label></div>');
                   }
                   else if(input.type=='text') {
-                    $("#signer" +  + signer.order).append('<div class="mb-3"><label for="' +input.document_tag_id.trim() + '" class="form-label">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '</label><input type="' + input.type + '" class="form-control" id="' + input.document_tag_id.trim() + '" placeholder="" value="' + '' + '" label="' +(input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '"></div>');
+                    $("#signer" +  +i).append('<div class="mb-3"><label for="' +input.document_tag_id.trim() + '" class="form-label">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '</label><input type="' + input.type + '" class="form-control" id="' + input.document_tag_id.trim() + '" placeholder="" value="' + '' + '" label="' +(input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '"></div>');
                   }
                 })
                 active='notActive';
+                i++;
               }
-
+              
             })
 
           }
@@ -168,11 +172,12 @@
         let sendEmail = $('#sendEmail').is(":checked");  
         console.log(sendEmail);
           if(templateField.id==$("#templateChooser").find(":selected").val()) {
+            var i = 1;
             templateField.signers.forEach(function(signer) {
-              console.log(signer);
-              let externalId =$("#signeremail_" + signer.order).val();
+              let externalId =$("#signeremail_" + i).val();
               if(signer.role=='signer') {
-                actualSigners.push(sendEmail?{"role":"signer",email:$("#signeremail_" + signer.order).val(),order:signer.order}:{"role":"signer",email:$("#signeremail_" + signer.order).val(),order:signer.order,embed_url_external_user_id:externalId})
+                actualSigners.push(sendEmail?{"role":"signer",email:$("#signeremail_" + i).val(),order:signer.order}:{"role":"signer",email:$("#signeremail_" + i).val(),order:signer.order,embed_url_external_user_id:externalId})
+                i++;
               }
             })
           }
