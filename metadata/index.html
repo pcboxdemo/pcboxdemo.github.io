@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folders, files and metadata exporter</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .box {
+            border: 2px solid #007bff;
+            padding: 40px;
+            text-align: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .box:hover {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+    <script>
+        var params = new URLSearchParams(window.location.search);
+        $(document).ready(function() {
+            var params = new URLSearchParams(window.location.search);
+            var code = params.get('auth');
+            if(code==null) {
+              code = params.get('code');
+            }
+            $.ajax({
+              method: 'get',
+              //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-tokengenerator",
+              url:"https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+      
+            data: {authCode:code,clientId:params.get('clientId')},
+              crossDomain: true,
+              cache: false,
+              success: function(response) {
+               sessionStorage.setItem("token",response.token);
+              },
+              error: function(err) {
+                console.log(JSON.stringify(err));
+                console.log("error:" + err.message);
+      
+              }
+            });
+      
+          });
+    </script>
+</head>
+<body>
+    <div class="container text-center mt-5">
+        <h1 class="mb-4">I want to...</h1>
+        <div class="row">
+            <div class="col-md-4">
+                <a href="#" class="box d-block">
+                    Export a folder structure with metadata
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="import.html" class="box d-block">
+                    Import a folder structure with metadata
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="#" class="box d-block">
+                    Apply metadata to a large data set
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

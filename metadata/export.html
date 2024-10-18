@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export folders, files and metadata</title>
+    <!-- Bootstrap CSS -->
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Bootstrap Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- jQuery CDN -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="./lib/bundle.js"></script>
+
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.css"/>
+<script src="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.js"></script>
+
+    <style>
+        .section {
+            border: 1px solid #007bff;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .transfer-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        select {
+            width: 200px;
+            height: 200px;
+            
+        }
+        option {
+            font-family: "Lato, Helvetica, Arial, sans-serif";
+            font-size:13px;
+        }
+        .button-section {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+
+    <script>
+        var folderPicker = new Box.FolderPicker();
+        const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
+        var client;
+        var accessToken=sessionStorage.getItem("token");//'1!ovMAnpXZqiVIIHfEmAgKsaxAYGqT54wQLOCjDudE9OOlot9_RhQXRncyKgiw1-eymQjVGe4YONcsCZZ2JUcmc9GyHLCYGfEOwMg8lP2pghjtJg_BpbgXerqucuVnYQJkknxTeJvNfSfEiu8GhShkgxupj02JPjdxoy4Eyj6AfavchgCS0x1huzmUPv4Q-Wi6zjqTjwATWXwWbVutAJ4_GSEFydHf751iqRWxA-bJaVuqB7FtVArcie7jDUuTcu3OsDZfRYzZZIvg5OWmOLKS-jbO0Gbj3MmXSDv__elJVQANjVDRWE6N5nzBM-ii1fQZtqiERKioKN3dxGI-M4NOZfEIh6MsHHtcbL9aJKvXpa05Ln76ro5IjzC01YfuRI0Ap1vf7c57b1G1gXprd4NvODd2mQqj_hUy43kk-v2Z2TSijyTuhj7yeF2BAgS5MyXBCNZctNVsPIGnBpR6bD1_lwsLZNkUz4ND-3b0iksLw7aZJhcT3FQW0vsrhu8QA3RJ-mQRl42pJ65dh4Ri5A9dsvGxr1uq2lCCwiemwR6zILZoSVoOp6q4d81EEMyaXXPtZHlD0eOeVO1krm6RnlaG9y6ZMXvS4nzJBv8tHiD3VxRap9ye_YeD6xXR_5rZHHiXpxwpBUM4bsDSUEsiyNYCuNMrcwNnpf0eYll6KOlnG908Xt6SYuyzqNgflrNWWhG_wT3-sVdqy-TVftYeLHYkCKPzyN2GYPb47awVjyBLUQZhWDrTItJRmwjc30b3-NfYfIhFiwnnKa-N6VthbRsCBB1NcjhwCpcKF9AWWl_iM4dqyNZ0myghxR0ZqNXnfWDNOpKmSFZtQTEpz-NVupTteW-EmAgOmn0vyG1y';        var selectedFolder=null;
+        var eid;
+        $(document).ready(async function() {
+            try {
+                //Create a Box client using the token
+                client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
+                });
+               eid = getEid(client); 
+            }
+            catch (e) {
+                console.error(e);
+            }
+            
+            let metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
+            metadataTemplates.entries.forEach(function(temp) {
+                $('#allTemplates').append($('<option>', {
+                    value: temp.templateKey,
+                    text: temp.displayName
+                }));
+            })
+
+            folderPicker.show('0', accessToken, {
+                container: ".pcontainer",
+                maxSelectable:1,
+                canSetShareAccess:false,
+                logoUrl:'logo-small.png',
+                currentFolderId:'75440175138',
+                rootFolderId:'0'
+            });
+            folderPicker.addListener("choose", async function (response) {
+                $.each(response, function (k, data) {
+                    selectedFolder = data.id;
+                    selectedFolderName = data.name;
+                    $("#sec2").text("Selected Folder:" + data.name);
+                    checkButton();
+
+                  
+                });
+                $('#analyze').click(function() {
+                    $(".rounded-pill").text('0');
+                    populate(selectedFolder);
+                    $('#export').attr('disabled',false);
+                });
+    
+                $('#export').click(function() {
+                    $(this).hide();
+                    $("#exportLoader").show();
+                    var templatesToUse = $('#selectedTemplates option:selected').map(function() {
+                        return $(this).val();
+                    }).get();
+                    let data = {
+                        "folderId":selectedFolder,
+                        "token":accessToken,
+                        "metadataTemplates":templatesToUse.join(",")
+                    };
+                    $.ajax({
+                        url:"http://localhost:3001/createzipfile",
+                        data: data,
+                        type: "post",
+                        success: function (response) {
+                            console.log(response);
+                            $("#exportLoader").hide();
+                            $("#export").show();
+                            $("#zipper").attr("src",response.url);
+                            $("#sharedLink").show();
+                            }
+                            ,
+                            error: function(xhr, status, error) {
+                                //$("#response").text(JSON.stringify(xhr,null,2));
+                                console.log('stat' + JSON.stringify(xhr.statusCode()));
+                                console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
+                                $("#loader").hide();
+                                $("#response").html(xhr.getAllResponseHeaders());
+                            }
+                    });
+                });
+                    
+            });
+            
+            function sortOptions(selectBox) {
+                var options = $(selectBox + ' option');
+                options.sort(function(a, b) {
+                    if (a.text.toLowerCase() < b.text.toLowerCase()) return -1;
+                    if (a.text.toLowerCase() > b.text.toLowerCase()) return 1;
+                    return 0;
+                });
+                $(selectBox).empty().append(options);
+            }
+            $('#moveRight').click(function() {
+                $('#allTemplates option:selected').each(function() {
+                    $(this).remove().appendTo('#selectedTemplates');
+                });
+                sortOptions('#allTemplates');
+                sortOptions('#selectedTemplates');
+                checkButton();
+            });
+
+            // Move items from SelectBox2 back to SelectBox1
+            $('#moveLeft').click(function() {
+                $('#selectedTemplates option:selected').each(function() {
+                    $(this).remove().appendTo('#allTemplates');
+                });
+                sortOptions('#allTemplates');
+                sortOptions('#selectedTemplates');
+                checkButton();
+            });
+        });
+        async function getEid() {
+            let user = await  client.users.getUserMe({"fields":["id,name,enterprise"]});
+            eid = user.enterprise.id;
+        }
+        let metadataTemplateMap = [];
+        async function populate(folderId) {
+            var templatesToUse = $('#selectedTemplates option:selected').map(function() {
+                return $(this).val();
+            }).get();
+            let fields = 'id,name,type';
+            templatesToUse.forEach(function(temp) {
+                fields +=',metadata.enterprise_'+eid + '.' + temp;
+            });
+            console.log(fields);
+           let items =  await client.folders.getFolderItems(folderId,{'fields':[fields],'limit':1000});
+            items.entries.forEach(function(data) {
+                if(data.type=='folder') {
+                    console.log(data);
+                    increment('folderCount');
+                    if(data.metadata) {
+                        increment('folderInstanceCount');
+                    }
+                    populate(data.id);
+                }
+                else {
+                    increment('fileCount');
+                    if(data.metadata) {
+                        increment('fileInstanceCount');
+                    }
+                }
+            })
+        }
+        function increment(id) {
+            $("#"+id).text(parseInt($("#"+id).text())+1);
+        }
+        function checkButton() {
+            console.log(selectedFolder);
+            console.log($('#selectedTemplates :selected').length);
+            if(selectedFolder!=null) {
+                if($('#selectedTemplates :selected').length>0) {
+                    $(".action").attr('disabled',false);
+                    return;
+                }
+                
+            }
+            $(".action").attr('disabled',true);
+        }
+        
+    </script>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Header -->
+        <header class="text-center mb-5">
+            <h1>Export folders, files and metadata</h1>
+        </header>
+
+        <!-- Row with two sections -->
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Select Folder</h4>
+                <div class="section pcontainer" style="height:443px !important">
+                    
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4>Select Metadata templates</h4>
+                <div class="transfer-container section">
+                    <!-- Select Box 1 -->
+                    <select id="allTemplates" class="form-select" multiple style="height:400px;">
+                        
+                    </select>
+        
+                    <!-- Transfer Buttons -->
+                    <div class="d-flex flex-column">
+                        <button class="btn btn-primary mb-2" id="moveRight"> > </button>
+                        <button class="btn btn-primary" id="moveLeft"> < </button>
+                    </div>
+        
+                    <!-- Select Box 2 -->
+                    <select id="selectedTemplates" class="form-select" multiple style="height:400px;"> 
+                    </select>
+                </div>
+                </div>
+           
+        </div>
+        <div class="button-section">
+            <button class="btn btn-primary action" id="analyze" disabled>Analyze</button>
+            <button class="btn btn-secondary" id="export" disabled>Export</button>
+            <img src="ajax-loader.gif" id="exportLoader" style="display:none;"/>
+            <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Zip file for sharing</a></div>
+        </div>
+        <!-- Row with one section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="section">
+                    <h3 id="sec2"></h3>
+                    <div id="sec2content">
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                Folders 
+                                <span class="badge rounded-pill bg-primary" id="folderCount">0</span>
+                            </li>
+                            <li class="list-group-item">
+                                Files
+                                <span class="badge rounded-pill bg-primary"  id="fileCount">0</span>
+                            </li>
+                            <li class="list-group-item">
+                                File Metadata instances 
+                                <span class="badge rounded-pill bg-primary"  id="fileInstanceCount">0</span>
+                            </li>
+                            <li class="list-group-item">
+                                Folder Metadata instances 
+                                <span class="badge rounded-pill bg-primary"  id="folderInstanceCount">0</span>
+                            </li>
+                        </ul>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
