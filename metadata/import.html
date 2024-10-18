@@ -119,7 +119,7 @@
                         "zipFileSharedUrl":$("#urlInput").val()
                     };
                     $.ajax({
-                        url:"http://localhost:3001/importzipfile",
+                        url:"https://box-tokengenerator-v2.herokuapp.com/createzipfile",
                         data: data,
                         type: "post",
                         success: function (response) {
