@@ -123,7 +123,7 @@
                             console.log(response);
                             $("#exportLoader").hide();
                             $("#export").show();
-                            $("#zipper").attr("src",response.url);
+                            $("#zipper").attr("href",response.url);
                             $("#sharedLink").show();
                             }
                             ,
@@ -257,7 +257,7 @@
             <button class="btn btn-primary action" id="analyze" disabled>Analyze</button>
             <button class="btn btn-secondary" id="export" disabled>Export</button>
             <img src="ajax-loader.gif" id="exportLoader" style="display:none;"/>
-            <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Zip file for sharing</a></div>
+            <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Shared link to Zip file for importing</a></div>
         </div>
         <!-- Row with one section -->
         <div class="row">
