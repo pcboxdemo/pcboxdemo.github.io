@@ -1011,7 +1011,113 @@ var defaultValues = [
       "Marco Galli",
       "Valentina Greco"
     ]
+  },
+  {
+    "field": "country",
+    "value": [
+        "Denmark",
+        "Germany",
+        "United Kingdom",
+        "Belgium",
+        "United States",
+        "Canada",
+        "Australia",
+        "France",
+        "Italy",
+        "Spain",
+        "Netherlands",
+        "Sweden",
+        "Norway",
+        "Finland",
+        "Switzerland",
+        "Austria",
+        "Ireland",
+        "Portugal",
+        "New Zealand",
+        "Japan",
+        "South Korea",
+        "Singapore",
+        "Brazil",
+        "Mexico",
+        "Argentina",
+        "South Africa"
+    ]
+},
+{"field":"parties",
+"value": [
+  "Party A: Company X",
+  "Party B: Individual Y",
+  "Party C: Government Z",
+  "Party D: Non-Profit Organization W",
+  "Party E: Partnership Group 1",
+  "Party F: LLC ABC",
+  "Party G: Corporation 123",
+  "Party H: Sole Proprietor M",
+  "Party I: Trust Fund T",
+  "Party J: Consortium of Investors"
+]},
+  {
+      "field": "title",
+      "value": [
+          "The Great Adventure",
+          "Understanding AI",
+          "Cooking Made Easy",
+          "The Road to Success",
+          "Secrets of the Universe",
+          "Exploring the Unknown",
+          "The Art of Gardening",
+          "Mastering JavaScript",
+          "Financial Freedom",
+          "A Journey Through Time"
+      ]
+  },
+  {
+      "field": "author",
+      "value": [
+          "John Smith",
+          "Emily Johnson",
+          "Michael Brown",
+          "Sarah Davis",
+          "David Wilson",
+          "Jennifer Garcia",
+          "Robert Martinez",
+          "Linda Rodriguez",
+          "William Hernandez",
+          "Jessica Lee"
+      ]
+  },
+  {
+      "field": "copyright",
+      "value": [
+          "© 2023 Global Publishing",
+          "© 2023 Creative Works",
+          "© 2023 Insight Press",
+          "© 2023 Future Books",
+          "© 2023 Knowledge House",
+          "© 2023 Visionary Media",
+          "© 2023 Innovative Publications",
+          "© 2023 Green Leaf Publishing",
+          "© 2023 Bright Ideas Press",
+          "© 2023 Endless Horizons"
+      ]
+  },
+  {
+      "field": "topic",
+      "value": [
+          "Technology and Innovation",
+          "Health and Wellness",
+          "Personal Finance",
+          "Travel and Adventure",
+          "History and Culture",
+          "Cooking and Cuisine",
+          "Science and Nature",
+          "Arts and Literature",
+          "Education and Learning",
+          "Sports and Recreation"
+      ]
   }
+
+
 ]
 
   
