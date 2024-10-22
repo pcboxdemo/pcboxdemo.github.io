@@ -29,10 +29,9 @@
             var params = new URLSearchParams(window.location.search);
             var debug = params.get('debug');
             var token = params.get('token');
-            var code = params.get('auth');
+            var code = params.get('code');
             if(code!=null) {
-              code = params.get('code');
-              sessionStorage.setItem("host","https://box-tokenegenrator-v2.herokuapp.com")
+             sessionStorage.setItem("host","https://box-tokenegenrator-v2.herokuapp.com")
             
             $.ajax({
               method: 'get',
