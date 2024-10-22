@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Partners Capital Client Dashboard</title>
+  <title>Randstad Client Dashboard</title>
   
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -145,7 +145,8 @@
 <!-- Header Section -->
 <header class="bg-light py-3 mb-4">
   <div class="container d-flex justify-content-between align-items-center">
-    <img src="logo.jpg" alt="Logo" class="logo me-3" height="80"> <!-- 'me-3' adds margin-right -->
+    <!--<img src="logo.jpg" alt="Logo" class="logo me-3" height="80">-->
+    <img src="Randstad_Logo.svg.png" alt="Logo" class="logo me-3" height="80">
     <h2 class="m-0">Client Dashboard</h2>
     <nav>
         <ul class="nav">
@@ -215,7 +216,7 @@
   <!-- File Widget Row -->
   <div class="row">
     <div class="col-12 section-box">
-      <h5>Box Files</h5>
+      <h5>Documents</h5>
       <div class="file-widget">
         <!-- Box Content Explorer placeholder -->
       </div>
@@ -299,7 +300,7 @@
               {
                 container: ".file-widget",
                 canDownload: true,
-                logoUrl:'images.png',
+                logoUrl:'Randstad_Logo.svg.png',
                 contentPreviewProps: {
                   contentSidebarProps: {
                     detailsSidebarProps: {
@@ -320,7 +321,7 @@
               folderId
             );
             name = clientFolder.name.split(' (')[0];
-            $("#welcome").text(name + ". Welcome to your Partners Capital client dashboard");
+            $("#welcome").text(name + ". Welcome to your Randstad client dashboard");
             //get country from folder
             let metadata = await client.folderMetadata.getFolderMetadataById(
               folderId,'enterprise','partnersCapitalClientRegistration'
@@ -415,6 +416,7 @@
               const ident = task.label.replace(/\s/g, '');
               const targetModal = task.label.startsWith("Sign")?"signModal":"taskModal";
               let taskHtml;
+              console.log(ident);
               if(sessionStorage.getItem(ident)=='In Progress') {
                 taskHtml = `
                 <li class="mb-3" data-bs-toggle="modal" data-bs-target="#taskModal"  id="task-${index}">

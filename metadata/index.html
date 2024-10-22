@@ -27,10 +27,13 @@
         var params = new URLSearchParams(window.location.search);
         $(document).ready(function() {
             var params = new URLSearchParams(window.location.search);
+            var debug = params.get('debug');
+            var token = params.get('token');
             var code = params.get('auth');
-            if(code==null) {
+            if(code!=null) {
               code = params.get('code');
-            }
+              sessionStorage.setItem("host","https://box-tokenegenrator-v2.herokuapp.com")
+            
             $.ajax({
               method: 'get',
               //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-tokengenerator",
@@ -48,6 +51,13 @@
       
               }
             });
+        }
+        else {
+            sessionStorage.setItem("token",token);
+            sessionStorage.setItem("debug",debug);
+            sessionStorage.setItem("host","http://localhost:3001")
+        }
+
       
           });
     </script>

@@ -75,10 +75,12 @@
             
             let metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
-                $('#allTemplates').append($('<option>', {
-                    value: temp.templateKey,
-                    text: temp.displayName
-                }));
+                if(temp.hidden==false) {
+                    $('#allTemplates').append($('<option>', {
+                        value: temp.templateKey,
+                        text: temp.displayName + ' (' + temp.templateKey + ')',
+                    }));
+                }
             })
 
             folderPicker.show('0', accessToken, {
@@ -86,7 +88,7 @@
                 maxSelectable:1,
                 canSetShareAccess:false,
                 logoUrl:'logo-small.png',
-                currentFolderId:'75440175138',
+                currentFolderId:'0',
                 rootFolderId:'0'
             });
             folderPicker.addListener("choose", async function (response) {
@@ -113,10 +115,12 @@
                     let data = {
                         "folderId":selectedFolder,
                         "token":accessToken,
-                        "metadataTemplates":templatesToUse.join(",")
+                        "metadataTemplates":templatesToUse.join(","),
+                        "isExport":"true"
                     };
                     $.ajax({
-                        url:"https://box-tokengenerator-v2.herokuapp.com/createzipfile",
+                        //url:sessionStorage.getItem("host") + "/createzipfile",
+                        url:"https://zilrj2u430.execute-api.eu-west-2.amazonaws.com/default/box-metadata-importer",
                         data: data,
                         type: "post",
                         success: function (response) {
@@ -181,7 +185,7 @@
                 fields +=',metadata.enterprise_'+eid + '.' + temp;
             });
             console.log(fields);
-           let items =  await client.folders.getFolderItems(folderId,{'fields':[fields],'limit':1000});
+           let items =  await getFolderItems(folderId,{'fields':[fields],'limit':1000});
             items.entries.forEach(function(data) {
                 if(data.type=='folder') {
                     console.log(data);
@@ -198,6 +202,27 @@
                     }
                 }
             })
+        }
+        async function getFolderItems(folderId,options) {
+            let url = "https://api.box.com/2.0/folders/"+folderId + "/items?fields=" + options.fields.join(",");
+            let resp;
+            await delay(200);
+
+            await $.ajax({
+                url:url,
+                type: "get",
+                headers: {
+                    "Authorization":"Bearer " + accessToken
+                },
+                success: function (response) {
+                    resp= response;
+                }
+            });
+            return resp;
+
+        }
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
         }
         function increment(id) {
             $("#"+id).text(parseInt($("#"+id).text())+1);
@@ -217,17 +242,17 @@
         
     </script>
 </head>
-<body>
+<body><a href="index.html">Home</a>
     <div class="container mt-5">
         <!-- Header -->
-        <header class="text-center mb-5">
-            <h1>Export folders, files and metadata</h1>
+        <header class="text-center mb-2">
+            <h3>Export folders, files and metadata</h3>
         </header>
 
         <!-- Row with two sections -->
         <div class="row">
             <div class="col-md-6">
-                <h4>Select Folder</h4>
+                <h4>Select Source Folder</h4>
                 <div class="section pcontainer" style="height:443px !important">
                     
                 </div>

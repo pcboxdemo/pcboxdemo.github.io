@@ -1115,7 +1115,29 @@ var defaultValues = [
           "Education and Learning",
           "Sports and Recreation"
       ]
+  },
+  {
+    "field": "randomstrings",
+    "value": [
+      "strategy", "synergy", "innovation", "growth", "optimization", "scalability", "leadership", 
+      "vision", "execution", "efficiency", "branding", "profitability", "leverage", "collaboration", 
+      "analytics", "disruption", "forecasting", "engagement", "networking", "ROI", "benchmarking", 
+      "outsourcing", "market", "customer", "conversion", "targeting", "KPIs", "acquisition", 
+      "development", "automation", "budgeting", "investment", "revenue", "milestone", "deliverable", 
+      "turnover", "diversification", "compliance", "ecosystem", "partnership", "risk", "capital", 
+      "venture", "valuation", "portfolio", "business", "startup", "monetization", "roadmap", 
+      "transformation", "onboarding", "traction", "scaling", "branding", "globalization", 
+      "operations", "blueprint", "ecosystem", "alignment", "value", "impact", "cost", 
+      "strategy", "resources", "productivity", "differentiation", "negotiation", "infrastructure", 
+      "logistics", "stakeholders", "pipeline", "outcome", "growth", "sustainability", "compliance", 
+      "asset", "capitalization", "benchmark", "target", "performance", "governance", "restructuring", 
+      "optimization", "risk", "innovation", "transparency", "execution", "equity", "leadership", 
+      "branding", "customer-centric", "outsourcing", "franchise", "procurement", "merger", "acquisition", 
+      "digitalization", "supply", "chain", "consulting", "diversification", "restructuring", "synergy", 
+      "integration"
+    ]
   }
+  
 
 
 ]
@@ -1171,5 +1193,17 @@ function prefillDefaultValues(attrToUse) {
         })
       }
     }
+  })
+}
+function getRandomValue(field) {
+  defaultValues.forEach(function(val) {
+    
+    if(val.field.toLowerCase()==field.toLocaleLowerCase() || val.field.toLowerCase().replace(/\s/g,'')==field.toLocaleLowerCase().replace(/\s/g,'')) {
+      filled.push(fl);
+      $("#" + id).val(val.value[Math.floor(Math.random() * val.value.length)]);
+    } else if(val.field.toLowerCase().includes(fl.toLocaleLowerCase()) || fl.toLowerCase().includes(val.field.toLocaleLowerCase())) {
+      $("#" + id).val(val.value[Math.floor(Math.random() * val.value.length)]);
+    }
+    
   })
 }
