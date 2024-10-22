@@ -127,7 +127,7 @@
                             console.log(response);
                             $("#exportLoader").hide();
                             $("#export").show();
-                            $("#zipper").attr("href",response.url);
+                            $("#zipper").attr("href",JSON.parse(response.input).result);
                             $("#sharedLink").show();
                             }
                             ,
