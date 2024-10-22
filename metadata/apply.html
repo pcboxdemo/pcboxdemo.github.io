@@ -80,10 +80,12 @@
             
             metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
-                $('#allTemplates').append($('<option>', {
-                    value: temp.templateKey,
-                    text: temp.displayName
-                }));
+                if(temp.hidden==false) {
+                    $('#allTemplates').append($('<option>', {
+                        value: temp.templateKey,
+                        text: temp.displayName + ' (' + temp.templateKey + ')',
+                    }));
+                }
             })
 
             folderPicker.show('0', accessToken, {
@@ -103,6 +105,7 @@
 
                   
                 });
+            });
                 $('#analyze').click(function() {
                     $(".rounded-pill").text('0');
                     var templateToUse = $('#selectedTemplate').text();
@@ -117,7 +120,7 @@
                     $(this).hide();
                     $("#exportLoader").show();
                    
-            });
+                });
             
             function sortOptions(selectBox) {
                 var options = $(selectBox + ' option');
@@ -130,8 +133,8 @@
             }
             $('#moveRight').click(function() {
                 $('#allTemplates option:selected').each(function() {
-                    $('#selectedTemplates').val($('#allTemplates option:selected').text());
-                    $('#selectedTemplates').text($('#allTemplates option:selected').text());
+                    $('#selectedTemplates').attr("key",$('#allTemplates option:selected').val());
+                    $('#selectedTemplates').html($('#allTemplates option:selected').text().replace("(","<br/>("));
                     let template =  metadataTemplates.entries.find(t => t.templateKey === $('#allTemplates option:selected').val());
                     generateTemplateLayout(template);
                     //prefillDefaultValues('display');
@@ -177,8 +180,9 @@
             })
         }
         function getRandomMetadata(templateKey) {
-            let template =  metadataTemplates.entries.find(t => t.templateKey === $('#selectedTemplate').text());
-            return getRandomMetadata(template);
+            console.log($('#selectedTemplate').attr("key"));
+            let template =  metadataTemplates.entries.find(t => t.templateKey === $('#selectedTemplates').attr("key"));
+            return generateRandomData(template);
 
         }
         function generateRandomData(template) {
@@ -451,7 +455,7 @@
                 <h4>Select Metadata template</h4>
                 <div class="transfer-container section">
                     <!-- Select Box 1 -->
-                    <select id="allTemplates" class="form-select align-self-start nofill" multiple style="height:400px;">
+                    <select id="allTemplates" class="form-select  nofill" multiple style="height:400px;">
                         
                     </select>
         
@@ -464,7 +468,7 @@
                     <!-- Select Box 2 -->
                     
                     <div id="templateForm" class="form-group">
-                        <span type="text" style="white-space: nowrap;" id="selectedTemplates" class="form-input align-self-start" ></span> <hr/>
+                        <span type="text" style="white-space: nowrap;" id="selectedTemplates" class="form-input align-self-start" ></span>
                     </div>
                 </div>
                 </div>
