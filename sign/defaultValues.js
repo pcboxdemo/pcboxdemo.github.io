@@ -1199,9 +1199,9 @@ function getRandomValue(field) {
   defaultValues.forEach(function(val) {
     
     if(val.field.toLowerCase()==field.toLocaleLowerCase() || val.field.toLowerCase().replace(/\s/g,'')==field.toLocaleLowerCase().replace(/\s/g,'')) {
-      $("#" + id).val(val.value[Math.floor(Math.random() * val.value.length)]);
+     return val.value[Math.floor(Math.random() * val.value.length)];
     } else if(val.field.toLowerCase().includes(field.toLocaleLowerCase()) || field.toLowerCase().includes(val.field.toLocaleLowerCase())) {
-      $("#" + id).val(val.value[Math.floor(Math.random() * val.value.length)]);
+      return val.value[Math.floor(Math.random() * val.value.length)];
     }
     
   })

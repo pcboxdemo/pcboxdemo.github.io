@@ -108,9 +108,7 @@
             });
                 $('#analyze').click(function() {
                     $(".rounded-pill").text('0');
-                    var templateToUse = $('#selectedTemplate').text();
-
-                    populate(selectedFolder,templateToUse);
+                    //count files and folders
                     
                     $('#apply').attr('disabled',false);
                     $('#applyAI').attr('disabled',false);
@@ -119,6 +117,10 @@
                 $('#apply').click(function() {
                     $(this).hide();
                     $("#exportLoader").show();
+                    var templateToUse = $('#selectedTemplate').attr("key");
+
+                    populate(selectedFolder,templateToUse);
+
                    
                 });
             
@@ -155,7 +157,7 @@
         let metadataTemplateMap = [];
         async function populate(folderId,templateKey) {
             let fields = 'id,name,type';
-           let items =  await client.folders.getFolderItems(folderId,{'fields':[fields],'limit':1000});
+             let items =  await client.folders.getFolderItems(folderId,{'fields':[fields],'limit':1000});
             items.entries.forEach(function(data) {
                 if(data.type=='folder') {
                     let md = getRandomMetadata(templateKey);
