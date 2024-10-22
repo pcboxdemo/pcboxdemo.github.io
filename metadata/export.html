@@ -63,6 +63,7 @@
         var accessToken=sessionStorage.getItem("token");//'1!ovMAnpXZqiVIIHfEmAgKsaxAYGqT54wQLOCjDudE9OOlot9_RhQXRncyKgiw1-eymQjVGe4YONcsCZZ2JUcmc9GyHLCYGfEOwMg8lP2pghjtJg_BpbgXerqucuVnYQJkknxTeJvNfSfEiu8GhShkgxupj02JPjdxoy4Eyj6AfavchgCS0x1huzmUPv4Q-Wi6zjqTjwATWXwWbVutAJ4_GSEFydHf751iqRWxA-bJaVuqB7FtVArcie7jDUuTcu3OsDZfRYzZZIvg5OWmOLKS-jbO0Gbj3MmXSDv__elJVQANjVDRWE6N5nzBM-ii1fQZtqiERKioKN3dxGI-M4NOZfEIh6MsHHtcbL9aJKvXpa05Ln76ro5IjzC01YfuRI0Ap1vf7c57b1G1gXprd4NvODd2mQqj_hUy43kk-v2Z2TSijyTuhj7yeF2BAgS5MyXBCNZctNVsPIGnBpR6bD1_lwsLZNkUz4ND-3b0iksLw7aZJhcT3FQW0vsrhu8QA3RJ-mQRl42pJ65dh4Ri5A9dsvGxr1uq2lCCwiemwR6zILZoSVoOp6q4d81EEMyaXXPtZHlD0eOeVO1krm6RnlaG9y6ZMXvS4nzJBv8tHiD3VxRap9ye_YeD6xXR_5rZHHiXpxwpBUM4bsDSUEsiyNYCuNMrcwNnpf0eYll6KOlnG908Xt6SYuyzqNgflrNWWhG_wT3-sVdqy-TVftYeLHYkCKPzyN2GYPb47awVjyBLUQZhWDrTItJRmwjc30b3-NfYfIhFiwnnKa-N6VthbRsCBB1NcjhwCpcKF9AWWl_iM4dqyNZ0myghxR0ZqNXnfWDNOpKmSFZtQTEpz-NVupTteW-EmAgOmn0vyG1y';        var selectedFolder=null;
         var eid;
         $(document).ready(async function() {
+            let startTime, timerInterval;
             try {
                 //Create a Box client using the token
                 client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
@@ -72,7 +73,16 @@
             catch (e) {
                 console.error(e);
             }
-            
+            function startTimer() {
+                startTime = Date.now();
+                timerInterval = setInterval(function() {
+                    let elapsedTime = Math.floor((Date.now() - startTime) / 1000); // Calculate seconds elapsed
+                    $('#timer').text(elapsedTime + 's'); // Update the timer text
+                }, 1000);
+            }
+            function stopTimer() {
+                clearInterval(timerInterval); // Stop the timer interval
+            }
             let metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
                 if(temp.hidden==false) {
@@ -109,6 +119,10 @@
                 $('#export').click(function() {
                     $(this).hide();
                     $("#exportLoader").show();
+                    $('#timer').show();  // Show the timer
+
+                    startTimer();  // Start the timer
+
                     var templatesToUse = $('#selectedTemplates option:selected').map(function() {
                         return $(this).val();
                     }).get();
@@ -124,20 +138,22 @@
                         data: data,
                         type: "post",
                         success: function (response) {
+                            stopTimer(); 
                             console.log(response);
                             $("#exportLoader").hide();
                             $("#export").show();
                             $("#zipper").attr("href",JSON.parse(response.input).result);
                             $("#sharedLink").show();
-                            }
-                            ,
-                            error: function(xhr, status, error) {
-                                //$("#response").text(JSON.stringify(xhr,null,2));
-                                console.log('stat' + JSON.stringify(xhr.statusCode()));
-                                console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
-                                $("#loader").hide();
-                                $("#response").html(xhr.getAllResponseHeaders());
-                            }
+                            
+                        }
+                        ,
+                        error: function(xhr, status, error) {
+                            //$("#response").text(JSON.stringify(xhr,null,2));
+                            console.log('stat' + JSON.stringify(xhr.statusCode()));
+                            console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
+                            $("#loader").hide();
+                            $("#response").html(xhr.getAllResponseHeaders());
+                        }
                     });
                 });
                     
@@ -281,7 +297,9 @@
         <div class="button-section">
             <button class="btn btn-primary action" id="analyze" disabled>Analyze</button>
             <button class="btn btn-secondary" id="export" disabled>Export</button>
-            <img src="ajax-loader.gif" id="exportLoader" style="display:none;"/>
+            <img src="ajax-loader.gif" id="exportLoader" class="loading" style="display:none;"/>
+            <span id="timer" class="loading"  style="display:none;">0s</span>
+
             <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Shared link to Zip file for importing</a></div>
         </div>
         <!-- Row with one section -->

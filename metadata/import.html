@@ -71,6 +71,7 @@
         var selectedFolder=null;
         var eid='47757585';
         $(document).ready(async function() {
+            let startTime, timerInterval;
             $('.url').hide();
             $('#fileUpload').hide();
             // Toggle input fields based on the selected radio button
@@ -92,7 +93,16 @@
                 console.error(e);
             }
             
-          
+            function startTimer() {
+                startTime = Date.now();
+                timerInterval = setInterval(function() {
+                    let elapsedTime = Math.floor((Date.now() - startTime) / 1000); // Calculate seconds elapsed
+                    $('#timer').text(elapsedTime + 's'); // Update the timer text
+                }, 1000);
+            }
+            function stopTimer() {
+                clearInterval(timerInterval); // Stop the timer interval
+            }
             folderPicker.show('0', accessToken, {
                 container: ".pcontainer",
                 maxSelectable:1,
@@ -113,10 +123,11 @@
                 $('#import').click(function() {
                     $(this).hide();
                     $("#importLoader").show();
+                    $('#timer').show(); 
                     let data = {
                         "folderId":selectedFolder,
                         "token":accessToken,
-                        "zipFileSharedUrl":$("#urlInput").val()
+                        "zipDownloadUrl":$("#urlInput").val()
                     };
                     $.ajax({
                         url:"https://zilrj2u430.execute-api.eu-west-2.amazonaws.com/default/box-metadata-importer",
@@ -217,6 +228,8 @@
         <div class="button-section">
             <button class="btn btn-secondary" id="import" >Import</button>
             <img src="ajax-loader.gif" id="importLoader" style="display:none;"/>
+            <span id="timer" class="loading"  style="display:none;">0s</span>
+
             <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Zip file for sharing</a></div>
         </div>
         <!-- Row with one section -->
