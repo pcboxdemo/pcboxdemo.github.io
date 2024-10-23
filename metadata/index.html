@@ -30,6 +30,7 @@
     <script>
         var params = new URLSearchParams(window.location.search);
         $(document).ready(function() {
+            $(".container").hide();
             var params = new URLSearchParams(window.location.search);
             var token = params.get('token');
             var code = params.get('code');
@@ -46,6 +47,7 @@
               cache: false,
               success: function(response) {
                sessionStorage.setItem("token",response.token);
+               $(".container").show();
               },
               error: function(err) {
                 console.log(JSON.stringify(err));
@@ -55,6 +57,7 @@
             });
         }
         else {
+            $(".container").show();
             if(sessionStorage.getItem("token")==null) {
                 sessionStorage.setItem("token",token);
             }
