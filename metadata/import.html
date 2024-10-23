@@ -96,8 +96,16 @@
             function startTimer() {
                 startTime = Date.now();
                 timerInterval = setInterval(function() {
-                    let elapsedTime = Math.floor((Date.now() - startTime) / 1000); // Calculate seconds elapsed
-                    $('#timer').text(elapsedTime + 's'); // Update the timer text
+                    let elapsedTime = Math.floor((Date.now() - startTime) / 1000); // Calculate total seconds elapsed
+                    let minutes = Math.floor(elapsedTime / 60); // Calculate the number of minutes
+                    let seconds = elapsedTime % 60; // Get remaining seconds after minutes
+            
+                    // Update the timer text to display in "m s" format
+                    if (minutes > 0) {
+                        $('#timer').text(minutes + ' m ' + seconds + ' s');
+                    } else {
+                        $('#timer').text(seconds + ' s');
+                    }
                 }, 1000);
             }
             function stopTimer() {
@@ -131,10 +139,12 @@
                         "zipDownloadUrl":$("#urlInput").val()
                     };
                     $.ajax({
-                        url:"https://zilrj2u430.execute-api.eu-west-2.amazonaws.com/default/box-metadata-importer",
+                        //url:"https://zilrj2u430.execute-api.eu-west-2.amazonaws.com/default/box-metadata-importer",
+                        url:"https://dtet4x5wdsgiyn7bicxfql33la0pdqkk.lambda-url.eu-west-2.on.aws/",
                         data: data,
                         type: "post",
                         success: function (response) {
+                            stopTimer();
                             console.log(response);
                             $("#importLoader").hide();
                             $("#import").show();
@@ -163,11 +173,12 @@
                             }
                         }
                         ,error: function(xhr, status, error) {
+                                stopTimer();
                                 //$("#response").text(JSON.stringify(xhr,null,2));
                                 console.log('stat' + JSON.stringify(xhr.statusCode()));
                                 console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
                                 $("#importLoader").hide();
-                                $("#response").html(xhr.getAllResponseHeaders());
+                                $("#.ct").html(xhr.getAllResponseHeaders());
                             }
                     });
                 });

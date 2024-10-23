@@ -20,7 +20,7 @@
 
     <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.css"/>
 <script src="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.js"></script>
-<script src="http://0.0.0.0:8000/sign/defaultValues.js"></script>
+<script src="https://pcboxdemo.github.io/sign/defaultValues.js"></script>
     <style>
         .section {
             border: 1px solid #007bff;
@@ -317,7 +317,7 @@
                         // Handle string input as a text input field
                         $label.text($label.text() + " (sample random value)");
                         let randomValue = getRandomValueFromList(field.displayName);
-                        console.log('r' + randomValue)
+                        
                         const $textInput = $('<input>')
                             .attr('type', 'text')
                             .attr('display', field.displayName)
