@@ -1245,6 +1245,97 @@ var defaultValues = [
         ]
     }
 
+,
+  {
+    "field": "Type of Document",
+    "value": [
+      "Passport",
+      "Driver's License",
+      "Invoice",
+      "Receipt",
+      "Contract",
+      "Purchase Order",
+      "Bill of Lading",
+      "Certificate",
+      "Report",
+      "Agreement"
+    ]
+  },
+  {
+    "field": "Status",
+    "value": [
+      "Pending",
+      "Approved",
+      "Rejected",
+      "In Progress",
+      "Completed",
+      "On Hold",
+      "Cancelled",
+      "Paid",
+      "Unpaid",
+      "Overdue"
+    ]
+  },
+  {
+    "field": "Passport Number",
+    "value": [
+      "M1234567",
+      "K9876543",
+      "A7654321",
+      "P3456789",
+      "L1122334",
+      "C4455667",
+      "Z9988776",
+      "B3344556",
+      "H6677889",
+      "N5544332"
+    ]
+  },
+  {
+    "field": "Invoice ID",
+    "value": [
+      "INV-001122",
+      "INV-998877",
+      "INV-556677",
+      "INV-334455",
+      "INV-112233",
+      "INV-445566",
+      "INV-778899",
+      "INV-990011",
+      "INV-223344",
+      "INV-667788"
+    ]
+  },
+  {
+    "field": "Invoice Identifier",
+    "value": [
+      "INV-XYZ-1234",
+      "INV-ABC-9876",
+      "INV-DEF-5432",
+      "INV-GHI-6789",
+      "INV-JKL-4321",
+      "INV-MNO-8765",
+      "INV-PQR-0987",
+      "INV-STU-4567",
+      "INV-VWX-2345",
+      "INV-YZA-7654"
+    ]
+  },
+  {
+    "field": "Billing Address",
+    "value": [
+      "123 Main St, Springfield, IL 62704",
+      "456 Elm St, New York, NY 10001",
+      "789 Oak Ave, Los Angeles, CA 90001",
+      "101 Pine Rd, Austin, TX 73301",
+      "202 Maple Blvd, Miami, FL 33101",
+      "303 Cedar St, Denver, CO 80201",
+      "404 Birch Ln, Chicago, IL 60601",
+      "505 Walnut Way, Dallas, TX 75201",
+      "606 Cherry Ct, Seattle, WA 98101",
+      "707 Poplar Dr, San Francisco, CA 94101"
+    ]
+  }
 
 ]
 
@@ -1305,7 +1396,6 @@ function getRandomValueFromList(field) {
   let retVal=''
   defaultValues.forEach(function(val) {
     if(val.field.toLowerCase()==field.toLowerCase() || val.field.toLowerCase().replace(/\s/g,'')==field.toLowerCase().replace(/\s/g,'')) {
-      console.log(val.value[Math.floor(Math.random() * val.value.length)]);
      retVal = val.value[Math.floor(Math.random() * val.value.length)];
     } else if(val.field.toLowerCase().includes(field.toLowerCase()) || field.toLowerCase().includes(val.field.toLowerCase())) {
       retVal =  val.value[Math.floor(Math.random() * val.value.length)];

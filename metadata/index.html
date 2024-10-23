@@ -31,7 +31,6 @@
         var params = new URLSearchParams(window.location.search);
         $(document).ready(function() {
             var params = new URLSearchParams(window.location.search);
-            var debug = params.get('debug');
             var token = params.get('token');
             var code = params.get('code');
             if(code!=null) {
@@ -56,9 +55,10 @@
             });
         }
         else {
-            sessionStorage.setItem("token",token);
-            sessionStorage.setItem("debug",debug);
-            sessionStorage.setItem("host","http://localhost:3001")
+            if(sessionStorage.getItem("token")==null) {
+                sessionStorage.setItem("token",token);
+            }
+            
         }
 
       

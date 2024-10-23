@@ -22,6 +22,9 @@
 <script src="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.js"></script>
 
     <style>
+        .la {
+            text-align:left !important;
+        } 
         .section {
             border: 1px solid #007bff;
             padding: 20px;
@@ -265,6 +268,7 @@
             }
             $(".action").attr('disabled',true);
         }
+
         
     </script>
 </head>
@@ -274,7 +278,18 @@
         <header class="text-center mb-2">
             <h3>Export folders, files and metadata</h3>
         </header>
-
+        <div class="row">
+            <div class="col-md-12">
+                <div class="section la">Instructions: <ul>
+                    <li>Select a source folder (click the blue tick to select) and one or more metadata templates</li>
+                    <li>Click Analyze and check results are as expected (analyze button will not be enabled until you have selected both folder and metadata template)</li>
+                    <li>Click Export</li>
+                    <li>When the process is complete a shared link will be shown. This can be used by anyone for importing the strucuture </li>
+                </ul>
+                
+                    </div>
+            </div>
+        </div>
         <!-- Row with two sections -->
         <div class="row">
             <div class="col-md-6">

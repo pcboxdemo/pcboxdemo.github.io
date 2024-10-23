@@ -22,6 +22,9 @@
 <script src="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.js"></script>
 <script src="https://pcboxdemo.github.io/sign/defaultValues.js"></script>
     <style>
+          .la {
+            text-align:left !important;
+        } 
         .section {
             border: 1px solid #007bff;
             padding: 20px;
@@ -109,7 +112,7 @@
                 $('#analyze').click(function() {
                     $(".rounded-pill").text('0');
                     //count files and folders
-                    
+                    populateCounts(selectedFolder);
                     $('#apply').attr('disabled',false);
                     $('#applyAI').attr('disabled',false);
                 });
@@ -130,6 +133,8 @@
                     var valueSelected = this.value;
                     $('#selectedTemplates').html("Selected Template: " + $('#allTemplates option:selected').text());
                     let template =  metadataTemplates.entries.find(t => t.templateKey === $('#allTemplates option:selected').val());
+                    $('#selectedTemplates').attr("key",template.templateKey);
+
                     generateTemplateLayout(template);
                     checkButton();
             });
@@ -137,6 +142,61 @@
             // Move items from SelectBox2 back to SelectBox1
           
         });
+        async function populateCounts(folderId) {
+            let fields = 'id,name,type';
+            
+            fields +=',metadata.enterprise_'+eid + '.' + $("#selectedTemplates").attr("key");
+           let items =  await getFolderItems(folderId,{'fields':[fields],'limit':1000});
+            items.entries.forEach(function(data) {
+                if(data.type=='folder') {
+                    console.log(data);
+                    increment('folderCount');
+                    if(data.metadata) {
+                        increment('folderInstanceCount');
+                    }
+                    populateCounts(data.id);
+                }
+                else {
+                    increment('fileCount');
+                    if(data.metadata) {
+                        increment('fileInstanceCount');
+                    }
+                }
+            })
+        }
+        async function getFolderItems(folderId,options) {
+            let url = "https://api.box.com/2.0/folders/"+folderId + "/items?fields=" + options.fields.join(",");
+            let resp;
+            await delay(200);
+
+            await $.ajax({
+                url:url,
+                type: "get",
+                headers: {
+                    "Authorization":"Bearer " + accessToken
+                },
+                success: function (response) {
+                    resp= response;
+                }
+            });
+            return resp;
+
+        }
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        function increment(id) {
+            $("#"+id).text(parseInt($("#"+id).text())+1);
+            checkLoader();
+        }
+        function checkLoader() {
+            if($("#fileCount").text()==$("#fileAppliedCount").text() 
+            && $("#folderCount").text()==$("#folderAppliedCount").text()){ 
+                $("#exportLoader").hide();
+                $("#apply").show();
+            } 
+
+        }
         async function getEid() {
             let user = await  client.users.getUserMe({"fields":["id,name,enterprise"]});
             eid = user.enterprise.id;
@@ -184,9 +244,9 @@
         
             // Helper function to generate random string (dummy)
             const getRandomStringValue = () => {
-                let string = getRandomValue(template.displayName);
+                let string = getRandomValueFromList(template.displayName);
                 if(string==null) {
-                    string = getRandomValue('randomstring');
+                    string = getRandomValueFromList('randomstring');
                 }
                 return string;
             };
@@ -230,8 +290,8 @@
         
                     case 'date':
                         // Assign a random date between two dates for 'date' type
-                        const startDate = $("#" + field.key + "_from");//new Date('2010-01-01');  // Start range
-                        const endDate = $("#" + field.key + "_from");//new Date('2030-01-01');    // End range
+                        const startDate = new Date($("#" + field.key + "_from").val());//new Date('2010-01-01');  // Start range
+                        const endDate = new Date($("#" + field.key + "_to").val());//new Date('2030-01-01');    // End range
                         randomData[field.key] = getRandomDate(startDate, endDate)+'T00:00:00-00:00';
                         break;
         
@@ -317,6 +377,10 @@
                         // Handle string input as a text input field
                         $label.text($label.text() + " (sample random value)");
                         let randomValue = getRandomValueFromList(field.displayName);
+                        console.log(randomValue);
+                        if(randomValue==null && randomValue.length<=1) {
+                            randomValue = getRandomValueFromList('randomstring');
+                            }
                         
                         const $textInput = $('<input>')
                             .attr('type', 'text')
@@ -444,7 +508,18 @@
         <header class="text-center mb-5">
             <h1>Apply metadata to folders and files</h1>
         </header>
-
+        <div class="row">
+            <div class="col-md-12">
+                <div class="section la">Instructions: <ul>
+                    <li>Select a source folder (click the blue tick to select)</li>
+                    <li>Select a metadata template. Fields will appear with sample values for randomly generated values for the field</li>
+                    <li>Click analyze and it will show how many folders and files you are applying to</li>
+                    <li>Click Apply random values to populate metadata for selected files and folders </li>
+                </ul>
+                
+                    </div>
+            </div>
+        </div>
         <!-- Row with two sections -->
         <div class="row">
             <div class="col-md-6">
@@ -479,7 +554,7 @@
         <div class="button-section">
             <button class="btn btn-primary action" id="analyze" disabled>Analyze</button>
             <button class="btn btn-secondary" id="apply" disabled>Apply random values</button>
-            <button class="btn btn-secondary" id="applyAI" disabled>Use AI to apply metadata</button>
+            <!--<button class="btn btn-secondary" id="applyAI" disabled>Use AI to apply metadata</button>-->
             <img src="ajax-loader.gif" id="exportLoader" style="display:none;"/>
             <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Shared link to Zip file for importing</a></div>
         </div>
@@ -500,6 +575,14 @@
                                 <li class="list-group-item">
                                     Files
                                     <span class="badge rounded-pill bg-primary" id="fileCount">0</span>
+                                </li>
+                                <li class="list-group-item">
+                                    Folders 
+                                    <span class="badge rounded-pill bg-primary" id="folderInstanceCount">0</span>
+                                </li>
+                                <li class="list-group-item">
+                                    Files
+                                    <span class="badge rounded-pill bg-primary" id="fileInstanceCount">0</span>
                                 </li>
                                 
                             </ul>
