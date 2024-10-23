@@ -178,6 +178,8 @@
                                 console.log('stat' + JSON.stringify(xhr.statusCode()));
                                 console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
                                 $("#importLoader").hide();
+                                $(".ct").show();
+
                                 $(".ct").html(xhr.getAllResponseHeaders());
                             }
                     });
