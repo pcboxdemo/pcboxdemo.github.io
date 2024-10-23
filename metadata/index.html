@@ -46,17 +46,23 @@
               crossDomain: true,
               cache: false,
               success: function(response) {
-               sessionStorage.setItem("token",response.token);
+               $("#loader").hide();sessionStorage.setItem("token",response.token);
+               $("#loader").hide();
                $(".container").show();
+               
               },
               error: function(err) {
                 console.log(JSON.stringify(err));
                 console.log("error:" + err.message);
+                $(".container").show();
+
+                $(".container").text("an error happened:" + err.message);
       
               }
             });
         }
         else {
+            $("#loader").hide();
             $(".container").show();
             if(sessionStorage.getItem("token")==null) {
                 sessionStorage.setItem("token",token);
@@ -69,6 +75,7 @@
     </script>
 </head>
 <body>
+    <img src="ajax-loader.gif" id="loader"/>
     <div class="container text-center mt-5">
         <h1 class="mb-4">I want to...</h1>
         <div class="row">
