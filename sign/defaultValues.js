@@ -1138,6 +1138,112 @@ var defaultValues = [
     ]
   }
   
+  ,
+    {
+        "field": "Case Number",
+        "value": [
+            "C1234567",
+            "C2345678",
+            "C3456789",
+            "C4567890",
+            "C5678901",
+            "C6789012",
+            "C7890123",
+            "C8901234",
+            "C9012345",
+            "C0123456"
+        ]
+    },
+    {
+        "field": "Case Owner",
+        "value": [
+            "John Doe",
+            "Sarah Smith",
+            "Alex Johnson",
+            "Emily Davis",
+            "Michael Brown",
+            "Jessica Taylor",
+            "Daniel White",
+            "Laura Martin",
+            "David Harris",
+            "Olivia Thompson"
+        ]
+    },
+    {
+        "field": "Customer Name",
+        "value": [
+            "Acme Corp",
+            "Global Solutions",
+            "Tech Innovators",
+            "Enterprise Solutions",
+            "Green Energy Inc.",
+            "BlueSky Technologies",
+            "HealthTech Ltd",
+            "Finance Corp",
+            "EduTech Enterprises",
+            "BrightFuture Inc."
+        ]
+    },
+    {
+        "field": "Customer Email",
+        "value": [
+            "contact@acme.com",
+            "support@globalsolutions.com",
+            "info@techinnovators.com",
+            "service@enterprisesolutions.com",
+            "sales@greenenergy.com",
+            "help@blueskytech.com",
+            "support@healthtech.com",
+            "info@financecorp.com",
+            "contact@edutech.com",
+            "help@brightfuture.com"
+        ]
+    },
+    {
+        "field": "Customer Contact",
+        "value": [
+            "Adam Cooper",
+            "Sophia Williams",
+            "Liam White",
+            "Isabella Green",
+            "James Lee",
+            "Amelia Young",
+            "Benjamin Walker",
+            "Ava Hall",
+            "Lucas Lewis",
+            "Mia King"
+        ]
+    },
+    {
+        "field": "Customer Address",
+        "value": [
+            "123 Main St, New York, NY",
+            "456 Elm St, Los Angeles, CA",
+            "789 Oak St, Chicago, IL",
+            "101 Pine St, Houston, TX",
+            "202 Maple Ave, San Francisco, CA",
+            "303 Cedar Ln, Austin, TX",
+            "404 Birch Dr, Seattle, WA",
+            "505 Walnut St, Miami, FL",
+            "606 Spruce Rd, Denver, CO",
+            "707 Redwood Ave, Boston, MA"
+        ]
+    },
+    {
+        "field": "Customer Contact Email",
+        "value": [
+            "acooper@acme.com",
+            "swilliams@globalsolutions.com",
+            "lwhite@techinnovators.com",
+            "igreen@enterprisesolutions.com",
+            "jlee@greenenergy.com",
+            "ayoung@blueskytech.com",
+            "bwalker@healthtech.com",
+            "ahall@financecorp.com",
+            "llewis@edutech.com",
+            "mking@brightfuture.com"
+        ]
+    }
 
 
 ]
@@ -1195,14 +1301,16 @@ function prefillDefaultValues(attrToUse) {
     }
   })
 }
-function getRandomValue(field) {
+function getRandomValueFromList(field) {
+  let retVal=''
   defaultValues.forEach(function(val) {
-    
-    if(val.field.toLowerCase()==field.toLocaleLowerCase() || val.field.toLowerCase().replace(/\s/g,'')==field.toLocaleLowerCase().replace(/\s/g,'')) {
-     return val.value[Math.floor(Math.random() * val.value.length)];
-    } else if(val.field.toLowerCase().includes(field.toLocaleLowerCase()) || field.toLowerCase().includes(val.field.toLocaleLowerCase())) {
-      return val.value[Math.floor(Math.random() * val.value.length)];
+    if(val.field.toLowerCase()==field.toLowerCase() || val.field.toLowerCase().replace(/\s/g,'')==field.toLowerCase().replace(/\s/g,'')) {
+      console.log(val.value[Math.floor(Math.random() * val.value.length)]);
+     retVal = val.value[Math.floor(Math.random() * val.value.length)];
+    } else if(val.field.toLowerCase().includes(field.toLowerCase()) || field.toLowerCase().includes(val.field.toLowerCase())) {
+      retVal =  val.value[Math.floor(Math.random() * val.value.length)];
     }
     
   })
+  return retVal;
 }
