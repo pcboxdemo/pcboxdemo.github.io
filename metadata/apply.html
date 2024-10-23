@@ -378,7 +378,7 @@
                         $label.text($label.text() + " (sample random value)");
                         let randomValue = getRandomValueFromList(field.displayName);
                         console.log(randomValue);
-                        if(randomValue==null && randomValue.length<=1) {
+                        if(randomValue==null || randomValue.length<=1) {
                             randomValue = getRandomValueFromList('randomstring');
                             }
                         

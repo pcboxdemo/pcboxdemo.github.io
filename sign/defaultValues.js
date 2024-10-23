@@ -1335,7 +1335,143 @@ var defaultValues = [
       "606 Cherry Ct, Seattle, WA 98101",
       "707 Poplar Dr, San Francisco, CA 94101"
     ]
-  }
+  },
+    {
+      "field": "Job Title",
+      "value": [
+        "Software Engineer",
+        "Data Analyst",
+        "Project Manager",
+        "Marketing Specialist",
+        "Finance Manager",
+        "Sales Executive",
+        "Human Resources Coordinator",
+        "Customer Support Representative",
+        "Operations Manager",
+        "Business Development Lead"
+      ]
+    },
+    {
+      "field": "Global Grade",
+      "value": [
+        "G10",
+        "G9",
+        "G8",
+        "G7",
+        "G6",
+        "G5",
+        "G4",
+        "G3",
+        "G2",
+        "G1"
+      ]
+    },
+    {
+      "field": "Department",
+      "value": [
+        "Engineering",
+        "Finance",
+        "Marketing",
+        "Human Resources",
+        "Operations",
+        "Sales",
+        "IT",
+        "Customer Service",
+        "Legal",
+        "Supply Chain"
+      ]
+    },
+    {
+      "field": "Location",
+      "value": [
+        "New York, NY",
+        "London, UK",
+        "San Francisco, CA",
+        "Singapore",
+        "Berlin, Germany",
+        "Toronto, Canada",
+        "Sydney, Australia",
+        "Paris, France",
+        "Tokyo, Japan",
+        "Dubai, UAE"
+      ]
+    },
+    {
+      "field": "Legal Entity",
+      "value": [
+        "ABC Corporation",
+        "XYZ Holdings",
+        "Global Tech Solutions",
+        "Innovative Enterprises",
+        "Universal Business Group",
+        "FutureTech Limited",
+        "NextGen Solutions LLC",
+        "BrightStar Industries",
+        "United Ventures",
+        "Prime Global Partners"
+      ]
+    },
+    {
+      "field": "Region",
+      "value": [
+        "North America",
+        "Europe",
+        "Asia-Pacific",
+        "Middle East",
+        "South America",
+        "Africa",
+        "Central Asia",
+        "Southeast Asia",
+        "Oceania",
+        "Eastern Europe"
+      ]
+    },
+    {
+      "field": "Manager",
+      "value": [
+        "John Smith",
+        "Jane Doe",
+        "David Johnson",
+        "Emily Williams",
+        "Michael Brown",
+        "Sophia Taylor",
+        "James Wilson",
+        "Emma Martinez",
+        "Liam Garcia",
+        "Olivia Davis"
+      ]
+    },
+    {
+      "field": "Salary",
+      "value": [
+        "$70,000",
+        "$85,000",
+        "$95,000",
+        "$110,000",
+        "$120,000",
+        "$130,000",
+        "$145,000",
+        "$150,000",
+        "$160,000",
+        "$175,000"
+      ]
+    },
+    {
+      "field": "Nationality",
+      "value": [
+        "American",
+        "British",
+        "Canadian",
+        "Australian",
+        "German",
+        "French",
+        "Indian",
+        "Japanese",
+        "Brazilian",
+        "Chinese"
+      ]
+    }
+    
 
 ]
 
