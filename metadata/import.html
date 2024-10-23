@@ -180,8 +180,8 @@
                                 $("#importLoader").hide();
                                 $(".ct").show();
 
-                                $(".ct").html(xhr.getAllResponseHeaders());
-                            }
+                                $(".ct").text("error:" + error.message + ", " + xhr.responseText);
+                            } 
                     });
                 });
                     
