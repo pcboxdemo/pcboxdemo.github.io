@@ -70,6 +70,8 @@
         var selectedFolder=null;
         var eid;
         let metadataTemplates;
+        let randomValues = [];
+        let randomFileId;
         $(document).ready(async function() {
             try {
                 //Create a Box client using the token
@@ -117,13 +119,25 @@
                     $('#applyAI').attr('disabled',false);
                 });
     
-                $('#apply').click(function() {
+                $('#apply').click(async function() {
                     $(this).hide();
                     $("#exportLoader").show();
                     $('#applyAI').attr('disabled',true);
                     var templateToUse = $('#selectedTemplates').attr("key");
-
-                    populate(selectedFolder,templateToUse);
+                    let stringFields = [];
+                    let template =  metadataTemplates.entries.find(t => t.templateKey === $('#selectedTemplates').attr("key"));
+                    template.fields.forEach(field => {
+                        if(field.type=='string') {
+                            stringFields.push(field.key);
+                            
+                        }
+                    });
+                    let values = await getDefaultValues(stringFields,randomFileId);
+                    console.log(values);
+                    for(var val in values) {
+                        $("#"+values[val].field).attr('value',values[val].value.join(","));
+                    }
+                    populate(selectedFolder,template,values);
 
                    
                 });
@@ -149,7 +163,6 @@
            let items =  await getFolderItems(folderId,{'fields':[fields],'limit':1000});
             items.entries.forEach(function(data) {
                 if(data.type=='folder') {
-                    console.log(data);
                     increment('folderCount');
                     if(data.metadata) {
                         increment('folderInstanceCount');
@@ -157,6 +170,7 @@
                     populateCounts(data.id);
                 }
                 else {
+                    randomFileId = data.id;
                     increment('fileCount');
                     if(data.metadata) {
                         increment('fileInstanceCount');
@@ -190,8 +204,10 @@
             checkLoader();
         }
         function checkLoader() {
-            if($("#fileCount").text()==$("#fileAppliedCount").text() 
-            && $("#folderCount").text()==$("#folderAppliedCount").text()){ 
+            console.log($("#fileCount").text() + '=' + $("#fileApplyCount").text());
+            console.log($("#folderCount").text() + '=' + $("#folderApplyCount").text());
+            if($("#fileCount").text()==$("#fileApplyCount").text() 
+            && $("#folderCount").text()==$("#folderApplyCount").text()){ 
                 $("#exportLoader").hide();
                 $("#apply").show();
             } 
@@ -202,41 +218,37 @@
             eid = user.enterprise.id;
         }
         let metadataTemplateMap = [];
-        async function populate(folderId,templateKey) {
+        async function populate(folderId,template,values) {
+
             let fields = 'id,name,type';
              let items =  await client.folders.getFolderItems(folderId,{'fields':[fields],'limit':1000});
             items.entries.forEach(function(data) {
                 if(data.type=='folder') {
-                    let md = getRandomMetadata(templateKey);
+                    let md = generateRandomData(template,values);
                     client.folderMetadata.createFolderMetadataById(
                         data.id,'enterprise',
-                        templateKey,
+                        template.templateKey,
                         md
                       ).then(increment('folderApplyCount'));
                       
                       
                     
-                    populate(data.id,templateKey);
+                    populate(data.id,template,values);
                 }
                 else {
-                    let md = getRandomMetadata(templateKey);
+                    let md = generateRandomData(template,values);
                     client.fileMetadata.createFileMetadataById(
                         data.id,'enterprise',
-                        templateKey,
+                        template.templateKey,
                         md
                       ).then(increment('fileApplyCount'));    
                 }
             })
         }
-        function getRandomMetadata(templateKey) {
-            console.log($('#selectedTemplates').attr("key"));
-            let template =  metadataTemplates.entries.find(t => t.templateKey === $('#selectedTemplates').attr("key"));
-            return generateRandomData(template);
-
-        }
-        function generateRandomData(template) {
+       
+       async function generateRandomData(template,values) {
             const randomData = {};
-        
+            
             // Helper function to get random values from an array
             const getRandomValueFromArray = (array) => {
                 return array[Math.floor(Math.random() * array.length)];
@@ -244,9 +256,9 @@
         
             // Helper function to generate random string (dummy)
             const getRandomStringValue = () => {
-                let string = getRandomValueFromList(template.displayName);
+                let string = '';//getRandomValueFromList(template.displayName);
                 if(string==null) {
-                    string = getRandomValueFromList('randomstring');
+                    //string = getRandomValueFromList('randomstring');
                 }
                 return string;
             };
@@ -274,13 +286,15 @@
                 }
                 return selectedValues;
             };
-        
+           
+
             // Iterate through the fields in the template
             template.fields.forEach(field => {
                 switch (field.type) {
                     case 'string':
                         // Assign a random string value for 'string' type
-                        randomData[field.key] = getRandomStringValue();
+                        //randomData[field.key] = getRandomStringValue();
+                        randomData[field.key] =values[field.key];
                         break;
         
                     case 'float':
@@ -311,11 +325,7 @@
         
             return randomData;
         }
-        
-        
-        function increment(id) {
-            $("#"+id).text(parseInt($("#"+id).text())+1);
-        }
+
         function checkButton() {
             
             console.log($('#selectedTemplates').text().length);
@@ -355,7 +365,7 @@
             // Variable to track the number of fields per row
             let $row = $('<div>').addClass('row mb-2');
             let fieldCount = 0;
-        
+          
             // Iterate through the fields in the template
             template.fields.forEach(field => {
                 // Create a div to wrap each form element (col)
@@ -375,20 +385,15 @@
                     
                     case 'string':
                         // Handle string input as a text input field
-                        $label.text($label.text() + " (sample random value)");
-                        let randomValue = getRandomValueFromList(field.displayName);
-                        console.log(randomValue);
-                        if(randomValue==null || randomValue.length<=1) {
-                            randomValue = getRandomValueFromList('randomstring');
-                            }
-                        
+                        $label.text($label.text() + " (will generate random value)");
+                       
                         const $textInput = $('<input>')
                             .attr('type', 'text')
                             .attr('display', field.displayName)
                             .addClass('form-control')
                             .attr('id', field.key)
                             .attr('name', field.key)
-                            .attr('value',randomValue);
+                            .attr('value','');
                         $formGroup.append($textInput);
                         break;
                     
@@ -496,7 +501,61 @@
                 $formContainer.append($row);
             }
         }
+        async function getDefaultValues(fields, id) {
+            // Create an array to hold promises for each AJAX request
+            let promises = fields.map(field => {
+                let data = {
+                    "prompt": `Write 5 plausible, real world examples of values for this field. return as comma separated string. Include only the 5 values, remove all linebreak characters like \\n or tab symbols like \\t from the answer`,
+                    "items": [
+                        {
+                            "id": id,
+                            "type": "file",
+                            "content": `field is ${field}`
+                        }
+                    ]
+                };
         
+                // Return a new promise for each AJAX call
+                return new Promise((resolve, reject) => {
+                    $.ajax({
+                        url: "https://api.box.com/2.0/ai/text_gen",
+                        data: JSON.stringify(data),
+                        headers: {
+                            Authorization: "Bearer " + accessToken,
+                            "Content-Type": "application/json",
+                            Accept: "application/json",
+                        },
+                        type: "post",
+                        success: function (response) {
+                            // Parse the response into a JSON object
+                            console.log(response.answer);
+                            let commaSeparatedValues = response.answer.split(', ');
+
+                            // Modify the object to include the field and its comma-separated values
+                            resolve({
+                                field: field,
+                                value: commaSeparatedValues
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Error occurred:", error);
+                            reject(error);  // Reject the promise in case of an error
+                        }
+                    });
+                });
+            });
+        
+            // Wait for all promises to complete, then return the array of fields
+            return Promise.all(promises)
+                .then(results => {
+                    // 'results' is an array of all field objects returned from the API
+                    return results;
+                })
+                .catch(error => {
+                    console.error("Error fetching default values:", error);
+                    throw error;
+                });
+        }
         
         
         
@@ -514,7 +573,7 @@
                     <li>Select a source folder (click the blue tick to select)</li>
                     <li>Select a metadata template. Fields will appear with sample values for randomly generated values for the field</li>
                     <li>Click analyze and it will show how many folders and files you are applying to</li>
-                    <li>Click Apply random values to populate metadata for selected files and folders </li>
+                    <li>Click Apply random values to populate metadata for selected files and folders (it will match the field display name to a bank of possible values. If none are found it will remain empty) </li>
                 </ul>
                 
                     </div>
@@ -577,11 +636,11 @@
                                     <span class="badge rounded-pill bg-primary" id="fileCount">0</span>
                                 </li>
                                 <li class="list-group-item">
-                                    Folders 
+                                    Folder metadata instances 
                                     <span class="badge rounded-pill bg-primary" id="folderInstanceCount">0</span>
                                 </li>
                                 <li class="list-group-item">
-                                    Files
+                                    File metadata instances
                                     <span class="badge rounded-pill bg-primary" id="fileInstanceCount">0</span>
                                 </li>
                                 
