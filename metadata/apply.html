@@ -505,7 +505,7 @@
             // Create an array to hold promises for each AJAX request
             let promises = fields.map(field => {
                 let data = {
-                    "prompt": `Write 5 plausible, real world examples of values for this field. return as comma separated string. Include only the 5 values, remove all linebreak characters like \\n or tab symbols like \\t from the answer`,
+                    "prompt": `Write 5 plausible, real world examples of values for this field. Return as comma separated string. Include only the 5 values, remove all linebreak characters like \\n or tab symbols like \\t from the answer`,
                     "items": [
                         {
                             "id": id,
