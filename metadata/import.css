@@ -1,0 +1,138 @@
+
+.la {
+    text-align:left !important;
+} 
+.section {
+    border: 1px solid #007bff;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.transfer-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+select {
+    width: 200px;
+    height: 200px;
+    
+}
+option,input,select,.form-label {
+    font-family: "Lato, Helvetica, Arial, sans-serif" !important;
+    font-size:13px !important;
+}
+.button-section {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+.normal {
+    height:auto !important;
+}
+
+
+.header {
+    background-color: #0061D5; /* Box.com blue color */
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+.header a {
+    color: white;
+    text-decoration: none;
+    margin-right: 20px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+.header a:hover {
+    text-decoration: underline;
+}
+.header i {
+    margin-right: 8px; /* Space between icon and text */
+}
+.la {
+    text-align:left !important;
+} 
+.section {
+    border: 1px solid #007bff;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.transfer-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+select {
+    width: 200px;
+    height: 200px;
+    
+}
+option {
+    font-family: "Lato, Helvetica, Arial, sans-serif";
+    font-size:13px;
+}
+.button-section {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.la {
+    text-align:left !important;
+} 
+.section {
+    border: 1px solid #007bff;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.transfer-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+select {
+    width: 200px;
+    height: 200px;
+    
+}
+option {
+    font-family: "Lato, Helvetica, Arial, sans-serif";
+    font-size:13px;
+}
+.button-section {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+.dynamic-input {
+    margin-top: 20px;
+    text-align:left !important
+}

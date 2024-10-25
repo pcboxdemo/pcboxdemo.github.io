@@ -22,44 +22,9 @@
 <script src="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.js"></script>
 <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css"/>
 <script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
-
+<link rel="stylesheet" href="import.css"/>
 
     <style>
-        .la {
-            text-align:left !important;
-        } 
-        .section {
-            border: 1px solid #007bff;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .list-group-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .transfer-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-        }
-        select {
-            width: 200px;
-            height: 200px;
-            
-        }
-        option {
-            font-family: "Lato, Helvetica, Arial, sans-serif";
-            font-size:13px;
-        }
-        .button-section {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
     </style>
 
     <script>
@@ -388,7 +353,14 @@
         
     </script>
 </head>
-<body><a href="index.html">Home</a>
+<body>   <header class="header">
+    <a href="index.html">
+        <i class="bi bi-house-door"></i> Home
+    </a>
+    <a href="https://pcboxdemo.github.io/metadata/index_oauth.html">
+                <i class="bi bi-box-arrow-in-right"></i> Login
+    </a>
+</header>
     <div class="container mt-5">
         <!-- Header -->
         <header class="text-center mb-2">
