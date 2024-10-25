@@ -126,52 +126,72 @@
                   
                 });
                 $('#analyze').click(function() {
+                    $("#sharedLink").hide();
+                    $("#zipper").text("").attr("src","");
+
                     $(".rounded-pill").text('0');
+                    totalSize=0;
                     populate(selectedFolder);
                     $('#export').attr('disabled',false);
                 });
-    
+                let processing=false;
                 $('#export').click(function() {
-                    $(this).hide();
-                    $("#exportLoader").show();
-                    $('#timer').show();  // Show the timer
-
-                    startTimer();  // Start the timer
-
-                    var templatesToUse = $('#selectedTemplates option:selected').map(function() {
-                        return $(this).val();
-                    }).get();
-                    let data = {
-                        "folderId":selectedFolder,
-                        "token":accessToken,
-                        "metadataTemplates":templatesToUse.join(","),
-                        "isExport":"true"
-                    };
-                    $.ajax({
-                        //url:sessionStorage.getItem("host") + "/createzipfile",
-                        //url:"https://zilrj2u430.execute-api.eu-west-2.amazonaws.com/default/box-metadata-importer",
-                        url:"https://dtet4x5wdsgiyn7bicxfql33la0pdqkk.lambda-url.eu-west-2.on.aws/",
-                        data: data,
-                        type: "post",
-                        success: function (response) {
-                            stopTimer(); 
-                            console.log(response);
-                            $("#exportLoader").hide();
-                            $("#export").show();
-                            $("#zipper").attr("href",JSON.parse(response.input).result);
-                            $("#sharedLink").show();
-                            
-                        }
-                        ,
-                        error: function(xhr, status, error) {
-                            //$("#response").text(JSON.stringify(xhr,null,2));
-                            stopTimer(); 
-                            console.log('stat' + JSON.stringify(xhr.statusCode()));
-                            console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
-                            $("#loader").hide();
-                            $("#zipper").html(xhr.getAllResponseHeaders());
-                        }
-                    });
+                    if(processing) {
+                        return;
+                    }
+                    else {
+                        $(this).hide();
+                        $("#exportLoader").show();
+                        $('#timer').show();  // Show the timer
+                        console.log('processing');
+                        startTimer();  // Start the timer
+    
+                        var templatesToUse = $('#selectedTemplates option:selected').map(function() {
+                            return $(this).val();
+                        }).get();
+                        let data = {
+                            "folderId":selectedFolder,
+                            "token":accessToken,
+                            "metadataTemplates":templatesToUse.join(","),
+                            "isExport":"true"
+                        };
+                        $.ajax({
+                            //url:sessionStorage.getItem("host") + "/createzipfile",
+                            //url:"https://zilrj2u430.execute-api.eu-west-2.amazonaws.com/default/box-metadata-importer",
+                            url:"https://dtet4x5wdsgiyn7bicxfql33la0pdqkk.lambda-url.eu-west-2.on.aws/",
+                            data: data,
+                            type: "post",
+                            dataType: "json",   
+                            success: function (response) {
+                                stopTimer(); 
+                                console.log(response);
+                                $("#exportLoader").hide();
+                                $("#export").show();
+                                $("#zipper").attr("href",response.message);
+                                $("#zipper").text("Shared link: " + response.message);
+                                $("#sharedLink").show();
+                                
+                                
+                                
+                                
+                            }
+                            ,
+                            error: function(xhr, status, error) {
+                                //$("#response").text(JSON.stringify(xhr,null,2));
+                                stopTimer(); 
+                                console.log('stat' + JSON.stringify(xhr.statusCode()));
+                                console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
+                                $("#export").show();
+                                $("#exportLoader").hide();
+                                $("#sharedLink").show();
+                                $("#msg").text(JSON.stringify(xhr.statusCode()) + "::" + error.message);
+                                processing=false;
+                                $("#msg").text(response.message);
+                            }
+                        });
+                    
+                    }
+                    
                 });
                     
             });
@@ -221,7 +241,7 @@
             var templatesToUse = $('#selectedTemplates option:selected').map(function() {
                 return $(this).val();
             }).get();
-            let fields = 'id,name,type';
+            let fields = 'id,name,type,size,';
             templatesToUse.forEach(function(temp) {
                 fields +=',metadata.enterprise_'+eid + '.' + temp;
             });
@@ -239,12 +259,25 @@
                 else if(data.type=='file') {
                     totalSize+=data.size;
                     increment('fileCount');
+                    $("#fileTotalSize").text(formatBytes(totalSize));
                     if(data.metadata) {
                         increment('fileInstanceCount');
                     }
                 }
             })
         }
+        function formatBytes(bytes) {
+            const units = ["Bytes", "KB", "MB", "GB", "TB"];
+            let unitIndex = 0;
+        
+            while (bytes >= 1024 && unitIndex < units.length - 1) {
+                bytes /= 1024;
+                unitIndex++;
+            }
+        
+            return `${bytes.toFixed(1)} ${units[unitIndex]}`;
+        }
+        
         async function checkMetadata(folderId) {
             let fields = 'id,name,type';
             let items = await getFolderItems(folderId, { 'fields': [fields], 'limit': 1000 });
@@ -413,7 +446,8 @@
             <img src="ajax-loader.gif" id="exportLoader" class="loading" style="display:none;"/>
             <span id="timer" class="loading"  style="display:none;">0s</span>
 
-            <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Shared link to Zip file for importing</a></div>
+            <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Shared link to Zip file for importing</a>
+            <span id="msg"></span></div>
         </div>
         <!-- Row with one section -->
         <div class="row">
@@ -429,6 +463,10 @@
                             <li class="list-group-item">
                                 Files
                                 <span class="badge rounded-pill bg-primary"  id="fileCount">0</span>
+                            </li>
+                            <li class="list-group-item">
+                                Files total size
+                                <span class="badge rounded-pill bg-primary"  id="fileTotalSize">0</span>
                             </li>
                             <li class="list-group-item">
                                 File Metadata instances 
