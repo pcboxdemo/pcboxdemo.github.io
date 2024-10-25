@@ -20,6 +20,9 @@
 
     <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.css"/>
 <script src="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.js"></script>
+<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css"/>
+<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
+
 
     <style>
         .la {
@@ -117,6 +120,7 @@
                     selectedFolder = data.id;
                     selectedFolderName = data.name;
                     $("#sec2").text("Selected Folder:" + data.name);
+                    $("#suggest").show();
                     checkButton();
 
                   
@@ -189,7 +193,14 @@
                 sortOptions('#selectedTemplates');
                 checkButton();
             });
+            $("#suggest").click(async function() {
+                $("#suggestLoader").show();
+                $("#suggest").hide();
+                await checkMetadata(selectedFolder);
+                $("#suggestLoader").hide();
+                $("#suggest").show();
 
+            })
             // Move items from SelectBox2 back to SelectBox1
             $('#moveLeft').click(function() {
                 $('#selectedTemplates option:selected').each(function() {
@@ -205,6 +216,7 @@
             eid = user.enterprise.id;
         }
         let metadataTemplateMap = [];
+        let totalSize=0;
         async function populate(folderId) {
             var templatesToUse = $('#selectedTemplates option:selected').map(function() {
                 return $(this).val();
@@ -224,7 +236,8 @@
                     }
                     populate(data.id);
                 }
-                else {
+                else if(data.type=='file') {
+                    totalSize+=data.size;
                     increment('fileCount');
                     if(data.metadata) {
                         increment('fileInstanceCount');
@@ -232,6 +245,76 @@
                 }
             })
         }
+        async function checkMetadata(folderId) {
+            let fields = 'id,name,type';
+            let items = await getFolderItems(folderId, { 'fields': [fields], 'limit': 1000 });
+        
+            // Helper function to handle metadata requests with concurrency control
+            async function processWithLimit(promises, limit) {
+                let result = [];
+                const executing = new Set();
+        
+                for (const p of promises) {
+                    const promise = p();
+                    result.push(promise);
+                    executing.add(promise);
+        
+                    promise.then(() => executing.delete(promise)).catch(() => executing.delete(promise));
+        
+                    if (executing.size >= limit) {
+                        await Promise.race(executing);
+                    }
+                }
+        
+                return Promise.all(result);
+            }
+        
+            // Prepare an array of functions for metadata fetching
+            let metadataFetchers = [];
+        
+            for (const data of items.entries) {
+                if (data.type === 'folder') {
+                    metadataFetchers.push(async () => {
+                        let folderMetadata = await client.folderMetadata.getFolderMetadata(data.id);
+                        console.log(`Folder Metadata for ${data.name}:`, folderMetadata);
+        
+                        // Process metadata entries if present
+                        if (folderMetadata.entries && folderMetadata.entries.length > 0) {
+                            processMetadataEntries(folderMetadata.entries);
+                        }
+        
+                        await checkMetadata(data.id); // Recurse for subfolders
+                    });
+                } else if(data.type=='file') {
+                    metadataFetchers.push(async () => {
+                        let fileMetadata = await client.fileMetadata.getFileMetadata(data.id);
+                        console.log(`File Metadata for ${data.name}:`, fileMetadata);
+        
+                        // Process metadata entries if present
+                        if (fileMetadata.entries && fileMetadata.entries.length > 0) {
+                            processMetadataEntries(fileMetadata.entries);
+                        }
+                    });
+                }
+            }
+        
+            // Call processWithLimit to control the concurrency to 10 requests at a time
+            await processWithLimit(metadataFetchers, 10);
+        }
+        
+        // Function to process metadata entries
+        function processMetadataEntries(entries) {
+            entries.forEach(entry => {
+                const templateValue = entry.template; // Grab the template attribute
+        
+                // Use jQuery to select the option in the select box with ID allTemplates
+                $('#allTemplates').val(templateValue).change();
+                $('#moveRight').click();
+
+            });
+        }
+        
+        
         async function getFolderItems(folderId,options) {
             let url = "https://api.box.com/2.0/folders/"+folderId + "/items?fields=" + options.fields.join(",");
             let resp;
@@ -258,9 +341,9 @@
         }
         function checkButton() {
             console.log(selectedFolder);
-            console.log($('#selectedTemplates :selected').length);
+            console.log($('#selectedTemplates').children('option').length);
             if(selectedFolder!=null) {
-                if($('#selectedTemplates :selected').length>0) {
+                if($('#selectedTemplates').children('option').length>0) {
                     $(".action").attr('disabled',false);
                     return;
                 }
@@ -281,7 +364,9 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="section la">Instructions: <ul>
-                    <li>Select a source folder (click the blue tick to select) and one or more metadata templates that are used in the folder</li>
+                    <li>Select a source folder (click the blue tick to select) and one or more metadata templates that are used in the folder
+                        <br/>(click the magnifying glass to traverse the structure and pull all templates programatically)
+                    </li>
                     <li>Click Analyze and check results are as expected and number of metadata instances are correct <br/>(analyze button will not be enabled until you have selected both folder and at least one metadata template)</li>
                     <li>Click Export</li>
                     <li>When the process is complete a shared link will be shown. This can be used by anyone for importing the strucuture </li>
@@ -310,6 +395,9 @@
                     <div class="d-flex flex-column">
                         <button class="btn btn-primary mb-2" id="moveRight"> > </button>
                         <button class="btn btn-primary" id="moveLeft"> < </button>
+                        <br/> <i class="bi bi-search" id="suggest" style="display:none;"></i>
+                        <img id="suggestLoader" src="ajax-loader.gif" height="24" style="display:none;"/>
+                        </button>
                     </div>
         
                     <!-- Select Box 2 -->

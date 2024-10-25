@@ -21,6 +21,8 @@
     <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.css"/>
 <script src="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.js"></script>
 <script src="https://pcboxdemo.github.io/sign/defaultValues.js"></script>
+<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css"/>
+<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
     <style>
           .la {
             text-align:left !important;
@@ -64,6 +66,7 @@
 
     <script>
         var folderPicker = new Box.FolderPicker();
+        var contentExplorer = new Box.ContentExplorer();
         const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
         var client;
         var accessToken=sessionStorage.getItem("token");//'1!ovMAnpXZqiVIIHfEmAgKsaxAYGqT54wQLOCjDudE9OOlot9_RhQXRncyKgiw1-eymQjVGe4YONcsCZZ2JUcmc9GyHLCYGfEOwMg8lP2pghjtJg_BpbgXerqucuVnYQJkknxTeJvNfSfEiu8GhShkgxupj02JPjdxoy4Eyj6AfavchgCS0x1huzmUPv4Q-Wi6zjqTjwATWXwWbVutAJ4_GSEFydHf751iqRWxA-bJaVuqB7FtVArcie7jDUuTcu3OsDZfRYzZZIvg5OWmOLKS-jbO0Gbj3MmXSDv__elJVQANjVDRWE6N5nzBM-ii1fQZtqiERKioKN3dxGI-M4NOZfEIh6MsHHtcbL9aJKvXpa05Ln76ro5IjzC01YfuRI0Ap1vf7c57b1G1gXprd4NvODd2mQqj_hUy43kk-v2Z2TSijyTuhj7yeF2BAgS5MyXBCNZctNVsPIGnBpR6bD1_lwsLZNkUz4ND-3b0iksLw7aZJhcT3FQW0vsrhu8QA3RJ-mQRl42pJ65dh4Ri5A9dsvGxr1uq2lCCwiemwR6zILZoSVoOp6q4d81EEMyaXXPtZHlD0eOeVO1krm6RnlaG9y6ZMXvS4nzJBv8tHiD3VxRap9ye_YeD6xXR_5rZHHiXpxwpBUM4bsDSUEsiyNYCuNMrcwNnpf0eYll6KOlnG908Xt6SYuyzqNgflrNWWhG_wT3-sVdqy-TVftYeLHYkCKPzyN2GYPb47awVjyBLUQZhWDrTItJRmwjc30b3-NfYfIhFiwnnKa-N6VthbRsCBB1NcjhwCpcKF9AWWl_iM4dqyNZ0myghxR0ZqNXnfWDNOpKmSFZtQTEpz-NVupTteW-EmAgOmn0vyG1y';        
@@ -115,29 +118,34 @@
                     $(".rounded-pill").text('0');
                     //count files and folders
                     populateCounts(selectedFolder);
-                    $('#apply').attr('disabled',false);
-                    $('#applyAI').attr('disabled',false);
+                    $('.apply').attr('disabled',false);
+                    
                 });
     
-                $('#apply').click(async function() {
+                $('.apply').click(async function() {
                     $(this).hide();
                     $("#exportLoader").show();
-                    $('#applyAI').attr('disabled',true);
+                    $('.action').attr('disabled',true);
                     var templateToUse = $('#selectedTemplates').attr("key");
+                    console.log($(this).attr("id"));
+                    var action = $(this).attr("id");
                     let stringFields = [];
                     let template =  metadataTemplates.entries.find(t => t.templateKey === $('#selectedTemplates').attr("key"));
-                    template.fields.forEach(field => {
-                        if(field.type=='string') {
-                            stringFields.push(field.key);
-                            
+                    let values;
+                    if(action=='apply') {
+                        template.fields.forEach(field => {
+                            if(field.type=='string') {
+                                stringFields.push(field.key);
+                                
+                            }
+                        });
+                        values = await getDefaultValues(stringFields,randomFileId);
+                        console.log(values);
+                        for(var val in values) {
+                            $("#"+values[val].field).attr('value',values[val].value.join(", "));
                         }
-                    });
-                    let values = await getDefaultValues(stringFields,randomFileId);
-                    console.log(values);
-                    for(var val in values) {
-                        $("#"+values[val].field).attr('value',values[val].value.join(","));
                     }
-                    populate(selectedFolder,template,values);
+                    populate(selectedFolder,template,values,action);
 
                    
                 });
@@ -203,13 +211,59 @@
             $("#"+id).text(parseInt($("#"+id).text())+1);
             checkLoader();
         }
+        function getQuery(metadata) {
+            for (let field of metadata.fields) {
+                if (field.type === "string" || field.type === "enum") {
+                    return field.key + ' IS null  OR ' + field.key + ' IS NOT null';
+                }
+            }
+            for (let field of metadata.fields) {
+                if (field.type === "float" ) {
+                    return field.key + ' =0  OR ' + field.key + ' !=0';
+                }
+            }
+            return ""; // Return null if no matching element is found
+        }
         function checkLoader() {
             console.log($("#fileCount").text() + '=' + $("#fileApplyCount").text());
             console.log($("#folderCount").text() + '=' + $("#folderApplyCount").text());
             if($("#fileCount").text()==$("#fileApplyCount").text() 
             && $("#folderCount").text()==$("#folderApplyCount").text()){ 
                 $("#exportLoader").hide();
-                $("#apply").show();
+                $(".action").show();
+                $(".ct").show();
+                let template =  metadataTemplates.entries.find(t => t.templateKey === $('#selectedTemplates').attr("key"));
+                let fieldsToShow = [];
+                let fields = [];
+                template.fields.forEach(element => fields.push('metadata.enterprise_' + eid + "." + template.templateKey + "." + element.key));
+                template.fields.forEach(element => fieldsToShow.push({ key: 'metadata.enterprise_' + eid + "." + template.templateKey + "." + element.key, canEdit: true }));;
+                let mdQuery = {
+                    from: "enterprise_" + eid + "." + template.templateKey,
+                    query: getQuery(template),
+                    limit: 100,
+                    query_params: {"arg1":"arg1"},
+                    ancestor_folder_id: selectedFolder,
+                    fields: fields
+                };
+                contentExplorer.show(selectedFolder,accessToken, {
+                    container:'.ct',
+                    metadataQuery: mdQuery,
+                    fieldsToShow: fieldsToShow,
+                    defaultView: 'metadata',
+                    contentPreviewProps: {
+                    contentSidebarProps: {
+                        detailsSidebarProps: {
+                            hasNotices: true,
+                            hasProperties: true,
+                            hasAccessStats: true,
+                            hasVersions: true
+                        },
+                        hasActivityFeed: true,
+                        hasSkills: true,
+                        hasMetadata: true
+                    }
+                }
+                })
             } 
 
         }
@@ -217,33 +271,47 @@
             let user = await  client.users.getUserMe({"fields":["id,name,enterprise"]});
             eid = user.enterprise.id;
         }
+        
+        
         let metadataTemplateMap = [];
-        async function populate(folderId,template,values) {
+
+        async function populate(folderId,template,values,action) {
 
             let fields = 'id,name,type';
              let items =  await client.folders.getFolderItems(folderId,{'fields':[fields],'limit':1000});
-            items.entries.forEach(function(data) {
+            //items.entries.forEach(function(data) {
+            for(var data of items.entries) {
                 if(data.type=='folder') {
-                    let md = generateRandomData(template,values);
-                    client.folderMetadata.createFolderMetadataById(
-                        data.id,'enterprise',
-                        template.templateKey,
-                        md
-                      ).then(increment('folderApplyCount'));
-                      
-                      
-                    
-                    populate(data.id,template,values);
+                    if(action=='applyAI') {
+                        increment('folderApplyCount')
+                    }
+                    else {
+                        let md = generateRandomData(template,values);
+                        client.folderMetadata.createFolderMetadataById(
+                            data.id,'enterprise',
+                            template.templateKey,
+                            md
+                        ).then(increment('folderApplyCount'));
+                    }
+                    populate(data.id,template,values,action);
                 }
                 else {
-                    let md = generateRandomData(template,values);
+                    let md;
+                    if(action=='applyAI') {
+                        md = await getMetadataSuggestionsFromAI(template.templateKey,data.id);
+                        md = fixDatesInFields(template,md);
+                    }
+                    else {
+                        md = generateRandomData(template,values);
+                    }
+                    
                     client.fileMetadata.createFileMetadataById(
                         data.id,'enterprise',
                         template.templateKey,
                         md
                       ).then(increment('fileApplyCount'));    
                 }
-            })
+            }
         }
        
        async function generateRandomData(template,values) {
@@ -413,7 +481,7 @@
                         
                         const $numberInputTo = $('<input>')
                             .attr('type', 'number')
-                            .addClass('form-control nofill')
+                            .addClass('form-control mb-2 nofill')
                             .attr('id', `${field.key}_to`)
                             .attr('name', `${field.key}_to`)
                             .attr('placeholder', 'To')
@@ -440,7 +508,7 @@
                         
                         const $dateInputTo = $('<input>')
                             .attr('type', 'date')
-                            .addClass('form-control nofill')
+                            .addClass('form-control mb-2 nofill')
                             .attr('id', `${field.key}_to`)
                             .attr('name', `${field.key}_to`)
                             .attr('placeholder', 'To')
@@ -556,6 +624,80 @@
                     throw error;
                 });
         }
+        function getMetadataSuggestionsFromAI(templateKey, fileID) {
+            // Create the data payload for the POST request
+            const data = {
+                "metadata_template": {
+                    "type": "metadata_template",
+                    "scope": "enterprise",
+                    "template_key": templateKey
+                },
+                "items": [{
+                    "type": "file",
+                    "id": fileID
+                }]
+            };
+        
+            // Return a new promise for the AJAX call
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: "https://api.box.com/2.0/ai/extract_structured", // API endpoint
+                    type: "POST", // Request method
+                    data: JSON.stringify(data), // Convert data object to JSON string
+                    headers: {
+                        "Authorization": "Bearer " + accessToken, // Add authorization header with the token
+                        "Content-Type": "application/json", // Specify content type as JSON
+                        "Accept": "application/json" // Expect JSON response
+                    },
+                    success: function(response) {
+                        // If successful, resolve the promise with the response
+                        resolve(response);
+                    },
+                    error: function(xhr, status, error) {
+                        // If there's an error, reject the promise with the error message
+                        console.error("Error occurred:", error);
+                        reject(error);
+                    }
+                });
+            });
+        }
+        function fixDatesInFields(template, jsonObject) {
+            // Regex to match dates like '2/21/2018' or 'April 3, 2019'
+            const dateRegex1 = /^\d{1,2}\/\d{1,2}\/\d{4}$/; // MM/DD/YYYY
+            const dateRegex2 = /^[A-Za-z]+\s\d{1,2},\s\d{4}$/; // Month Day, Year (e.g., April 3, 2019)
+        
+            // Helper function to fix date format
+            function formatDateToISO(dateStr) {
+                const dateObj = new Date(dateStr);
+                if (isNaN(dateObj.getTime())) {
+                    return dateStr; // If parsing failed, return the original string
+                }
+                const isoDate = dateObj.toISOString(); // Get date in 'YYYY-MM-DDTHH:MM:SS.sssZ' format
+                const timezoneOffset = -dateObj.getTimezoneOffset();
+                const offsetHours = Math.abs(Math.floor(timezoneOffset / 60)).toString().padStart(2, '0');
+                const offsetMinutes = Math.abs(timezoneOffset % 60).toString().padStart(2, '0');
+                const sign = timezoneOffset >= 0 ? '+' : '-';
+        
+                return isoDate.slice(0, 19) + sign + offsetHours + ':' + offsetMinutes; // 'YYYY-MM-DDTHH:MM:SS±HH:MM'
+            }
+        
+            // Iterate through the fields in the template object
+            template.fields.forEach(field => {
+                // Match field keys in the template with the jsonObject
+                const fieldKey = field.key;
+                const fieldValue = jsonObject[fieldKey];
+        
+                // Check if the field type is 'date' and if it matches one of the date formats
+                if (field.type === 'date' && typeof fieldValue === 'string') {
+                    if (dateRegex1.test(fieldValue) || dateRegex2.test(fieldValue) || !isNaN(Date.parse(fieldValue))) {
+                        jsonObject[fieldKey] = formatDateToISO(fieldValue); // Convert date
+                    }
+                }
+            });
+        
+            return jsonObject; // Return the updated jsonObject
+        }
+        
         
         
         
@@ -612,8 +754,8 @@
         </div>
         <div class="button-section">
             <button class="btn btn-primary action" id="analyze" disabled>Analyze</button>
-            <button class="btn btn-secondary" id="apply" disabled>Apply random values</button>
-            <!--<button class="btn btn-secondary" id="applyAI" disabled>Use AI to apply metadata</button>-->
+            <button class="btn btn-secondary apply" id="apply" disabled>Apply random values</button>
+            <button class="btn btn-secondary apply" id="applyAI" disabled>Use AI to apply metadata</button>
             <img src="ajax-loader.gif" id="exportLoader" style="display:none;"/>
             <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Shared link to Zip file for importing</a></div>
         </div>
@@ -660,6 +802,17 @@
                                 </li>
                             </ul>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="section">
+                    <h3 id="sec2"></h3>
+                    <div id="sec2content" class="ct" style="display:none;height:600px;"></div>
+                        
+
                     </div>
                 </div>
             </div>
