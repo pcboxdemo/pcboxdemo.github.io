@@ -189,8 +189,8 @@
             return ""; // Return null if no matching element is found
         }
         function checkLoader() {
-            console.log($("#fileCount").text() + '=' + $("#fileApplyCount").text());
-            console.log($("#folderCount").text() + '=' + $("#folderApplyCount").text());
+            //console.log($("#fileCount").text() + '=' + $("#fileApplyCount").text());
+            //console.log($("#folderCount").text() + '=' + $("#folderApplyCount").text());
             if($("#fileCount").text()==$("#fileApplyCount").text() 
             && $("#folderCount").text()==$("#folderApplyCount").text()){ 
                 $("#exportLoader").hide();
@@ -250,7 +250,7 @@
                         increment('folderApplyCount')
                     }
                     else {
-                        let md = generateRandomData(template,values);
+                        let md = await generateRandomData(template,values);
                         client.folderMetadata.createFolderMetadataById(
                             data.id,'enterprise',
                             template.templateKey,
@@ -266,7 +266,7 @@
                         md = fixDatesInFields(template,md);
                     }
                     else {
-                        md = generateRandomData(template,values);
+                        md =await  generateRandomData(template,values);
                     }
                     
                     client.fileMetadata.createFileMetadataById(
@@ -297,7 +297,7 @@
         
             // Helper function to generate random float number between min and max
             const getRandomFloat = (min, max) => {
-                return (Math.random() * (max - min) + min).toFixed(2);
+                return parseInt((Math.random() * (max - min) + min).toFixed(0));
             };
         
             // Helper function to generate a random date between two dates
@@ -318,6 +318,18 @@
                 }
                 return selectedValues;
             };
+            const getRandomValue = (values,fieldName) =>{
+                // Find the object with the matching field
+                const fieldData = values.find(item => item.field === fieldName);
+                
+                // If the field is found, get a random value from its value array
+                if (fieldData && fieldData.value.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * fieldData.value.length);
+                    return fieldData.value[randomIndex];
+                } else {
+                    return null; // Return null if field not found or empty
+                }
+            }
            
 
             // Iterate through the fields in the template
@@ -326,7 +338,8 @@
                     case 'string':
                         // Assign a random string value for 'string' type
                         //randomData[field.key] = getRandomStringValue();
-                        randomData[field.key] =values[field.key];
+                        console.log(field.key + "::" + JSON.stringify(values));
+                        randomData[field.key] =getRandomValue(values,field.key);
                         break;
         
                     case 'float':
@@ -354,7 +367,7 @@
                     // Add more cases for other types if necessary
                 }
             });
-        
+            console.log(`returning: ${JSON.stringify(randomData)}`);
             return randomData;
         }
 
