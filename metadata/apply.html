@@ -682,12 +682,27 @@
 </head>
 <body>
     <header class="header">
-        <a href="index.html">
-            <i class="bi bi-house-door"></i> Home
-        </a>
-        <a href="https://pcboxdemo.github.io/metadata/index_oauth.html">
-            <i class="bi bi-box-arrow-in-right"></i> Login
-        </a>
+        <!-- Left side links -->
+        <div class="left">
+            <a href="index.html">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+            <a href="login.html">
+                <i class="bi bi-box-arrow-in-right"></i> Login
+            </a>
+        </div>
+
+        <!-- Center links -->
+        <div class="center">
+            <a href="export.html" ><i class="bi bi-arrow-up-circle"></i> Export</a>
+            <a href="import.html"><i class="bi bi-arrow-down-circle"></i> Import</a>
+            <a href="apply.html" class="active"><i class="bi bi-check-circle"></i> Apply</a>
+        </div>
+
+        <!-- Right side could have more links or branding if needed -->
+        <div class="right">
+            <!-- Placeholder for potential right-aligned content -->
+        </div>
     </header>
     <div class="container mt-5">
         <!-- Header -->
@@ -701,6 +716,7 @@
                     <li>Select a metadata template. Fields will appear with sample values for randomly generated values for the field</li>
                     <li>Click analyze and it will show how many folders and files you are applying to</li>
                     <li>Click Apply random values to populate metadata for selected files and folders (it will match the field display name to a bank of possible values. If none are found it will remain empty) </li>
+                    <li>Click Use AI to Apply Metadata to invoke the Metadata AI API endpoint to extract metadata from files. This only affects files and assumes that the files are relevant for the chosen metadata template</li>
                 </ul>
                 
                     </div>
@@ -718,7 +734,7 @@
                 <h4>Select Metadata template</h4>
                 <div class="transfer-container section">
                     <!-- Select Box 1 -->
-                    <select id="allTemplates" class="form-select  nofill" style="height:600px;" size="40">
+                    <select id="allTemplates" class="form-select  nofill" style="height:600px !important" size="40">
                         
                     </select>
         

@@ -44,7 +44,11 @@ option,input,select,.form-label {
     color: white;
     padding: 15px 20px;
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
+    align-items: center;
+}
+.header .left, .header .center, .header .right {
+    display: flex;
     align-items: center;
 }
 .header a {
@@ -60,6 +64,10 @@ option,input,select,.form-label {
 }
 .header i {
     margin-right: 8px; /* Space between icon and text */
+}
+.header .center a.active {
+    font-weight: bold;
+    text-decoration: underline;
 }
 .la {
     text-align:left !important;
