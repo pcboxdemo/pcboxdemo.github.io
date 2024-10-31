@@ -188,14 +188,17 @@
             }
             return ""; // Return null if no matching element is found
         }
-        function checkLoader() {
+        async function checkLoader() {
             //console.log($("#fileCount").text() + '=' + $("#fileApplyCount").text());
             //console.log($("#folderCount").text() + '=' + $("#folderApplyCount").text());
             if($("#fileCount").text()==$("#fileApplyCount").text() 
             && $("#folderCount").text()==$("#folderApplyCount").text()){ 
-                $("#exportLoader").hide();
+                
+                
+                await delay(5000);
                 $(".action").show();
                 $(".ct").show();
+                $("#exportLoader").hide();
                 let template =  metadataTemplates.entries.find(t => t.templateKey === $('#selectedTemplates').attr("key"));
                 let fieldsToShow = [];
                 let fields = [];

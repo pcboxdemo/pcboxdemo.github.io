@@ -53,9 +53,9 @@
             
                     // Update the timer text to display in "m s" format
                     if (minutes > 0) {
-                        $('#timer').text(minutes + ' m ' + seconds + ' s');
+                        $('#timer').text('Elapsed: ' + minutes + ' m ' + seconds + ' s');
                     } else {
-                        $('#timer').text(seconds + ' s');
+                        $('#timer').text('Elapsed: ' + seconds + ' s');
                     }
                 }, 1000);
             }
@@ -93,11 +93,13 @@
                 $('#analyze').click(function() {
                     $("#sharedLink").hide();
                     $("#zipper").text("").attr("src","");
+                    $("#timer").hide();
 
                     $(".rounded-pill").text('0');
                     totalSize=0;
                     populate(selectedFolder);
                     $('#export').attr('disabled',false);
+                    
                 });
                 let processing=false;
                 $('#export').click(function() {
@@ -122,8 +124,6 @@
                             "isExport":"true"
                         };
                         $.ajax({
-                            //url:sessionStorage.getItem("host") + "/createzipfile",
-                            //url:"https://zilrj2u430.execute-api.eu-west-2.amazonaws.com/default/box-metadata-importer",
                             url:"https://dtet4x5wdsgiyn7bicxfql33la0pdqkk.lambda-url.eu-west-2.on.aws/",
                             data: data,
                             type: "post",
@@ -143,7 +143,6 @@
                             }
                             ,
                             error: function(xhr, status, error) {
-                                //$("#response").text(JSON.stringify(xhr,null,2));
                                 stopTimer(); 
                                 console.log('stat' + JSON.stringify(xhr.statusCode()));
                                 console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
@@ -226,6 +225,7 @@
                     totalSize+=data.size;
                     increment('fileCount');
                     $("#fileTotalSize").text(formatBytes(totalSize));
+                    $("#estimated").text('Est:' + predictSeconds($("#folderCount").text(),$("#fileCount").text(),totalSize/1024/1024)).show();
                     if(data.metadata) {
                         increment('fileInstanceCount');
                     }
@@ -315,7 +315,7 @@
         
         
         async function getFolderItems(folderId,options) {
-            let url = "https://api.box.com/2.0/folders/"+folderId + "/items?fields=" + options.fields.join(",");
+            let url = "https://api.box.com/2.0/folders/"+folderId + "/items?fields=" + options.fields.join(",") +'&limit=1000';
             let resp;
             await delay(200);
 
@@ -351,7 +351,25 @@
             $(".action").attr('disabled',true);
         }
 
-        
+        const coefficients = [-0.3579, 0.4680, 0.0564];
+        const intercept = 11.636;
+
+    // Prediction function
+    function predictSeconds(folder, files, size) {
+        // Calculate the predicted seconds
+        let predictedSeconds = (coefficients[0] * folder) + 
+                            (coefficients[1] * files) + 
+                            (coefficients[2] * size) + 
+                            intercept;
+                            let minutes = Math.floor(predictedSeconds / 60); // Calculate the number of minutes
+        let seconds = Math.floor(predictedSeconds) % 60; // Get remaining seconds after minutes
+        if (minutes > 0) {
+            return minutes + ' m ' + seconds + ' s';
+        } else {
+            return seconds + ' s';
+        }
+
+}
     </script>
 </head>
 <body>   <header class="header">
@@ -388,7 +406,8 @@
                     <li>Select a source folder (click the blue tick to select) and one or more metadata templates that are used in the folder
                         <br/>(click the magnifying glass to traverse the structure and pull all templates programatically - the icon will appear when you select a folder)
                     </li>
-                    <li>Click Analyze and check results are as expected and number of metadata instances are correct <br/>(analyze button will not be enabled until you have selected both folder and at least one metadata template)</li>
+                    <li>Click Analyze and check results are as expected and number of metadata instances are correct- the button will work when you have selected both folder and at least one metadata template</li>
+                    <li>Please note that for datasets over ~200 folders and ~500 files can timeout after 8 minutes. If you have a large dataset like this let me (Peter) know</li>
                     <li>Click Export</li>
                     <li>When the process is complete a shared link will be shown. This can be used by anyone for importing the strucuture </li>
                 </ul>
@@ -432,6 +451,7 @@
             <button class="btn btn-primary action" id="analyze" disabled>Analyze</button>
             <button class="btn btn-secondary" id="export" disabled>Export</button>
             <img src="ajax-loader.gif" id="exportLoader" class="loading" style="display:none;"/>
+            <span id="estimated" class="loading"  style="display:none;"></span>
             <span id="timer" class="loading"  style="display:none;">0s</span>
 
             <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Shared link to Zip file for importing</a>
