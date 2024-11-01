@@ -34,6 +34,7 @@
         var accessToken=sessionStorage.getItem("token");//'1!ovMAnpXZqiVIIHfEmAgKsaxAYGqT54wQLOCjDudE9OOlot9_RhQXRncyKgiw1-eymQjVGe4YONcsCZZ2JUcmc9GyHLCYGfEOwMg8lP2pghjtJg_BpbgXerqucuVnYQJkknxTeJvNfSfEiu8GhShkgxupj02JPjdxoy4Eyj6AfavchgCS0x1huzmUPv4Q-Wi6zjqTjwATWXwWbVutAJ4_GSEFydHf751iqRWxA-bJaVuqB7FtVArcie7jDUuTcu3OsDZfRYzZZIvg5OWmOLKS-jbO0Gbj3MmXSDv__elJVQANjVDRWE6N5nzBM-ii1fQZtqiERKioKN3dxGI-M4NOZfEIh6MsHHtcbL9aJKvXpa05Ln76ro5IjzC01YfuRI0Ap1vf7c57b1G1gXprd4NvODd2mQqj_hUy43kk-v2Z2TSijyTuhj7yeF2BAgS5MyXBCNZctNVsPIGnBpR6bD1_lwsLZNkUz4ND-3b0iksLw7aZJhcT3FQW0vsrhu8QA3RJ-mQRl42pJ65dh4Ri5A9dsvGxr1uq2lCCwiemwR6zILZoSVoOp6q4d81EEMyaXXPtZHlD0eOeVO1krm6RnlaG9y6ZMXvS4nzJBv8tHiD3VxRap9ye_YeD6xXR_5rZHHiXpxwpBUM4bsDSUEsiyNYCuNMrcwNnpf0eYll6KOlnG908Xt6SYuyzqNgflrNWWhG_wT3-sVdqy-TVftYeLHYkCKPzyN2GYPb47awVjyBLUQZhWDrTItJRmwjc30b3-NfYfIhFiwnnKa-N6VthbRsCBB1NcjhwCpcKF9AWWl_iM4dqyNZ0myghxR0ZqNXnfWDNOpKmSFZtQTEpz-NVupTteW-EmAgOmn0vyG1y';        var selectedFolder=null;
         var eid;
         $(document).ready(async function() {
+            setupExportHandler();
             let startTime, timerInterval;
             try {
                 //Create a Box client using the token
@@ -44,24 +45,7 @@
             catch (e) {
                 console.error(e);
             }
-            function startTimer() {
-                startTime = Date.now();
-                timerInterval = setInterval(function() {
-                    let elapsedTime = Math.floor((Date.now() - startTime) / 1000); // Calculate total seconds elapsed
-                    let minutes = Math.floor(elapsedTime / 60); // Calculate the number of minutes
-                    let seconds = elapsedTime % 60; // Get remaining seconds after minutes
             
-                    // Update the timer text to display in "m s" format
-                    if (minutes > 0) {
-                        $('#timer').text('Elapsed: ' + minutes + ' m ' + seconds + ' s');
-                    } else {
-                        $('#timer').text('Elapsed: ' + seconds + ' s');
-                    }
-                }, 1000);
-            }
-            function stopTimer() {
-                clearInterval(timerInterval); // Stop the timer interval
-            }
             let metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
                 if(temp.hidden==false) {
@@ -101,63 +85,7 @@
                     $('#export').attr('disabled',false);
                     
                 });
-                let processing=false;
-                $('#export').click(function() {
-                    if(processing) {
-                        return;
-                    }
-                    else {
-                        processing=true;
-                        $(this).hide();
-                        $("#exportLoader").show();
-                        $('#timer').show();  // Show the timer
-                        console.log('processing');
-                        startTimer();  // Start the timer
-    
-                        var templatesToUse = $('#selectedTemplates option:selected').map(function() {
-                            return $(this).val();
-                        }).get();
-                        let data = {
-                            "folderId":selectedFolder,
-                            "token":accessToken,
-                            "metadataTemplates":templatesToUse.join(","),
-                            "isExport":"true"
-                        };
-                        $.ajax({
-                            url:"https://dtet4x5wdsgiyn7bicxfql33la0pdqkk.lambda-url.eu-west-2.on.aws/",
-                            data: data,
-                            type: "post",
-                            dataType: "json",   
-                            success: function (response) {
-                                stopTimer(); 
-                                console.log(response);
-                                $("#exportLoader").hide();
-                                $("#export").show();
-                                $("#zipper").attr("href",response.message);
-                                $("#zipper").text("Shared link: " + response.message);
-                                $("#sharedLink").show();
-                                processing=false;
-                                
-                                
-                                
-                            }
-                            ,
-                            error: function(xhr, status, error) {
-                                stopTimer(); 
-                                console.log('stat' + JSON.stringify(xhr.statusCode()));
-                                console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
-                                $("#export").show();
-                                $("#exportLoader").hide();
-                                $("#sharedLink").show();
-                                $("#msg").text(JSON.stringify(xhr.statusCode()) + "::" + error.message);
-                                processing=false;
-                                $("#msg").text(response.message);
-                            }
-                        });
-                    
-                    }
-                    
-                });
+               
                     
             });
             
@@ -196,6 +124,74 @@
                 checkButton();
             });
         });
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(function() {
+                let elapsedTime = Math.floor((Date.now() - startTime) / 1000); // Calculate total seconds elapsed
+                let minutes = Math.floor(elapsedTime / 60); // Calculate the number of minutes
+                let seconds = elapsedTime % 60; // Get remaining seconds after minutes
+        
+                // Update the timer text to display in "m s" format
+                if (minutes > 0) {
+                    $('#timer').text('Elapsed Time: ' + minutes + ' m ' + seconds + ' s');
+                } else {
+                    $('#timer').text('Elapsed Time: ' + seconds + ' s');
+                }
+            }, 1000);
+        }
+        function stopTimer() {
+            clearInterval(timerInterval); // Stop the timer interval
+        }
+        function setupExportHandler() {
+            $('#export').one('click',function() {
+                $(this).hide();
+                $("#exportLoader").show();
+                $('#timer').show();  // Show the timer
+                console.log('processing');
+                startTimer();  // Start the timer
+
+                var templatesToUse = $('#selectedTemplates option:selected').map(function() {
+                    return $(this).val();
+                }).get();
+                let data = {
+                    "folderId":selectedFolder,
+                    "token":accessToken,
+                    "metadataTemplates":templatesToUse.join(","),
+                    "isExport":"true"
+                };
+                $.ajax({
+                    url:"https://dtet4x5wdsgiyn7bicxfql33la0pdqkk.lambda-url.eu-west-2.on.aws/",
+                    data: data,
+                    type: "post",
+                    dataType: "json",   
+                    success: function (response) {
+                        stopTimer(); 
+                        console.log(response);
+                        $("#exportLoader").hide();
+                        $("#export").show();
+                        $("#zipper").attr("href",response.message);
+                        $("#zipper").text("Shared link: " + response.message);
+                        $("#sharedLink").show();
+                        setupExportHandler();
+                        
+                        
+                        
+                    }
+                    ,
+                    error: function(xhr, status, error) {
+                        stopTimer(); 
+                        console.log('stat' + JSON.stringify(xhr.statusCode()));
+                        console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
+                        $("#export").show();
+                        $("#exportLoader").hide();
+                        $("#sharedLink").show();
+                        $("#msg").text(JSON.stringify(xhr.statusCode()) + "::" + error.message);
+                        $("#msg").text(response.message);
+                        setupExportHandler();
+                    }
+                });
+            });
+        }
         async function getEid() {
             let user = await  client.users.getUserMe({"fields":["id,name,enterprise"]});
             eid = user.enterprise.id;
@@ -225,7 +221,7 @@
                     totalSize+=data.size;
                     increment('fileCount');
                     $("#fileTotalSize").text(formatBytes(totalSize));
-                    $("#estimated").text('Est:' + predictSeconds($("#folderCount").text(),$("#fileCount").text(),totalSize/1024/1024)).show();
+                    $("#estimated").text('Estimated Time:' + predictSeconds($("#folderCount").text(),$("#fileCount").text(),totalSize/1024/1024)).show();
                     if(data.metadata) {
                         increment('fileInstanceCount');
                     }
