@@ -74,7 +74,7 @@
             });
             folderPicker.addListener("choose", async function (response) {
                 $.each(response, function (k, data) {
-                    $("msg").text('').hide();
+                    $("msgResult").text('').hide();
                     $(".ct").show();
                     selectedFolder = data.id;
                     selectedFolderName = data.name;
@@ -203,6 +203,7 @@
         }
         function setupImportHandler() {
             $('#import').one('click',function() {
+                
                 startTimer();  // Start the timer
                 $(this).hide();
                 $("#importLoader").show();
