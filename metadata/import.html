@@ -74,7 +74,7 @@
             });
             folderPicker.addListener("choose", async function (response) {
                 $.each(response, function (k, data) {
-                    $("msgResult").text('').hide();
+                    $("#msgResult").text('').hide();
                     $(".ct").show();
                     selectedFolder = data.id;
                     selectedFolderName = data.name;
@@ -227,7 +227,7 @@
                             $(".ct").text(response.error);
                         }
                         else {
-                            $("msgResult").text(response.message).show();
+                            $("#msgResult").text(response.message).show();
                             contentExplorer.clearCache();
                             contentExplorer.hide();
                             contentExplorer.show(selectedFolder,accessToken, {
