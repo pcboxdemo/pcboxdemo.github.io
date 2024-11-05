@@ -33,8 +33,10 @@
         var client;
         var accessToken=sessionStorage.getItem("token");//'1!ovMAnpXZqiVIIHfEmAgKsaxAYGqT54wQLOCjDudE9OOlot9_RhQXRncyKgiw1-eymQjVGe4YONcsCZZ2JUcmc9GyHLCYGfEOwMg8lP2pghjtJg_BpbgXerqucuVnYQJkknxTeJvNfSfEiu8GhShkgxupj02JPjdxoy4Eyj6AfavchgCS0x1huzmUPv4Q-Wi6zjqTjwATWXwWbVutAJ4_GSEFydHf751iqRWxA-bJaVuqB7FtVArcie7jDUuTcu3OsDZfRYzZZIvg5OWmOLKS-jbO0Gbj3MmXSDv__elJVQANjVDRWE6N5nzBM-ii1fQZtqiERKioKN3dxGI-M4NOZfEIh6MsHHtcbL9aJKvXpa05Ln76ro5IjzC01YfuRI0Ap1vf7c57b1G1gXprd4NvODd2mQqj_hUy43kk-v2Z2TSijyTuhj7yeF2BAgS5MyXBCNZctNVsPIGnBpR6bD1_lwsLZNkUz4ND-3b0iksLw7aZJhcT3FQW0vsrhu8QA3RJ-mQRl42pJ65dh4Ri5A9dsvGxr1uq2lCCwiemwR6zILZoSVoOp6q4d81EEMyaXXPtZHlD0eOeVO1krm6RnlaG9y6ZMXvS4nzJBv8tHiD3VxRap9ye_YeD6xXR_5rZHHiXpxwpBUM4bsDSUEsiyNYCuNMrcwNnpf0eYll6KOlnG908Xt6SYuyzqNgflrNWWhG_wT3-sVdqy-TVftYeLHYkCKPzyN2GYPb47awVjyBLUQZhWDrTItJRmwjc30b3-NfYfIhFiwnnKa-N6VthbRsCBB1NcjhwCpcKF9AWWl_iM4dqyNZ0myghxR0ZqNXnfWDNOpKmSFZtQTEpz-NVupTteW-EmAgOmn0vyG1y';
         var selectedFolder=null;
+        var selectedFolderName;
         var eid='47757585';
         let startTime, timerInterval;
+        let first = true;
         $(document).ready(async function() {
             setupImportHandler();
             
@@ -48,6 +50,9 @@
                     $('.url').hide();
                     $('#fileUpload').show();
                 }
+            });
+            $('#urlInput').on('input', async function() {
+                let me = await checkFolderAndLink();
             });
             try {
                 //Create a Box client using the token
@@ -69,11 +74,37 @@
             });
             folderPicker.addListener("choose", async function (response) {
                 $.each(response, function (k, data) {
+                    $("msg").text('').hide();
+                    $(".ct").show();
                     selectedFolder = data.id;
                     selectedFolderName = data.name;
+                    $("#sharedLink").attr("disabled",false);
                     $("#sec2").text("Selected Folder:" + data.name);
-                    contentExplorer.clearCache();
-                    contentExplorer.hide();
+                    checkFolderAndLink();
+                    if(contentExplorer) {
+                        if(!first) {
+                            contentExplorer.clearCache();
+                            contentExplorer.hide();
+                        }
+                        first=false;
+                        contentExplorer.show(selectedFolder,accessToken, {
+                            container:'.ct',
+                            contentPreviewProps: {
+                                contentSidebarProps: {
+                                detailsSidebarProps: {
+                                    hasNotices: true,
+                                    hasProperties: true,
+                                    hasAccessStats: true,
+                                    hasVersions: true
+                                },
+                                hasActivityFeed: true,
+                                hasSkills: true,
+                                hasMetadata: true
+                                }
+                            }
+                        })
+                    }
+                    
 
                   
                 });
@@ -84,6 +115,73 @@
             
            
         });
+        async function checkFolderForItemName(folderId, targetName) {
+            try {
+                // Fetch items within the specified folder
+                const folderItems = await client.folders.getFolderItems(folderId, {fields: ['name'],limit: 1000});
+
+                // Check if any item's name matches the target name
+                let val= folderItems.entries.some(item => {
+                    console.log(`Folder Item Name: ${item.name} = ${targetName}`);
+                    return item.name === targetName;
+
+                });
+                console.log(val);
+                return val;
+            } catch (error) {
+                console.error("Error fetching folder items:", error);
+                return false;
+                
+            }
+            return false;
+        }
+        async function checkFolderAndLink() {
+            const sharedLink = $('#urlInput').val().trim(); // Get the input value
+            $("#msg").empty().hide();
+            $("#sloader").show();
+            if (sharedLink && selectedFolder) {
+                try {
+                    // Use the SDK to find file details by shared link
+                    const fileInfo = await client.sharedLinksFiles.findFileForSharedLink({},{'boxapi':'shared_link=' + sharedLink});
+
+                    // Extract the file name from the response
+                    const fileName = fileInfo.name;
+                    const match = fileName.match(/^[^_]+_([^_]+)_/);
+                    if (match) {
+                        const named = match[1];
+                        // Compare the file name with targetFileName
+                        let folderExists = await checkFolderForItemName(selectedFolder,named);
+                        if (folderExists) {
+                            $("#msg").text('Looks like a folder with the name: ' + named + ' alread exists inside the selected folder: ' + selectedFolderName);
+                            $("#msg").show();
+                            $("#import").attr("disabled",true);
+
+                            
+                        } else {
+                            console.log("The file name does not match the target. Found:", fileName);
+                            $("#msg").html('<i class="bi bi-check ok-icon" style="color: green; margin-left: 5px;font-size:20px;"></i>').show();
+                            $("#import").attr("disabled",false);
+                        }
+                        $("#sloader").hide();
+                    }
+                    else {
+                        $("#msg").text('Could not determine if a folder with the same name already exists in target folder. If it does you will get an error');
+                        $("#msg").show();
+                        $("#import").attr("disabled",false);
+                    }
+                } catch (error) {
+                    console.error("Error fetching file details:", error);
+                    $("#msg").text('Looks like the shared link cannot be accessed by you');
+                    $("#msg").show();
+                    $("#sloader").hide();
+                }
+            }
+            if(selectedFolder) {
+              
+             
+            }
+            $("#sloader").hide();
+        }
         let metadataTemplateMap = [];
         function startTimer() {
             startTime = Date.now();
@@ -124,11 +222,14 @@
                         $("#importLoader").hide();
                         $("#import").show();
                         $(".ct").show();
+                        $("msg").text(response.message);
                         if(response.error) {
                             $(".ct").text(response.error);
                         }
                         else {
-                            
+                            $("msg").text(response.message).show();
+                            contentExplorer.clearCache();
+                            contentExplorer.hide();
                             contentExplorer.show(selectedFolder,accessToken, {
                                 container:'.ct',
                                 contentPreviewProps: {
@@ -200,7 +301,7 @@
                 <div class="section la">Instructions: <ul>
                     <li>Select a target folder (click the blue tick to select)</li>
                     <li>Paste the shared link to the exported zip file in the field</li>
-                    <li>Click Import</li>
+                    <li>Click Import (the import will only be available if the shared link is valid and a folder with the name does not already exist in the chosen target folder)</li>
                     <li>When the process is complete the folder will display below for you to browse and validate. The import will fail if a folder already exists in the target with the same name as the source folder </li>
                 </ul>
                 
@@ -222,8 +323,8 @@
                 <div class="section">
                     
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="inputType" id="urlRadio" value="url" checked>
-                        <label class="form-check-label" for="urlRadio">
+                        <input class="form-check-input" type="radio" name="inputType" id="sharedLink" value="url" checked disabled>
+                        <label class="form-check-label" for="sharedLink">
                             Enter Shared Link URL
                         </label>
                     </div>
@@ -237,27 +338,30 @@
                     <!-- Dynamic input fields -->
                     <div class="dynamic-input">
                         <!-- URL Input -->
-                        <input type="text" class="form-control url" id="urlInput" placeholder="Enter Shared Link URL">
-                        <!--<input type="text" class="form-control url" id="passwordInput" placeholder="Enter password here">-->
-        
-                        <!-- File Upload Input -->
-                        <!--<input type="file" class="form-control" id="fileUpload">-->
+                        <input type="text" class="form-control url" id="urlInput" placeholder="Enter Shared Link URL"><img id="sloader" style="display:none" height="24" widht="24" src="ajax-loader.gif"><br/>
+                        <span id="msg" style="display:none;color:red;font-size:12px;"></span>
+                        
                     </div>
                 </div>
            
         </div>
         <div class="button-section">
-            <button class="btn btn-primary" id="import" >Import</button>
+            <button class="btn btn-primary" id="import" disabled>Import</button>
             <img src="ajax-loader.gif" id="importLoader" style="display:none;"/>
             <span id="timer" class="loading"  style="display:none;">0s</span>
 
-            <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Zip file for sharing</a></div>
+            <div id="msg" style="display:none;"></div>
+                
+
+
+            </div>
         </div>
         <!-- Row with one section -->
         <div class="row">
             <div class="col-12">
                 <div class="section">
                     <h3 id="sec2"></h3>
+                    
                     <div id="sec2content" class="ct" style="display:none;height:600px;"></div>
                         
 

@@ -45,7 +45,17 @@
             catch (e) {
                 console.error(e);
             }
-            
+            $('.copy-icon').on('click', function() {
+                // Get the href attribute of the anchor
+                var linkUrl = $('#zipper').attr('href');
+                
+                // Copy the link to the clipboard
+                navigator.clipboard.writeText(linkUrl).then(function() {
+                    alert('Link copied to clipboard!');
+                }).catch(function(err) {
+                    console.error('Error copying text: ', err);
+                });
+            });
             let metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
                 if(temp.hidden==false) {
@@ -170,7 +180,7 @@
                         $("#exportLoader").hide();
                         $("#export").show();
                         $("#zipper").attr("href",response.message);
-                        $("#zipper").text("Shared link: " + response.message);
+                        $("#zipper").text(response.message);
                         $("#sharedLink").show();
                         setupExportHandler();
                         
@@ -221,7 +231,7 @@
                     totalSize+=data.size;
                     increment('fileCount');
                     $("#fileTotalSize").text(formatBytes(totalSize));
-                    $("#estimated").text('Estimated Time:' + predictSeconds($("#folderCount").text(),$("#fileCount").text(),totalSize/1024/1024)).show();
+                    $("#estimated").text('Estimated Time: ' + predictSeconds($("#folderCount").text(),$("#fileCount").text(),totalSize/1024/1024)).show();
                     if(data.metadata) {
                         increment('fileInstanceCount');
                     }
@@ -446,11 +456,12 @@
         <div class="button-section">
             <button class="btn btn-primary action" id="analyze" disabled>Analyze</button>
             <button class="btn btn-secondary" id="export" disabled>Export</button>
-            <img src="ajax-loader.gif" id="exportLoader" class="loading" style="display:none;"/>
+            <img src="ajax-loader.gif" id="exportLoader" height="32" class="loading" style="display:none;"/>
             <span id="estimated" class="loading"  style="display:none;"></span>
             <span id="timer" class="loading"  style="display:none;">0s</span>
 
             <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Shared link to Zip file for importing</a>
+                <i class="bi bi-clipboard copy-icon" style="cursor: pointer; margin-left: 5px;"></i>
             <span id="msg"></span></div>
         </div>
         <!-- Row with one section -->
