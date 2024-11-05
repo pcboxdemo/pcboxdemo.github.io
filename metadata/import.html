@@ -222,12 +222,11 @@
                         $("#importLoader").hide();
                         $("#import").show();
                         $(".ct").show();
-                        $("msg").text(response.message);
                         if(response.error) {
                             $(".ct").text(response.error);
                         }
                         else {
-                            $("msg").text(response.message).show();
+                            $("msgResult").text(response.message).show();
                             contentExplorer.clearCache();
                             contentExplorer.hide();
                             contentExplorer.show(selectedFolder,accessToken, {
@@ -350,7 +349,7 @@
             <img src="ajax-loader.gif" id="importLoader" style="display:none;"/>
             <span id="timer" class="loading"  style="display:none;">0s</span>
 
-            <div id="msg" style="display:none;"></div>
+            <div id="msgResult" style="display:none;"></div>
                 
 
 
