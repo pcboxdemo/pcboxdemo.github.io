@@ -144,3 +144,18 @@ option {
     margin-top: 20px;
     text-align:left !important
 }
+
+#results {
+    padding: 10px;
+  }
+  
+  #results h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  
+  #results ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin: 0;
+  }

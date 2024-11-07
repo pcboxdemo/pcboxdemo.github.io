@@ -75,6 +75,9 @@
             folderPicker.addListener("choose", async function (response) {
                 $.each(response, function (k, data) {
                     $("#msgResult").text('').hide();
+                    $("#resultSection").hide();
+                    $("#result").empty();
+                    $("#msg").text('').hide();
                     $(".ct").show();
                     selectedFolder = data.id;
                     selectedFolderName = data.name;
@@ -203,7 +206,7 @@
         }
         function setupImportHandler() {
             $('#import').one('click',function() {
-                
+                $("#msgResult").text('').hide();
                 startTimer();  // Start the timer
                 $(this).hide();
                 $("#importLoader").show();
@@ -219,7 +222,6 @@
                     type: "post",
                     success: function (response) {
                         stopTimer();
-                        console.log(response);
                         $("#importLoader").hide();
                         $("#import").show();
                         $(".ct").show();
@@ -227,7 +229,17 @@
                             $(".ct").text(response.error);
                         }
                         else {
-                            $("#msgResult").text(response.message).show();
+                            const foldersValue = response.input.find(item => item.hasOwnProperty('folders'))?.folders || 0;
+                            const filesValue = response.input.find(item => item.hasOwnProperty('files'))?.files || 0;
+                            const templatesValue = response.input.find(item => item.hasOwnProperty('templates'))?.templates || '';
+
+                            // Create an unordered list
+                            const $ul = $('<ul></ul>').css('text-align', 'left');
+                            $ul.append(`<li>Created Folders: ${foldersValue}</li>`);
+                            $ul.append(`<li>Created Files: ${filesValue}</li>`);
+                            $ul.append(`<li>Loaded Metadata Templates: ${templatesValue.slice(0,-1)}</li>`);
+                            $('#resultSection').append($ul).show();
+                            $("#msgResult").text(response.input.find(item => item.hasOwnProperty('message'))?.message || '').show();
                             contentExplorer.clearCache();
                             contentExplorer.hide();
                             contentExplorer.show(selectedFolder,accessToken, {
@@ -342,6 +354,12 @@
                         <span id="msg" style="display:none;color:red;font-size:12px;"></span>
                         
                     </div>
+                </div>
+                <div class="section" id="resultSection" style="display:none;">
+                    <h3>Import result</h3>
+                  <div id="results">
+
+                  </div>
                 </div>
            
         </div>
