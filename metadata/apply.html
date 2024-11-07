@@ -39,6 +39,23 @@
         let randomValues = [];
         let randomFileId;
         $(document).ready(async function() {
+            $(document).on('click', 'input[type="radio"]', function() {
+                const $button = $('button[aria-label="Choose"]');
+
+                if ($button.length) {
+                  $button.click();
+                }
+            
+          });
+          $(document).on('change', 'input[type="radio"]', function() {
+            const $button = $('button[aria-label="Choose"]');
+
+            if ($button.length) {
+              $button.click();
+            }
+        
+      });
+      
             try {
                 //Create a Box client using the token
                 client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
@@ -715,7 +732,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="section la">Instructions: <ul>
-                    <li>Select a source folder (click the blue tick to select)</li>
+                    <li>Select a source folder</li>
                     <li>Select a metadata template. Fields will appear with sample values for randomly generated values for the field</li>
                     <li>Click analyze and it will show how many folders and files you are applying to</li>
                     <li>Click Apply random values to populate metadata for selected files and folders (it will match the field display name to a bank of possible values. If none are found it will remain empty) </li>

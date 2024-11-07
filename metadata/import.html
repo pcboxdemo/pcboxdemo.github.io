@@ -39,7 +39,15 @@
         let first = true;
         $(document).ready(async function() {
             setupImportHandler();
+            $(document).on('click', 'input[type="radio"]', function() {
+                const $button = $('button[aria-label="Choose"]');
+
+                if ($button.length) {
+                  $button.click();
+                }
             
+          });
+      
             //$('#fileUpload').hide();
             // Toggle input fields based on the selected radio button
             $('input[name="inputType"]').change(function () {
@@ -311,7 +319,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="section la">Instructions: <ul>
-                    <li>Select a target folder (click the blue tick to select)</li>
+                    <li>Select a target folder </li>
                     <li>Paste the shared link to the exported zip file in the field</li>
                     <li>Click Import (the import will only be available if the shared link is valid and a folder with the name does not already exist in the chosen target folder)</li>
                     <li>When the process is complete the folder will display below for you to browse and validate. The import will fail if a folder already exists in the target with the same name as the source folder </li>

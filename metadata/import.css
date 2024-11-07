@@ -159,3 +159,7 @@ option {
     padding-left: 20px;
     margin: 0;
   }
+
+  .bcp-footer {
+    display:none !important;
+}
