@@ -116,7 +116,7 @@
                     if(action=='apply') {
                         template.fields.forEach(field => {
                             if(field.type=='string') {
-                                stringFields.push(field.key);
+                                stringFields.push({"key":field.key,"displayName":field.displayName});
                                 
                             }
                         });
@@ -214,6 +214,7 @@
                 
                 await delay(5000);
                 $(".action").show();
+                $(".apply").show();
                 $(".ct").show();
                 $("#exportLoader").hide();
                 let template =  metadataTemplates.entries.find(t => t.templateKey === $('#selectedTemplates').attr("key"));
@@ -271,11 +272,7 @@
                     }
                     else {
                         let md = await generateRandomData(template,values);
-                        client.folderMetadata.createFolderMetadataById(
-                            data.id,'enterprise',
-                            template.templateKey,
-                            md
-                        ).then(increment('folderApplyCount'));
+                        upsertMetadata(data.id,md,template.templateKey,'folder').then(increment('folderApplyCount'));
                     }
                     populate(data.id,template,values,action);
                 }
@@ -289,11 +286,11 @@
                         md =await  generateRandomData(template,values);
                     }
                     
-                    client.fileMetadata.createFileMetadataById(
-                        data.id,'enterprise',
-                        template.templateKey,
-                        md
-                      ).then(increment('fileApplyCount'));    
+                    //client.fileMetadata.createFileMetadataById(
+                     //   data.id,'enterprise',
+                     //   template.templateKey,
+                     //   md
+                     upsertMetadata(data.id,md,template.templateKey,'file').then(increment('fileApplyCount'));    
                 }
             }
         }
@@ -570,12 +567,12 @@
             // Create an array to hold promises for each AJAX request
             let promises = fields.map(field => {
                 let data = {
-                    "prompt": `Write 5 plausible, real world examples of values for this field. Return as comma separated string. Include only the 5 values, remove all linebreak characters like \\n or tab symbols like \\t from the answer`,
+                    "prompt": `"Write 5 plausible real world example values for this field. Return as comma separated string. Include only the 5 values in the repsonse. Nothing else! Remove all linebreak characters like \\n or tab symbols like \\t from the answer`,
                     "items": [
                         {
                             "id": id,
                             "type": "file",
-                            "content": `field is ${field}`
+                            "content": `field is ${field.displayName}`
                         }
                     ]
                 };
@@ -598,7 +595,7 @@
 
                             // Modify the object to include the field and its comma-separated values
                             resolve({
-                                field: field,
+                                field: field.key,
                                 value: commaSeparatedValues
                             });
                         },
@@ -657,6 +654,52 @@
                     }
                 });
             });
+        }
+
+        async function upsertMetadata(fileID,metadata,templateKey,type) {
+            try {
+                // Try to get existing metadata
+                let existingMetadata;
+                if(type=='file') {
+                    await client.fileMetadata.getFileMetadataById(fileID, 'enterprise',templateKey);
+                }
+                else {
+                    await client.folderMetadata.getFolderMetadataById(fileID, 'enterprise',templateKey);
+                }
+            
+
+                // If metadata exists, prepare updates
+                const updates = Object.entries(metadata).map(([key, value]) => ({
+                op: 'replace',  // Use 'replace' to update existing metadata
+                path: `/${key}`,
+                value,
+                }));
+
+                // Update metadata with prepared updates
+                if(type=='file') {
+                    await client.fileMetadata.updateFileMetadataById(fileID, 'enterprise',templateKey,  updates);
+                }
+                else {
+                    await client.folderMetadata.updateFolderMetadataById(fileID, 'enterprise',templateKey,  updates);
+                }
+                //await client.fileMetadata.updateFileMetadataById(fileID,'enterprise', templateKey,  updates);
+                console.log(`Metadata updated for  ID: ${fileID}`);
+            } catch (error) {
+                console.log("error caught:" + JSON.stringify(error));
+                if (error.responseInfo.statusCode === 404) {
+                // If metadata does not exist, create it
+                if(type=='file') {
+                    await client.fileMetadata.createFileMetadataById(fileID, 'enterprise',templateKey,  metadata);
+                }
+                else {
+                    await client.fileMetadata.createFolderMetadataById(fileID, 'enterprise',templateKey,  metadata);
+                }
+                    console.log(`Metadata created for  ID: ${fileID}`);
+                } else {
+                    console.error(`Error updating or creating metadata: ${error.message}`);
+                throw error;
+                }
+            }
         }
         function fixDatesInFields(template, jsonObject) {
             // Regex to match dates like '2/21/2018' or 'April 3, 2019'
@@ -735,7 +778,7 @@
                     <li>Select a source folder</li>
                     <li>Select a metadata template. Fields will appear with sample values for randomly generated values for the field</li>
                     <li>Click analyze and it will show how many folders and files you are applying to</li>
-                    <li>Click Apply random values to populate metadata for selected files and folders (it will match the field display name to a bank of possible values. If none are found it will remain empty) </li>
+                    <li>Click Apply random values to populate metadata for selected files and folders. This uses Box AI textgen to try to generate plausible random values for each text field. </li>
                     <li>Click Use AI to Apply Metadata to invoke the Metadata AI API endpoint to extract metadata from files. This only affects files and assumes that the files are relevant for the chosen metadata template</li>
                 </ul>
                 
