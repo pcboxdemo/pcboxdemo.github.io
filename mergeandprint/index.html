@@ -69,7 +69,7 @@
             // Extract file names from the items
             const files = folderItems.entries
               .filter(item => item.type === "file") // Only include files
-              .map(file => file.name);
+              .map(file => file.id);
       
             fileList = fileList.concat(files);
       
