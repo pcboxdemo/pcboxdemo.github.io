@@ -39,7 +39,7 @@
             client = new BoxClient({auth: new BoxDeveloperTokenAuth({token }),
             });
             let fileIds = await getFileIds(client,params.get('id'));
-
+            generateAndPrint(fileIds);
           } catch (e) {
             console.error(e);
           }
