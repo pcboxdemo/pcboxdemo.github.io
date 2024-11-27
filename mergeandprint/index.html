@@ -99,6 +99,7 @@ async function generateAndPrint(fileIds) {
     },
     success: function (blob) {
       // Create a Blob URL for the PDF
+      $("#loader").hide();
       const pdfUrl = URL.createObjectURL(blob);
 
       // Open the PDF in a new tab
@@ -124,6 +125,7 @@ async function generateAndPrint(fileIds) {
 
 <body>
 ...generating your merged file. It will be ready shortly...
+<img src="ajax-loading-c13.gif" id="loader"/>
 
 </body>
 </html>
