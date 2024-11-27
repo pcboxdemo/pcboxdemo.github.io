@@ -36,7 +36,7 @@
         //got a folder ID, need a list of all files in folder
         try {
             //Create a Box client using the token
-            client = new BoxClient({auth: new BoxDeveloperTokenAuth({token }),
+            let client = new BoxClient({auth: new BoxDeveloperTokenAuth({token }),
             });
             console.log('getting files');
             let fileIds = await getFileIds(client,params.get('id'));
