@@ -7,14 +7,14 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="./lib/bundle.js"></script>
 
 <script>
     const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
 
     let token;
-  $(document).ready(function () {
+  $(document).ready(async function () {
 
 
     var params = new URLSearchParams(window.location.search);
@@ -92,7 +92,7 @@ async function generateAndPrint(fileIds) {
     console.log('generating print');
   // Send a POST request to the servlet
   $.ajax({
-    url: "https://box-java-sandpit.herokuapp.com/pdfmergeall?token=" + token + "&id=" +fileIds , // Servlet endpoint
+    url: "https://box-java-sandpit.herokuapp.com/pdfmergeall?token=" + token + "&ids=" +fileIds , // Servlet endpoint
     method: "POST",
     xhrFields: {
       responseType: "blob", // Expect a binary response (PDF)
