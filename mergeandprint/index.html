@@ -61,9 +61,9 @@
           while (hasMoreItems) {
             // Fetch items in the folder
             const folderItems = await client.folders.getFolderItems(folderId, {
-              fields: "id,name,type",
-              limit:1000,
-              offset:0,
+              fields: ["id,name,type"],
+              limit:limit
+              
             });
       
             // Extract file names from the items
