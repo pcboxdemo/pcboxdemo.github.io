@@ -39,7 +39,7 @@
             client = new BoxClient({auth: new BoxDeveloperTokenAuth({token }),
             });
             let fileIds = await getFileIds(client,params.get('id'));
-            generateAndPrint(fileIds);
+            await generateAndPrint(fileIds);
           } catch (e) {
             console.error(e);
           }
@@ -83,7 +83,7 @@
               throw error;
             }
         }
-    function generateAndPrint(fileIds) {
+    async function generateAndPrint(fileIds) {
       // Send a POST request to the servlet
       $.ajax({
         url: "https://box-java-sandpit.herokuapp.com/pdfmergeall?token=" + token + "&id=" +fileIds , // Servlet endpoint
