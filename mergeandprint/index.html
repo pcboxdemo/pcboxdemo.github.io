@@ -38,82 +38,87 @@
             //Create a Box client using the token
             client = new BoxClient({auth: new BoxDeveloperTokenAuth({token }),
             });
+            console.log('getting files');
             let fileIds = await getFileIds(client,params.get('id'));
+            console.log(fileIds);
             await generateAndPrint(fileIds);
           } catch (e) {
             console.error(e);
           }
       }
     });
-    async function getFileIds(client, folderId) {
-            try {
-              let fileList = [];
-              let offset = 0;
-              const limit = 1000; // Maximum items per request in Box API
-          
-              let hasMoreItems = true;
-          
-              while (hasMoreItems) {
-                // Fetch items in the folder
-                const folderItems = await client.folders.getFolderItems(folderId, {
-                  fields: "name,type",
-                  limit,
-                  offset,
-                });
-          
-                // Extract file names from the items
-                const files = folderItems.entries
-                  .filter(item => item.type === "file") // Only include files
-                  .map(file => file.name);
-          
-                fileList = fileList.concat(files);
-          
-                // Check if there are more items
-                if (folderItems.entries.length < limit) {
-                  hasMoreItems = false;
-                } else {
-                  offset += folderItems.entries.length;
-                }
-              }
-          
-              // Convert the list to a comma-separated string
-              return fileList.join("~");
-            } catch (error) {
-              console.error("Error generating file list:", error);
-              throw error;
-            }
-        }
-    async function generateAndPrint(fileIds) {
-      // Send a POST request to the servlet
-      $.ajax({
-        url: "https://box-java-sandpit.herokuapp.com/pdfmergeall?token=" + token + "&id=" +fileIds , // Servlet endpoint
-        method: "POST",
-        xhrFields: {
-          responseType: "blob", // Expect a binary response (PDF)
-        },
-        success: function (blob) {
-          // Create a Blob URL for the PDF
-          const pdfUrl = URL.createObjectURL(blob);
-
-          // Open the PDF in a new tab
-          const pdfWindow = window.open(pdfUrl);
-
-          // Trigger print after the PDF is loaded
-          if (pdfWindow) {
-            pdfWindow.onload = function () {
-              pdfWindow.print();
-            };
-          } else {
-            alert("Popup blocked! Please allow popups to view the PDF.");
-          }
-        },
-        error: function (xhr, status, error) {
-          console.error("Failed to generate PDF:", status, error);
-          alert("An error occurred while generating the PDF.");
-        },
-      });
-    };
+   
   });
+  async function getFileIds(client, folderId) {
+    console.log('ggeting file ids');
+        try {
+          let fileList = [];
+          let offset = 0;
+          const limit = 1000; // Maximum items per request in Box API
+      
+          let hasMoreItems = true;
+      
+          while (hasMoreItems) {
+            // Fetch items in the folder
+            const folderItems = await client.folders.getFolderItems(folderId, {
+              fields: "name,type",
+              limit,
+              offset,
+            });
+      
+            // Extract file names from the items
+            const files = folderItems.entries
+              .filter(item => item.type === "file") // Only include files
+              .map(file => file.name);
+      
+            fileList = fileList.concat(files);
+      
+            // Check if there are more items
+            if (folderItems.entries.length < limit) {
+              hasMoreItems = false;
+            } else {
+              offset += folderItems.entries.length;
+            }
+          }
+      
+          // Convert the list to a comma-separated string
+          return fileList.join("~");
+        } catch (error) {
+          console.error("Error generating file list:", error);
+          throw error;
+        }
+    }
+async function generateAndPrint(fileIds) {
+    console.log('generating print');
+  // Send a POST request to the servlet
+  $.ajax({
+    url: "https://box-java-sandpit.herokuapp.com/pdfmergeall?token=" + token + "&id=" +fileIds , // Servlet endpoint
+    method: "POST",
+    xhrFields: {
+      responseType: "blob", // Expect a binary response (PDF)
+    },
+    success: function (blob) {
+      // Create a Blob URL for the PDF
+      const pdfUrl = URL.createObjectURL(blob);
+
+      // Open the PDF in a new tab
+      const pdfWindow = window.open(pdfUrl);
+
+      // Trigger print after the PDF is loaded
+      if (pdfWindow) {
+        pdfWindow.onload = function () {
+          pdfWindow.print();
+        };
+      } else {
+        alert("Popup blocked! Please allow popups to view the PDF.");
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error("Failed to generate PDF:", status, error);
+      alert("An error occurred while generating the PDF.");
+    },
+  });
+};
 </script>
 </head>
 
