@@ -92,7 +92,7 @@ async function generateAndPrint(fileIds) {
     console.log('generating print');
   // Send a POST request to the servlet
   $.ajax({
-    url: "https://box-java-sandpit.herokuapp.com/pdfmergeall?token=" + token + "&ids=" +fileIds , // Servlet endpoint
+    url: "https://box-java-sandpit.herokuapp.com/pdfmergeall?accessToken=" + token + "&ids=" +fileIds , // Servlet endpoint
     method: "GET",
     xhrFields: {
       responseType: "blob", // Expect a binary response (PDF)
