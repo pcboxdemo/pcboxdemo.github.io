@@ -10,6 +10,7 @@
 
 <!-- Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- Bootstrap Icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.css" rel="stylesheet">
@@ -38,6 +39,41 @@
         let startTime, timerInterval;
         let first = true;
         $(document).ready(async function() {
+            const $infoIcon = $('.info-icon');
+            const $modalBox = $('.modal-box');
+            const $closeButton = $('.close-modal');
+
+            // Show the modal box on icon click
+            $infoIcon.on('click', function () {
+                // Calculate position of the icon
+                const iconOffset = $(this).offset();
+                const iconHeight = $(this).outerHeight();
+    
+                // Position the modal box just under the icon
+                $modalBox.css({
+                    top: iconOffset.top + iconHeight + 5 + 'px', // 5px spacing
+                    left: iconOffset.left + 'px'
+                });
+    
+                // Toggle modal visibility
+                $modalBox.toggle();
+                const isVisible = !$modalBox.is(':hidden');
+                $(this).attr('aria-expanded', isVisible);
+            });
+
+            // Hide the modal box on close button click
+            $closeButton.on('click', function () {
+                $modalBox.hide();
+                $infoIcon.attr('aria-expanded', false);
+            });
+
+            // Close modal when clicking outside
+            $(document).on('click', function (event) {
+                if (!$(event.target).closest('.info-icon, .modal-box').length) {
+                    $modalBox.hide();
+                    $infoIcon.attr('aria-expanded', false);
+                }
+            });
             setupImportHandler();
             $(document).on('click', 'input[type="radio"]', function() {
                 const $button = $('button[aria-label="Choose"]');
@@ -115,16 +151,8 @@
                             }
                         })
                     }
-                    
-
-                  
                 });
-               
-                
-                    
             });
-            
-           
         });
         async function checkFolderForItemName(folderId, targetName) {
             try {
@@ -176,7 +204,7 @@
                         $("#sloader").hide();
                     }
                     else {
-                        $("#msg").text('Could not determine if a folder with the same name already exists in target folder. If it does you will get an error');
+                        $("#msg").text('Could not determine if a folder with the same name already exists in target folder. You can go ahead with the import but if a folder already exists you will get an error');
                         $("#msg").show();
                         $("#import").attr("disabled",false);
                     }
@@ -222,7 +250,8 @@
                 let data = {
                     "folderId":selectedFolder,
                     "token":accessToken,
-                    "zipDownloadUrl":$("#urlInput").val()
+                    "zipDownloadUrl":$("#urlInput").val(),
+                    "postFix":$("#postFix").val()
                 };
                 $.ajax({
                     url:"https://dtet4x5wdsgiyn7bicxfql33la0pdqkk.lambda-url.eu-west-2.on.aws/",
@@ -363,6 +392,25 @@
                         
                     </div>
                 </div>
+                <h4>The 'Guillaume' template suffix:</h4>
+                <div class="section">
+                    <div class="d-flex align-items-center">
+                        <input type="text" class="form-control text" id="postFix" name="postFix" />
+                        <span class="info-icon" tabindex="0" role="button" aria-expanded="false">
+                        ❔
+                        </span>
+                    </div>
+                    <div class="modal-box" role="dialog" style="display:none;">
+                        <div class="modal-content">
+                            <p>
+                                Add a suffix to the metadata template(s) in the import. This is useful if you want to use a data set as a base but make some changes 
+                                to display names of the template without it impacting an existing demo. This was primarily added for to enable localisation (eg. _FR). Please note this 
+                                will generate new metadata templates when used. Leave empty for normal importing
+                            </p>
+                            <button class="close-modal">Close</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="section" id="resultSection" style="display:none;">
                     <h3>Import result</h3>
                   <div id="results">
@@ -371,6 +419,7 @@
                 </div>
            
         </div>
+       
         <div class="button-section">
             <button class="btn btn-primary" id="import" disabled>Import</button>
             <img src="ajax-loader.gif" id="importLoader" style="display:none;"/>

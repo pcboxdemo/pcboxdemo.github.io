@@ -163,3 +163,47 @@ option {
   .bcp-footer {
     display:none !important;
 }
+.info-icon {
+    display: inline-block;
+    font-size: 1.2em;
+    color: #007bff;
+    background-color: #007bff;
+    cursor: pointer;
+    margin-left: 5px;
+    position: relative;
+}
+
+/* Style for the modal box */
+.modal-box {
+    position: absolute;
+    top: 25px; /* Adjust based on the icon's size */
+    left: 0;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 300px;
+    z-index: 10;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+}
+
+/* Modal content */
+.modal-content {
+    font-size: 0.9em;
+    color: #333;
+}
+
+/* Close button */
+.close-modal {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    display: block;
+}
+.close-modal:hover {
+    background-color: #0056b3;
+}

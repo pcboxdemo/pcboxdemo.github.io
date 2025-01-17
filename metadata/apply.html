@@ -680,9 +680,9 @@
 
                 // If metadata exists, prepare updates
                 const updates = Object.entries(metadata).map(([key, value]) => ({
-                op: 'add',  // Use 'replace' to update existing metadata
-                path: `/${key}`,
-                value,
+                    op: 'add',  // Use 'replace' to update existing metadata
+                    path: `/${key}`,
+                    value,
                 }));
 
                 // Update metadata with prepared updates
