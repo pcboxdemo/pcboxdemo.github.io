@@ -7,12 +7,25 @@
     <script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.js"></script>
 
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
-
+    <style>
+        .icon-chevron {
+            display:none !important;
+        }
+    </style>
   </head>
   <body>
     <div class="container" style="height:100%; width: 100%;"></div>
     
     <script>
+        $(document).ready(function() {
+            $(document).on('click', '.ReactVirtualized__Table__headerColumn[aria-label="Name"], .ReactVirtualized__Table__headerColumn[aria-label="Modified"]', function(event) {
+                console.log('clicked');
+                event.stopImmediatePropagation(); // Stops all other handlers on the same element
+                event.preventDefault();  // Prevents default action if applicable
+                return false;            // Ensures nothing else happens
+            });
+            
+        }); 
         var myResponseInterceptor = (config) => {
             if(config.request.responseURL.includes('item_collection')) {
              //   config.data.item_collection.entries = config.data.item_collection.entries.filter((entry) => {

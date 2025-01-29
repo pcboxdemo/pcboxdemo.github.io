@@ -655,7 +655,7 @@
                     },
                     success: function(response) {
                         // If successful, resolve the promise with the response
-                        resolve(response);
+                        resolve(response.answer);
                     },
                     error: function(xhr, status, error) {
                         // If there's an error, reject the promise with the error message
