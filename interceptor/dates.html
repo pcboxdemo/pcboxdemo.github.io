@@ -1,0 +1,64 @@
+<head>
+    <meta charset="utf-8" />
+    <title>Box Interceptor Test bed</title>
+
+    <!-- Latest version of the picker css for your locale -->
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.css"/>
+    <script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
+
+  </head>
+  <body>
+    <div class="container" style="height:100%; width: 100%;"></div>
+    
+    <script>
+        var myResponseInterceptor = (config) => {
+            if(config.request.responseURL.includes('item_collection')) {
+             //   config.data.item_collection.entries = config.data.item_collection.entries.filter((entry) => {
+              //      return !entry.name || !/\.(docx|xlsx|pptx)$/i.test(entry.name);
+              //  });
+              console.log(config.data.item_collection.entries);
+
+              config.data.item_collection.entries = config.data.item_collection.entries
+              .filter(entry => entry.modified_at && entry.content_modified_at) // Only include files with both properties
+              .map(entry => {
+                  return {
+                      ...entry, // Spread the original properties
+                      modified_at: entry.content_modified_at, // Swap the values
+                      //content_modified_at: entry.modified_at
+                  };
+              })
+              .sort((a, b) => new Date(b.content_modified_at) - new Date(a.content_modified_at)); // Sort by `content_modified_at` descending
+          
+          
+                console.log(config.data.item_collection.entries);
+            }
+
+			return config;
+		  };
+		  var myRequestInterceptor = (config ) => {
+                if(config.url.startsWith('https://api.box.com/2.0/folders')) {
+                    //Clear the banner
+                    let params = config.params;
+                    //Inject the metadata.global.MalwareDeepScan field into the request
+                    params.fields+=params.fields + ',content_modified_at,content_created_at';
+                    config.params = params;
+                }
+                return config;
+              };
+         
+            
+            
+		  
+        var accessToken = sessionStorage.getItem("token");
+        var folderId = "0";
+        var explorer = new Box.ContentExplorer();
+        explorer.show(folderId, accessToken, 
+        {
+            "container":".container",
+            "requestInterceptor":myRequestInterceptor,
+            "responseInterceptor":myResponseInterceptor
+        });
+    </script>
+  </body>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box UI elements interceptor demo</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <style>
+        .custom-modal {
+            max-width: 80vw; /* 80% of viewport width */
+            height: 80vh; /* 80% of viewport height */
+            display: flex;
+            align-items: center; /* Center vertically */
+            justify-content: center;
+        }
+        
+        .custom-modal .modal-content {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .custom-modal .modal-body {
+            height: calc(100% - 56px - 56px); /* Adjusting for header and footer */
+            overflow-y: auto; /* Enable scrolling if needed */
+        }
+        
+    </style>
+    <script>
+        var params = new URLSearchParams(window.location.search);
+        $(document).ready(function() {
+            var params = new URLSearchParams(window.location.search);
+            var token = params.get('token');
+            var code = params.get('code');
+            $.ajax({
+                method: 'get',
+                url:"https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",  
+                data: {authCode:code,clientId:params.get('clientId')},
+                crossDomain: true,
+                cache: false,
+                success: function(response) {
+                    $("#loader").hide();
+                    sessionStorage.setItem("token",response.token);
+                    $("#loader").hide();
+                    $(".container").show();
+               
+              },
+              error: function(err) {
+                console.log(JSON.stringify(err));
+                $(".container").show();
+                $("#loader").hide();
+                if(!sessionStorage.getItem("token")) {
+                    $(".container").text("an error happened:" + err.message);
+                }
+                
+      
+              }
+            });
+        });
+        
+    </script>
+
+</head>
+<body>
+    <img src="ajax-loader.gif" id="loader"/>
+
+    <!-- Top Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="newplatformlogo.png" width="30" height="30" class="d-inline-block align-top" alt="">
+            Box UI Element interceptor demonstrations
+        </a>
+        <span class="navbar-text">
+            
+        </span>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <div class="row">
+            <!-- Card 1 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">Exclude files</div>
+                    <div class="card-body">
+                        <p class="card-text">This interceptor will exclude all docx, pptx and xlsx from the Content Explorer</p>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-url="excludeFiles.html">Try me</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 2 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">No zip files please</div>
+                    <div class="card-body">
+                        <p class="card-text">This interceptor will not allow the user to upload zip files.</p>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-url="noZip.html">Try me</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 3 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">Malware banner</div>
+                    <div class="card-body">
+                        <p class="card-text">This interceptor will show a red banner if the previewed file has been identified with malware</p>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-url="malwareBanner.html">Try me</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <!-- Card 4 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">Use Content Modified Date for file list</div>
+                    <div class="card-body">
+                        <p class="card-text">This interceptor will swap the modified date for the content modified date in the file list and sort on that (not that sort headers are disabled for this).</p>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-url="dates.html">Try me</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 5 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">Card 5</div>
+                    <div class="card-body">
+                        <p class="card-text">This is some text within a card body.</p>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-url="https://example.com/iframe5">Open Modal</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Card 6 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">Card 6</div>
+                    <div class="card-body">
+                        <p class="card-text">This is some text within a card body.</p>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-url="https://example.com/iframe6">Open Modal</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl custom-modal" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <iframe id="modalIframe" width="100%" height="100%" frameborder="0"></iframe>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $('#myModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var url = button.data('url');
+            var modal = $(this);
+            modal.find('.modal-body iframe').attr('src', url);
+        });
+    </script>
+</body>
+</html></button></div>

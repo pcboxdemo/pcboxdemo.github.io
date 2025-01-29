@@ -1,0 +1,45 @@
+<head>
+    <meta charset="utf-8" />
+    <title>Box Interceptor Test bed</title>
+
+    <!-- Latest version of the picker css for your locale -->
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.css"/>
+    <script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
+
+  </head>
+  <body>
+    <div class="container" style="height:100%; width: 100%;"></div>
+    
+    <script>
+        var myResponseInterceptor = (config) => {
+            console.log(config);
+			return config;
+		  };
+		  var myRequestInterceptor = (config ) => {
+            console.log(config);
+            if ( config.method == "post" && config.url.startsWith("https://upload")) {
+                var formDataAttributes = JSON.parse(config.data.attributes);
+                if (formDataAttributes.name.endsWith(".zip")) {
+                console.log("No zip files allowed");
+                //send to another URL that will error
+                var diffURL = "https://api.box.com/2.0/files/badextension";
+                config.method = "get";
+                config.url = diffURL;
+                alert("Please upload anything other than ZIP files.");
+                }
+            }
+            return config;
+		  };
+        var accessToken = sessionStorage.getItem("token");
+        var folderId = "0";
+        var explorer = new Box.ContentExplorer();
+        explorer.show(folderId, accessToken, 
+        {
+            "container":".container",
+            "requestInterceptor":myRequestInterceptor,
+            "responseInterceptor":myResponseInterceptor
+        });
+    </script>
+  </body>
