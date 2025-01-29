@@ -1,0 +1,49 @@
+<head>
+    <meta charset="utf-8" />
+    <title>Box Interceptor Test bed</title>
+
+    <!-- Latest version of the picker css for your locale -->
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.css"/>
+    <script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
+
+  </head>
+  <body>
+    <div class="container" style="height:100%; width: 100%;"></div>
+    
+    <script>
+        var myResponseInterceptor = (config) => {
+            console.log(config);
+			return config;
+		  };
+		  var myRequestInterceptor = (config)  => {
+            var method = config.method;
+            //config.data.size=5368709120000;
+            //Only do logic when method is post, not options!
+            if (method == 'post' && config.url.includes('https://upload.app.box.com/api/2.0/files/content')) {
+                var jsonRep = JSON.parse(config.data.attributes);
+                //If this is a PDF
+                if (!jsonRep.name.toLowerCase().endsWith('.pdf')) {
+                    console.log("drop this download");
+                    //Use URL that will return a 200
+                    var diffURL = "https://api.box.com/2.0/users/me";
+                    config.method = 'get';
+                    config.url = diffURL;
+                    //Alert of push a message somewhere on screen so the user can see what happened
+                    alert('we only want pdf files!');
+                }
+            }
+            return config;
+        };
+        var accessToken = sessionStorage.getItem("token");
+        var folderId = "0";
+        var explorer = new Box.ContentExplorer();
+        explorer.show(folderId, accessToken, 
+        {
+            "container":".container",
+            "requestInterceptor":myRequestInterceptor,
+            "responseInterceptor":myResponseInterceptor
+        });
+    </script>
+  </body>
