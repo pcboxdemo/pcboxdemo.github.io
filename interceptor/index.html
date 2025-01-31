@@ -64,6 +64,7 @@
             var params = new URLSearchParams(window.location.search);
             var token = params.get('token');
             var code = params.get('code');
+            $(".container").hide();
             $.ajax({
                 method: 'get',
                 url:"https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",  
