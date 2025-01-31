@@ -74,8 +74,26 @@
       
               }
             });
+
+            $(document).on('show.bs.modal', '#myModal', function (event) {
+                console.log("Modal is about to show!"); // Debugging log to check if the event is firing
+    
+                var button = $(event.relatedTarget); // Button that triggered the modal
+                var url = button.data('url'); // Get the URL from the button
+                var modal = $(this);
+    
+                // Get the card header text that triggered the modal
+                var cardHeader = button.closest('.card').find('.card-header').text().trim();
+                console.log("Card header: " + cardHeader); // Debugging log to check card header
+    
+                // Set the modal title to the card header
+                modal.find('.modal-title').text(cardHeader);
+    
+                // Set the iframe src based on the URL data
+                modal.find('.modal-body iframe').attr('src', url);
+            });         
         });
-        
+       
     </script>
 
 </head>
@@ -131,7 +149,7 @@
                         <div class="card">
                     <div class="card-header">Use Content Modified Date for file list</div>
                     <div class="card-body">
-                        <p class="card-text">This interceptor will swap the modified date for the content modified date in the file list and sort on that (not that sort headers are disabled for this).</p>
+                        <p class="card-text">This interceptor will swap the modified date for the content modified date in the file list and sort on that (note that sort headers are disabled for this).</p>
                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-url="dates.html">Try me</button>
                     </div>
                 </div>
@@ -139,10 +157,10 @@
             <!-- Card 5 -->
             <div class="col-md-4">
                 <div class="card">
-                    <div class="card-header">Coming soon..</div>
+                    <div class="card-header">Only PDF files please</div>
                     <div class="card-body">
-                        <p class="card-text">.</p>
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-url="#">Nothing here</button>
+                        <p class="card-text">Only allow PDF files to be uploaded</p>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" data-url="onlyPDF.html">Nothing here</button>
                     </div>
                 </div>
             </div>

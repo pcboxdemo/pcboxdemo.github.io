@@ -1,0 +1,62 @@
+<head>
+    <meta charset="utf-8" />
+    <title>Box Interceptor Test bed</title>
+
+    <!-- Latest version of the picker css for your locale -->
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.css"/>
+    <script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Viewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.js"></script>
+  </head>
+  <body>
+    <div class="container" style="height:100%; width: 100%;"></div>
+    <div id="json-display"></div>
+
+    <script>
+        var requestKey = ['headers','params','parsedUrl','url','method'];
+        var myResponseInterceptor = (config) => {
+            
+            console.log(config);
+            //$("#json-display").JSONView(config, { collapsed: false });
+
+
+			return config;
+		  };
+		  var myRequestInterceptor = (config ) => {
+            
+            var cleanConfig = removeFunctionsRequest(config);
+            //$("#json-display").JSONView(cleanConfig, { collapsed: true });
+
+            return config;
+		  };
+        var accessToken = sessionStorage.getItem("token");
+        var folderId = "0";
+        var explorer = new Box.ContentExplorer();
+        explorer.show(folderId, accessToken, 
+        {
+            "container":".container",
+            "requestInterceptor":myRequestInterceptor,
+            "responseInterceptor":myResponseInterceptor
+        });
+       function removeFunctionsRequest(obj) {
+            var cleanObj = {};
+            for (var key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    if (requestKey.includes(key)) {
+                        
+                        cleanObj[key] = obj[key]; 
+                    }
+                }
+            }
+            
+            return cleanObj;
+        }
+        
+    </script>
+  </body>
+  

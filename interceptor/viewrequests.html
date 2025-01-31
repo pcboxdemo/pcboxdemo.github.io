@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI elements testbed</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>   
+    
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.css"/>
+    <script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.js"></script>
+    <script type="module" src="annotations.js"></script>
+	 <link rel="stylesheet" href="annotations.css" />
+    <style>
+        .modal {
+            display: none;
+        }
+        .custom-modal {
+            max-width: 80vw; /* 80% of viewport width */
+            height: 80vh; /* 80% of viewport height */
+            display: flex;
+            align-items: center; /* Center vertically */
+            justify-content: center;
+        }
+        
+        .custom-modal .modal-content {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .custom-modal .modal-body {
+            height: calc(100% - 56px - 56px); /* Adjusting for header and footer */
+            overflow-y: auto; /* Enable scrolling if needed */
+        }
+        body {
+            background-color: #0061D5; /* Box.com blue */
+        }
+        .header {
+            background-color: #0051BA; /* Slightly darker Box.com blue */
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .content-container {
+            padding: 20px;
+        }
+        .shaded-box {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            background: #007bff;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            min-width: 80px;
+            text-align: center;
+        }
+        .ucontainer {
+            height: 800px;
+            
+            
+        }
+        .request-list {
+            list-style: none;
+            padding: 0;
+            max-height: 1000px;
+            overflow-y: auto;
+        }
+        .request-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .json-content {
+            display: none;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        .expand-btn {
+            padding: 2px 6px;
+            font-size: 0.8rem;
+        }
+    </style>
+    <script src="uielement.js"></script>
+    <script>
+            var requestKey = ['headers','params','parsedUrl','url','method','data'];
+            var myResponseInterceptor = (config) => {
+               
+                return config;
+              };
+              var myRequestInterceptor = (config ) => {
+                console.log(config);
+               updateRequestCount(config.method);
+                var cleanConfig = removeFunctionsRequest(config);
+               addRequestLog(config.method,cleanConfig,extractBoxResource(config.url));
+    
+                return config;
+              };
+            var accessToken = sessionStorage.getItem("token");
+            var folderId = "0";
+            var explorer = new Box.ContentExplorer();
+           
+           function removeFunctionsRequest(obj) {
+                var cleanObj = {};
+                for (var key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        if (requestKey.includes(key) ) {
+                            cleanObj[key] = obj[key]; 
+                        }
+                    }
+                }
+                return cleanObj;
+            }
+            function updateRequestCount(type) {
+                $('#' + type + '-count').attr('count', parseInt($('#' + type + '-count').attr('count')) + 1);
+                $('#' + type + '-count').text(type.toUpperCase() + ': ' + $('#' + type + '-count').attr('count'));
+            }
+            function addRequestLog(type, data,urlPart) {
+                let requestId = 'request-' + Date.now() + '_' + Math.floor(Math.random() * 10000); 
+                let listItem = `<li class="request-item" data-target="#${requestId}">
+                                    <button req="${type}" urlPart="${urlPart}" class="btn btn-xs btn-primary expand-btn" data-target="#${requestId}">+ ${type.toUpperCase()} ${urlPart}</button>
+                                    <br/><div id="${requestId}" class="json-content"></div>
+                                </li>`;
+                $('#request-list').prepend(listItem);
+                console.log(data);
+                $('#' + requestId).JSONView(data,{ collapsed: true });
+            }
+           
+            
+            $(document).on('click', '.expand-btn', function(event) {
+                console.log('clicked');
+                event.stopPropagation();
+                let target = $(this).data('target');
+                if($(this).text()==='-') {
+                    $(this).text('+ ' + $(this).attr('req').toUpperCase() + ' ' + $(this).attr('urlPart')); 
+                }
+                else {
+                    $(this).text('-');
+                }
+                $(target).toggle();
+            });
+            var annotations;
+            var currentId=0;
+        $(document).ready(function() {
+            annotations = new BoxAnnotations();
+
+            explorer.show(folderId, accessToken, 
+            createCEOptions());
+            addListener();
+            $('#reset-button').on('click', function() {
+                $('.pill').text(function() {
+                    return $(this).attr('id').toUpperCase().replace('-COUNT', '') + ': 0';
+                }).attr('count', 0);
+                $('#request-list').empty();
+            });
+            $('#edit-button').on('click', function() {
+
+                $('#contentExplorerModal').modal('show');
+                $("#contentExplorerForm").empty();
+                $("#contentExplorerForm").append(generateFormFields(contentExplorerOptions,'',1));
+            });
+            $('#saveContentExplorerOptions').click(function() {
+                const updatedOptions = getFormData($('#contentExplorerForm'));
+                contentExplorerOptions = updatedOptions;
+                $('#contentExplorerModal').modal('hide');
+                explorer.hide();
+                explorer.clearCache();
+                explorer.show(currentId, accessToken, createCEOptions());
+                addListener();
+            });
+            $('#close').click(function() {
+                //const updatedOptions = getFormData($('#contentExplorerForm'));
+                
+                $('#contentExplorerModal').modal('hide');
+            });
+        });
+        
+       
+    </script>
+</head>
+<body>
+    <div class="header">UI elements request counter</div>
+    <div class="container-fluid First Row - Full Width Columcontent-container">
+        <div class="row mb-3">
+            <div class="col-12 shaded-box">
+                <span class="pill" id="get-count" count="0">GET: 0</span>
+                <span class="pill" id="post-count" count="0">POST: 0</span>
+                <span class="pill" id="options-count" count="0">OPTIONS: 0</span>
+                <span class="pill" id="put-count" count="0">PUT: 0</span>
+                <span class="pill" id="delete-count" count="0">DELETE: 0</span>
+                <button id="reset-button" class="btn btn-danger btn-sm float-end">Reset Requests</button>
+                <button id="edit-button" class="btn btn-primary btn-sm float-end edit">Edit UI element options</button>
+
+            </div>
+        </div>
+        <div class="row d-flex">
+            <div class="col-md-7 shaded-box ucontainer"></div>
+            <div class="col-md-5 shaded-box"><h5>Request Log</h5>
+                <ul id="request-list" class="request-list"></ul></div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="contentExplorerModal" tabindex="-1" role="dialog" aria-labelledby="contentExplorerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl custom-modal" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="contentExplorerModalLabel">Edit Content Explorer Options</h5>
+                    <button type="button"  id="close" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="contentExplorerForm">
+                       
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="saveContentExplorerOptions">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

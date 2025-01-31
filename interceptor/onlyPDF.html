@@ -26,12 +26,12 @@
                 //If this is a PDF
                 if (!jsonRep.name.toLowerCase().endsWith('.pdf')) {
                     console.log("drop this download");
-                    //Use URL that will return a 200
-                    var diffURL = "https://api.box.com/2.0/users/me";
+                    //Use URL that will return an error
+                    var diffURL = "https://api.box.com/2.0/badextension";
                     config.method = 'get';
                     config.url = diffURL;
                     //Alert of push a message somewhere on screen so the user can see what happened
-                    alert('we only want pdf files!');
+                    alert('we only want pdf files - non PDF files were discarded!');
                 }
             }
             return config;
