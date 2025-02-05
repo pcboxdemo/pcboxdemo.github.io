@@ -11,6 +11,24 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <style>
+        .footer {
+            background-color: #f8f9fa;
+            padding: 10px 0;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
         .custom-modal {
             max-width: 80vw; /* 80% of viewport width */
             height: 80vh; /* 80% of viewport height */
@@ -233,5 +251,9 @@
             modal.find('.modal-body iframe').attr('src', url);
         });
     </script>
+
+    <footer class="footer">
+        <p>Made by <a href="mailto:pchristensen@box.com">Peter Christensen</a> - Box Platform Solutions Engineering &copy; 2025 | <a href="https://developer.box.com" target="_blank">developer.box.com</a></p>
+    </footer>
 </body>
-</html></button></div>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+	<meta charset="UTF-8">
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<!-- Box preview SDK -->
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/uploader.css">
+	<script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/uploader.js"></script>
+
+	<script>
+		var testRequestInterceptor = (
+			config /* https://github.com/axios/axios#response-config */
+		  ) => {
+			//console.log(JSON.stringify(config));
+			//var newConfig = config.replace(/api.box.com/g, "localhost:3000");
+			console.log('request');
+			return config;
+		  };
+		  var testResponseInterceptor = (
+			config /* https://github.com/axios/axios#response-config */
+		  ) => {
+			//console.log(config.data.item_collection.entries[0].authenticated_download_url);
+			var newConfig =	JSON.stringify(config).replace(/https:\/\/dl.boxcloud.com/g, "http:\/\/localhost:3001").replace(/https:\/\/upload.app.box.com/g, "http:\/\/localhost:3000/app-upload");//.replace(/https:\/\/upload.app.box.com/g, "http:\/\/localhost:3002");;
+			//newConfig = JSON.stringify(JSON.parse(newConfig)).replace(/https:\/\/upload.app.box.com/g, "http:\/\/localhost:3002");
+			return JSON.parse(newConfig);	
+			//return config;
+		  };
+		$(document).ready(function() {
+			var contentUploader = new Box.ContentUploader();
+			contentUploader.show('283313298395', '123', {
+				container: '.pcontainer',
+				apiHost:"http://localhost:3000/api",
+				uploadHost:"http://localhost:3000/upload",
+				requestInterceptor: testRequestInterceptor,
+            		responseInterceptor: testResponseInterceptor
+
+			});
+
+		});
+		//});
+	</script>
+</head>
+
+<body>
+
+	<div class='pcontainer' >
+		
+	</div>
+</div>
+</body>
+
+</html>
