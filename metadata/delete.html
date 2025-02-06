@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete metadata template (proceed with caution)</title>
+    <!-- Bootstrap CSS -->
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Bootstrap Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- jQuery CDN -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="./lib/bundle.js"></script>
+
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.css"/>
+<script src="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.js"></script>
+<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css"/>
+<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
+<script src="metadata.js"></script>
+<link rel="stylesheet" href="import.css"/>
+
+    <style>
+     
+    </style>
+
+    <script>
+        const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
+        var client;
+        var accessToken=sessionStorage.getItem("token");//'1!ovMAnpXZqiVIIHfEmAgKsaxAYGqT54wQLOCjDudE9OOlot9_RhQXRncyKgiw1-eymQjVGe4YONcsCZZ2JUcmc9GyHLCYGfEOwMg8lP2pghjtJg_BpbgXerqucuVnYQJkknxTeJvNfSfEiu8GhShkgxupj02JPjdxoy4Eyj6AfavchgCS0x1huzmUPv4Q-Wi6zjqTjwATWXwWbVutAJ4_GSEFydHf751iqRWxA-bJaVuqB7FtVArcie7jDUuTcu3OsDZfRYzZZIvg5OWmOLKS-jbO0Gbj3MmXSDv__elJVQANjVDRWE6N5nzBM-ii1fQZtqiERKioKN3dxGI-M4NOZfEIh6MsHHtcbL9aJKvXpa05Ln76ro5IjzC01YfuRI0Ap1vf7c57b1G1gXprd4NvODd2mQqj_hUy43kk-v2Z2TSijyTuhj7yeF2BAgS5MyXBCNZctNVsPIGnBpR6bD1_lwsLZNkUz4ND-3b0iksLw7aZJhcT3FQW0vsrhu8QA3RJ-mQRl42pJ65dh4Ri5A9dsvGxr1uq2lCCwiemwR6zILZoSVoOp6q4d81EEMyaXXPtZHlD0eOeVO1krm6RnlaG9y6ZMXvS4nzJBv8tHiD3VxRap9ye_YeD6xXR_5rZHHiXpxwpBUM4bsDSUEsiyNYCuNMrcwNnpf0eYll6KOlnG908Xt6SYuyzqNgflrNWWhG_wT3-sVdqy-TVftYeLHYkCKPzyN2GYPb47awVjyBLUQZhWDrTItJRmwjc30b3-NfYfIhFiwnnKa-N6VthbRsCBB1NcjhwCpcKF9AWWl_iM4dqyNZ0myghxR0ZqNXnfWDNOpKmSFZtQTEpz-NVupTteW-EmAgOmn0vyG1y';        var selectedFolder=null;
+        var eid;
+        $(document).ready(async function() {
+            $('#delete').click(function () {
+                if (!confirm("Are you sure you want to delete this template? This action cannot be undone and all metadata instances will be deleted!")) {
+                    return;
+                }
+                let token = sessionStorage.getItem('token');
+                let templateKey = $('#selectedTemplates').attr("key");       
+                $.ajax({
+                    url: `https://api.box.com/2.0/metadata_templates/enterprise_${eid}/${templateKey}/schema`,
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    },
+                    success: function () {
+                        $("#selectedTemplates").text($("#selectedTemplates").text() + " - DELETED");
+                        $("#fields").empty();
+                        checkButton();
+                        $("#allTemplates option[value='" + templateKey + "']").remove();
+
+                        
+                    },
+                    error: function (xhr) {
+                        alert("Error deleting template: " + xhr.responseText);
+                    }
+                });
+            });
+            $('#allTemplates').on('change', function (e) {
+                $("#fields").empty();
+                $("#fileInstanceCount").text(0);
+                $("#folderInstanceCount").text(0);
+                var optionSelected = $("option:selected", this);
+                var valueSelected = this.value;
+                $('#selectedTemplates').html("Selected Template: " + $('#allTemplates option:selected').text());
+                let template =  metadataTemplates.entries.find(t => t.templateKey === $('#allTemplates option:selected').val());
+                $('#selectedTemplates').attr("key",template.templateKey);
+                $('#selectedTemplates').attr("firstField",template.fields[0].key);
+
+
+                generateFieldList(template,'fields');
+                checkButton();
+            }); 
+            try {
+                //Create a Box client using the token
+                client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
+                });
+               eid = getEid(client); 
+            }
+            catch (e) {
+                console.error(e);
+            }
+        
+            let metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
+            metadataTemplates.entries.forEach(function(temp) {
+                if(temp.hidden==false) {
+                    $('#allTemplates').append($('<option>', {
+                        value: temp.templateKey,
+                        text: temp.displayName + ' (' + temp.templateKey + ')',
+                    }));
+                }
+            })
+
+           
+                $('#analyze').click(function() {
+                    $("#analyzeLoader").show();
+                    $(".action").hide();
+                    fetchMetadata($('#selectedTemplates').attr("key"), $('#selectedTemplates').attr("firstField"));
+                    
+                });
+               
+                    
+            });
+            function fetchMetadata(templateKey, field, marker = null, folderCount = 0,filecount=0) {
+                let token = sessionStorage.getItem('token');
+                if (!token) {
+                    return;
+                }
+                $.ajax({
+                    url: "https://api.box.com/2.0/metadata_queries/execute_read",
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    data: JSON.stringify({
+                        from: `enterprise_${eid}.${templateKey}`,
+                        ancestor_folder_id: "0",
+                        query_params:{
+                            "arg1":"Denmark"
+                        },
+                        query: `${field} IS NULL OR ${field} IS NOT NULL`,
+                        fields: ["id,name,type"],
+                        limit: 1000,
+                        next_marker: marker
+                    }),
+                    success: function (response) {
+                        response.entries.forEach(entry => {
+                            if(entry.type=="file") {
+                                filecount++;
+                                $("#fileInstanceCount").text(filecount);
+                            } else {
+                                $('#folderInstanceCount').text(folderCount);
+                                folderCount++;
+                            }
+                        });
+                        
+        
+                        if (response.next_marker && (filecount+folderCount) < 10000) {
+                            fetchMetadata(templateKey, field, response.next_marker, folderCount,filecount);
+                        } else {
+                            $("#analyzeLoader").hide();
+                            $(".action").show();
+                            $("#delete").attr('disabled',false);
+                        }
+                    },
+                    error: function (xhr) {
+                        $("#analyzeLoader").hide();
+                        $(".action").show();
+                        alert("Error fetching metadata: " + xhr.responseText);
+                    }
+                });
+            }
+            function checkButton() {
+                $("#delete").attr('disabled',true);
+                if($('#selectedTemplates').text().length>0) {
+                    $(".action").attr('disabled',false);
+                    return;
+                }
+                
+                $(".action").attr('disabled',true);
+            }
+            function sortOptions(selectBox) {
+                var options = $(selectBox + ' option');
+                options.sort(function(a, b) {
+                    if (a.text.toLowerCase() < b.text.toLowerCase()) return -1;
+                    if (a.text.toLowerCase() > b.text.toLowerCase()) return 1;
+                    return 0;
+                });
+                $(selectBox).empty().append(options);
+            }
+           
+           
+            
+        
+        
+        async function getEid() {
+            let user = await  client.users.getUserMe({"fields":["id,name,enterprise"]});
+            eid = user.enterprise.id;
+        }
+        let metadataTemplateMap = [];
+        let totalSize=0;
+        
+        
+       
+        
+        // Function to process metadata entries
+       
+        
+        
+        
+   
+    </script>
+</head>
+<body>   <header class="header">
+    <!-- Left side links -->
+    <div class="left">
+        <a href="index.html">
+            <i class="bi bi-house-door"></i> Home
+        </a>
+        <a href="index_oauth.html">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+        </a>
+    </div>
+
+    <!-- Center links -->
+    <div class="center">
+        <a href="export.html"><i class="bi bi-arrow-up-circle"></i> Export</a>
+        <a href="import.html" class="active"><i class="bi bi-arrow-down-circle"></i> Import</a>
+        <a href="apply.html"><i class="bi bi-check-circle"></i> Apply</a>
+        <a href="delete.html" class="text-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Delete Template</a>
+
+    </div>
+
+    <!-- Right side could have more links or branding if needed -->
+    <div class="right">
+        <!-- Placeholder for potential right-aligned content -->
+    </div>
+</header>
+    <div class="container mt-5">
+        <!-- Header -->
+        <header class="text-center mb-2">
+            <h3>Delete metadata templates (proceed with caution!)</h3>
+        </header>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="section la">Instructions: <ul>
+                    <li>This page will allow you to delete metadata templates as you cannot do this currently in the Box UI</li>
+                    <li>Select a template to delete</li>
+                    <li>Click Analyze button - this will count how many instances of the template there are in your EID (up to 10.000)</li>
+                    <li style="color:red"><b>Click Delete if you are absolutely sure you want to delete (this CANNOT be undone!!!!)</b></li>
+                    
+                </ul>
+                
+                    </div>
+            </div>
+        </div>
+        <!-- Row with two sections -->
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Select Metadata template</h4>
+                <div class="transfer-container section" style="height:400px !important">
+                    <!-- Select Box 1 -->
+                    <select id="allTemplates" class="form-select" multiple style="height:350px;" size="35">
+                        
+                    </select>
+        
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4>Take action</h4>
+
+                <div class="section">
+                    <h4 id="selectedTemplates"></h4>
+                    <div id="sec3content">
+                        <div id="fields"></div>
+
+                    </div>
+                    
+                    <div class="section mt-3">
+                        <div class="button-section">
+                            <button class="btn btn-primary action" id="analyze" disabled>Analyze</button>
+                            <button class="btn btn-secondary" id="delete" disabled>Delete</button>
+                            <img src="ajax-loader.gif" id="analyzeLoader" height="32" class="loading" style="display:none;"/>
+                        </div>
+                       
+                    </div>
+                    <div class="section mt-3">
+                        <ul class="list-group">
+                           
+                            <li class="list-group-item">
+                                File Metadata instances 
+                                <span class="badge rounded-pill bg-primary"  id="fileInstanceCount">0</span>
+                            </li>
+                            <li class="list-group-item">
+                                Folder Metadata instances 
+                                <span class="badge rounded-pill bg-primary"  id="folderInstanceCount">0</span>
+                            </li>
+                        </ul>
+                       
+                    </div>
+                </div>
+                </div>
+           
+        </div>
+       
+       
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
