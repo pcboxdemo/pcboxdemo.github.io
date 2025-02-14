@@ -290,7 +290,7 @@ function generateFieldHints(jsonString) {
                 } else {
                     // Ignore fields with date, number, or id in their name
                         console.log(obj[key]);
-                        if (obj[key].startsWith('{{') || obj[key]==null || obj[key]==='null') {
+                        if (obj[key]==null || obj[key]==='null' || obj[key].startsWith('{{')) {
                             if(ignoreKeywords.some(kw => key.toLowerCase().includes(kw))) {
                                 newObj[key] = 'use random ' + key;
                             }

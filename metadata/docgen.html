@@ -92,7 +92,9 @@
                 $(this).attr("disabled",true);
                 const docGenProcessor = new DocGenProcessor(client, 8);
                 const aiProcessor = new AIProcessor(client, docGenProcessor,accessToken, 8);
-                const selectedTemplates = $("#selectedTemplates").val();
+                const selectedTemplates = $("#selectedTemplates option").map(function() {
+                    return $(this).val();
+                }).get();
                 const templatesArray = Array.isArray(selectedTemplates) ? selectedTemplates : [selectedTemplates];
                 const numberOfDocs = parseInt($("#numberofdocs").val(), 10); // Get number of docs
                 console.log(templatesArray);
