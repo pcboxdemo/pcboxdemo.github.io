@@ -83,6 +83,7 @@
                 $.each(response, function (k, data) {
                     selectedFolder = data.id;
                     selectedFolderName = data.name;
+                    $("#folderHeader").text("Select folder:" + selectedFolderName);
                     checkButton();
                  });
             });
@@ -114,7 +115,7 @@
                                 boxFileId: boxFileId,  
                                 folderId: selectedFolder, 
                                 prompt: 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. Do not use values from the document itself. For any names use ' + generateNameCriteria() + '. Also include a real world business random value for fileName based on this value:' + fileName + ' - call the attribute fileName. Only return the valid JSON, do not start the answer with three backticks and the word json',
-                                content: generateFieldHints(editor.get())
+                                content: generateFieldHints(tagsMap.find(item => item.id === templateId))
                             };
                         }
                     }
@@ -267,7 +268,7 @@
                 
             }
            function checkButton() {
-                if ($('#selectedTemplates option').length === 0 && selectedFolder) {
+                if ($('#selectedTemplates option').length === 0 || selectedFolder==null) {
                     $('#generate').attr("disabled",true);
                 } else {
                     $('#generate').attr("disabled",false);
@@ -348,8 +349,8 @@
                 <div class="section la">Instructions: <ul>
                     <li>This page will allow you to generate a number of documents based on existing doc gen templates and randomly generated data</li>
                     <li>Select docgen template(s)</li>
-                    <li>Edit the tags. For each tag you can provide a prompt to generate the value or let the tool do it </li>
-                    <li>All values are generated with Box TextGen AI</li>
+                    <li>Edit the tags for your docgen template. For each tag you can provide a prompt to generate the value or let the tool do it </li>
+                    <li>All values are generated with Box TextGen AI API</li>
                     <li>Select target folder</li>
                     <li>Select number of documents per template and hit Generate</li>
                 </ul>
@@ -408,7 +409,7 @@
             </div>
         </div>
         <div class="row">
-            <h4 id="tagsHeader">Select folder</h4>
+            <h4 id="folderHeader">Select folder</h4>
             <div class="col-md-12">
 
                 <div class="section mt-3 selector" style="height:500px;">
