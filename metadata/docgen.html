@@ -51,6 +51,7 @@
         var tagsMap = [];
         var editor ;
         const completedBatches = new Set(); // Store completed batch IDs
+        const completedWithErrorBatches = new Set(); // Store completed batch IDs
 
         $(document).ready(async function() {
             $(document).on('click', 'input[type="radio"]', function() {
@@ -75,7 +76,7 @@
                 maxSelectable:1,
                 canSetShareAccess:false,
                 logoUrl:'logo-small.png',
-                currentFolderId:'0',
+                currentFolderId:'295472871623',
                 rootFolderId:'0'
             });
             folderPicker.addListener("choose", async function (response) {
@@ -115,7 +116,7 @@
                                 boxFileId: boxFileId,  
                                 folderId: selectedFolder, 
                                 prompt: 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. Do not use values from the document itself. For any names use ' + generateNameCriteria() + '. Also include a real world business random value for fileName based on this value:' + fileName + ' - call the attribute fileName. Only return the valid JSON, do not start the answer with three backticks and the word json',
-                                content: generateFieldHints(tagsMap.find(item => item.id === templateId))
+                                content: generateFieldHints(tagsMap.find(item => item.id === templateId).json)
                             };
                         }
                     }
@@ -132,7 +133,8 @@
                     $("#docgenJobs").text(docgenStatus.totalJobs);
                     $("#docgenJobsSent").text(docgenStatus.completedJobs);
                     $("#docgenJobsCompleted").text(completedBatches.size);
-                    if (completedBatches.size >= numberOfDocs) {
+                    $("#docgenJobsFailed").text(completedWithErrorBatches.size);
+                    if ((completedBatches.size+completedWithErrorBatches.size) >= numberOfDocs) {
                         clearInterval(statusInterval);  // Stop the first interval
                         clearInterval(docgenInterval);  // Stop the second interval
                         console.log("Intervals stopped as completedBatchSize reached the limit.");
@@ -142,7 +144,8 @@
                 const docgenInterval = setInterval(()=> {
                     checkDocgenBatchJobs(docGenProcessor.getJobResults(),client);
                     $("#docgenJobsCompleted").text(completedBatches.size);
-                    if (completedBatches.size >= numberOfDocs) {
+                    $("#docgenJobsFailed").text(completedWithErrorBatches.size);
+                    if ((completedBatches.size+completedWithErrorBatches.size) >= numberOfDocs) {
                         clearInterval(statusInterval);  // Stop the first interval
                         clearInterval(docgenInterval);  // Stop the second interval
                         console.log("Intervals stopped as completedBatchSize reached the limit.");
@@ -459,6 +462,10 @@
                             <li class="list-group-item">
                                 Docgen batches completed successfully
                                 <span class="badge rounded-pill bg-primary counter" id="docgenJobsCompleted">0</span>
+                            </li>
+                            <li class="list-group-item">
+                                Docgen batches completed with errors
+                                <span class="badge rounded-pill bg-danger counter" id="docgenJobsFailed">0</span>
                             </li>
                             
                         </ul>

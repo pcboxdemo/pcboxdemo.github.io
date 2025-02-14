@@ -192,6 +192,7 @@ function generateNameCriteria() {
   }
   async function checkDocgenBatchJobs(docgenBatches,client) {
     let completedCount = 0;
+    let completed_with_errors = 0;
     let inProgressCount = 0;
     const batchesArray = Array.from(docgenBatches.values());
     console.log(batchesArray);
@@ -201,7 +202,12 @@ function generateNameCriteria() {
         batchesArray.map(async (docgenBatch) => {
             console.log('batches:' + batchesArray.length + "::completedBatches:" + completedBatches.size);
             if (completedBatches.has(docgenBatch.id)) {
-                console.log('skipping');
+                console.log('skipping: completed');
+                // Skip API call if batch is already marked as completed
+                return docgenBatch;
+            }
+            if (completedWithErrorBatches.has(docgenBatch.id)) {
+                console.log('skipping: completed with errors');
                 // Skip API call if batch is already marked as completed
                 return docgenBatch;
             }
@@ -219,6 +225,11 @@ function generateNameCriteria() {
                                 console.log('adding to completed batches');
                                 completedBatches.add(docgenBatch.id); 
 
+                            } else if (entry.status === "completed_with_error") {
+                                completed_with_errors++;
+                                console.log('adding to completed with errors batches');
+                                completedWithErrorBatches.add(docgenBatch.id); 
+
                             } else {
                                 inProgressCount++;
                                 allCompleted = false;
@@ -234,8 +245,8 @@ function generateNameCriteria() {
             return docgenBatch; // Keep ongoing batches
         })
     );
-    console.log(`Completed: ${completedCount}, In Progress: ${inProgressCount}`);
-    return { completedCount, inProgressCount, remainingBatches: docgenBatches };
+    console.log(`Completed: ${completedCount}, Completed with errors: ${completed_with_errors} In Progress: ${inProgressCount}`);
+    return { completedCount, completed_with_errors,inProgressCount, remainingBatches: docgenBatches };
 }
 // Example Usage
 
