@@ -315,3 +315,42 @@ function generateFieldHints(jsonString) {
         return jsonString; // Return original JSON if parsing fails
     }
 }
+
+async function getTagsFromDoc(id) {
+    const json = tagsMap.find(item => item.id === id);
+    if(json) {
+        return json.json;
+    }
+    else {
+        let url = "https://api.box.com/2.0/ai/ask";
+
+        await $.ajax({
+            url:url,
+            type: "post",
+            headers: {
+                "Authorization":"Bearer " + accessToken
+            },
+            data: JSON.stringify(
+                {
+                    "mode": "single_item_qa",
+                    "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. Only return the valid JSON, do not start the answer with three backticks and the word json",
+                    "items": [
+                        {
+                            "id": id,
+                            "type": "file"
+                        }
+                    ],
+                    "dialogue_history": [],
+                    "include_citations": true
+                }
+
+            ),
+            success: function (response) {
+                resp= response.answer;
+                tagsMap.push({id:id,json:JSON.parse(response.answer)})
+            }
+        });
+        return JSON.parse(resp);
+    }
+    
+}

@@ -30,6 +30,8 @@
 <script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/picker.js"></script>
 <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/preview.css"/>
 <script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/preview.js"></script>
+<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css"/>
+<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
 <script src="metadata.js"></script>
 <script src="docgen.js"></script>
 <link rel="stylesheet" href="import.css"/>
@@ -46,6 +48,7 @@
         const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
         var client;
         var folderPicker = new Box.FolderPicker();
+        var contentExplorer = new Box.ContentExplorer();
         var accessToken=sessionStorage.getItem("token");//'1!ovMAnpXZqiVIIHfEmAgKsaxAYGqT54wQLOCjDudE9OOlot9_RhQXRncyKgiw1-eymQjVGe4YONcsCZZ2JUcmc9GyHLCYGfEOwMg8lP2pghjtJg_BpbgXerqucuVnYQJkknxTeJvNfSfEiu8GhShkgxupj02JPjdxoy4Eyj6AfavchgCS0x1huzmUPv4Q-Wi6zjqTjwATWXwWbVutAJ4_GSEFydHf751iqRWxA-bJaVuqB7FtVArcie7jDUuTcu3OsDZfRYzZZIvg5OWmOLKS-jbO0Gbj3MmXSDv__elJVQANjVDRWE6N5nzBM-ii1fQZtqiERKioKN3dxGI-M4NOZfEIh6MsHHtcbL9aJKvXpa05Ln76ro5IjzC01YfuRI0Ap1vf7c57b1G1gXprd4NvODd2mQqj_hUy43kk-v2Z2TSijyTuhj7yeF2BAgS5MyXBCNZctNVsPIGnBpR6bD1_lwsLZNkUz4ND-3b0iksLw7aZJhcT3FQW0vsrhu8QA3RJ-mQRl42pJ65dh4Ri5A9dsvGxr1uq2lCCwiemwR6zILZoSVoOp6q4d81EEMyaXXPtZHlD0eOeVO1krm6RnlaG9y6ZMXvS4nzJBv8tHiD3VxRap9ye_YeD6xXR_5rZHHiXpxwpBUM4bsDSUEsiyNYCuNMrcwNnpf0eYll6KOlnG908Xt6SYuyzqNgflrNWWhG_wT3-sVdqy-TVftYeLHYkCKPzyN2GYPb47awVjyBLUQZhWDrTItJRmwjc30b3-NfYfIhFiwnnKa-N6VthbRsCBB1NcjhwCpcKF9AWWl_iM4dqyNZ0myghxR0ZqNXnfWDNOpKmSFZtQTEpz-NVupTteW-EmAgOmn0vyG1y';        var selectedFolder=null;
         var eid;
         var tagsMap = [];
@@ -54,6 +57,18 @@
         const completedWithErrorBatches = new Set(); // Store completed batch IDs
 
         $(document).ready(async function() {
+            $(".toggle-btn").click(function () {
+                var target = $($(this).data("bs-target"));
+                var button = $(this);
+    
+                setTimeout(function () {
+                    if (target.hasClass("show")) {
+                        button.html("[-]");
+                    } else {
+                        button.html("[+]");
+                    }
+                }, 200); // Delay to allow Bootstrap animation to complete
+            });
             $(document).on('click', 'input[type="radio"]', function() {
                 const $button = $('button[aria-label="Choose"]');
 
@@ -88,8 +103,13 @@
                     checkButton();
                  });
             });
-            $("#generate").click(function () {
-                $(this).attr("disabled",true);
+            $(".action").click(function () {
+                $(".action").attr("disabled",true);
+                $(".counter").text('0');
+                completedBatches.clear();
+                completedWithErrorBatches.clear();
+                $("#loaderGen").show();
+                let type = $(this).attr('id');
                 const docGenProcessor = new DocGenProcessor(client, 8);
                 const aiProcessor = new AIProcessor(client, docGenProcessor,accessToken, 8);
                 const selectedTemplates = $("#selectedTemplates option").map(function() {
@@ -103,29 +123,49 @@
                     alert("Please select at least one template and enter a valid number of documents.");
                     return;
                 }
-        
-                function* generateAiJobs() {
+                if(type==='generateAI') {
+                    function* generateAiJobs() {
+                        for (const templateId of templatesArray) {
+                            for (let i = 0; i < numberOfDocs; i++) {
+                                console.log('creating job:' + templateId);
+                                const boxFileId = templateId; 
+
+                                // Use the Box file ID and template/document combination to create a unique fileId for the job
+                                const uniqueFileId = `${boxFileId}_template_doc_${i + 1}`;
+                                const fileName = $("#selectedTemplate option[value='" + boxFileId + "']").text();
+                                yield {
+                                    fileId: uniqueFileId,  
+                                    boxFileId: boxFileId,  
+                                    folderId: selectedFolder, 
+                                    prompt: 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. Do not use values from the document itself. For any names use ' + generateNameCriteria() + '. Also include a real world business random value for fileName based on this value:' + fileName + ' - call the attribute fileName. Only return the valid JSON, do not start the answer with three backticks and the word json',
+                                    content: generateFieldHints(tagsMap.find(item => item.id === templateId).json)
+                                };
+                            }
+                        }
+                    }
+                    aiProcessor.generateJobs(generateAiJobs); // Pass jobs to AI processor
+                    console.log("AI jobs submitted.");
+                
+                }
+                else {
                     for (const templateId of templatesArray) {
                         for (let i = 0; i < numberOfDocs; i++) {
-                            console.log('creating job:' + templateId);
                             const boxFileId = templateId; 
-
-                            // Use the Box file ID and template/document combination to create a unique fileId for the job
                             const uniqueFileId = `${boxFileId}_template_doc_${i + 1}`;
                             const fileName = $("#selectedTemplate option[value='" + boxFileId + "']").text();
-                            yield {
-                                fileId: uniqueFileId,  
-                                boxFileId: boxFileId,  
-                                folderId: selectedFolder, 
-                                prompt: 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. Do not use values from the document itself. For any names use ' + generateNameCriteria() + '. Also include a real world business random value for fileName based on this value:' + fileName + ' - call the attribute fileName. Only return the valid JSON, do not start the answer with three backticks and the word json',
-                                content: generateFieldHints(tagsMap.find(item => item.id === templateId).json)
-                            };
+                            let docGenJob = {
+                                    uniqueId:uniqueFileId,
+                                    uploadedFileId: boxFileId,
+                                    folderId: selectedFolder,
+                                    fileName: `Generated_${uniqueFileId}`,
+                                    userInput:tagsMap.find(item => item.id === templateId).json
+                            }
+                            docGenProcessor.addJob(docGenJob);
                         }
                     }
                 }
+
                 
-                aiProcessor.generateJobs(generateAiJobs); // Pass jobs to AI processor
-                console.log("AI jobs submitted.");
                 // Check status periodically
                 const statusInterval = setInterval(() => {
                     let aiStatus = aiProcessor.getStatus();
@@ -140,6 +180,9 @@
                         clearInterval(statusInterval);  // Stop the first interval
                         clearInterval(docgenInterval);  // Stop the second interval
                         console.log("Intervals stopped as completedBatchSize reached the limit.");
+                        loadExplorer();
+                        checkButton();
+                        $("#loaderGen").hide();
                     }
                     
                 }, 1000);
@@ -151,6 +194,9 @@
                         clearInterval(statusInterval);  // Stop the first interval
                         clearInterval(docgenInterval);  // Stop the second interval
                         console.log("Intervals stopped as completedBatchSize reached the limit.");
+                        loadExplorer();
+                        checkButton();
+                        $("#loaderGen").hide();
                     }
 
                 },4000)
@@ -234,49 +280,17 @@
                 }));
                
             })
-            async function getTagsFromDoc(id) {
-                const json = tagsMap.find(item => item.id === id);
-                if(json) {
-                    return json.json;
-                }
-                else {
-                    let url = "https://api.box.com/2.0/ai/ask";
-
-                    await $.ajax({
-                        url:url,
-                        type: "post",
-                        headers: {
-                            "Authorization":"Bearer " + accessToken
-                        },
-                        data: JSON.stringify(
-                            {
-                                "mode": "single_item_qa",
-                                "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. Only return the valid JSON, do not start the answer with three backticks and the word json",
-                                "items": [
-                                    {
-                                        "id": id,
-                                        "type": "file"
-                                    }
-                                ],
-                                "dialogue_history": [],
-                                "include_citations": true
-                            }
-
-                        ),
-                        success: function (response) {
-                            resp= response.answer;
-                            tagsMap.push({id:id,json:JSON.parse(response.answer)})
-                        }
-                    });
-                    return JSON.parse(resp);
-                }
-                
+            function loadExplorer() {
+                $("#files").show();
+                contentExplorer.show(selectedFolder, accessToken, {
+                    container: ".explorer"
+                });
             }
            function checkButton() {
                 if ($('#selectedTemplates option').length === 0 || selectedFolder==null) {
-                    $('#generate').attr("disabled",true);
+                    $('.action').attr("disabled",true);
                 } else {
-                    $('#generate').attr("disabled",false);
+                    $('.action').attr("disabled",false);
                 }
            }
             });
@@ -355,7 +369,7 @@
                     <li>This page will allow you to generate a number of documents based on existing doc gen templates and randomly generated data</li>
                     <li>Select docgen template(s)</li>
                     <li>Edit the tags for your docgen template. For each tag you can provide a prompt to generate the value or let the tool do it </li>
-                    <li>All values are generated with Box TextGen AI API</li>
+                    <li>All values are generated with Box TextGen AI API or you can choose to input exact values instead. This is useful for testing </li>
                     <li>Select target folder</li>
                     <li>Select number of documents per template and hit Generate</li>
                 </ul>
@@ -364,64 +378,93 @@
             </div>
         </div>
         <!-- Row with two sections -->
-        <div class="row">
-            <div class="col-md-6">
-                <h4>Select docgen template(s)</h4>
-                <div class="transfer-container section d-flex flex-column" style="height:400px !important">
-                    <div class="d-flex w-100">
-                        <!-- Select Box 1 -->
-                        <select id="allTemplates" class="form-select flex-grow-1 templates" size="20" style="height:200px;">
-                        </select>
-        
-                        <!-- Transfer Buttons -->
-                        <div class="d-flex flex-column justify-content-center mx-2" style="width:50px;">
-                            <button class="btn btn-primary mb-2" id="moveRight"> > </button>
-                            <button class="btn btn-primary" id="moveLeft"> < </button>
-                        </div>
-        
-                        <!-- Select Box 2 -->
-                        <select id="selectedTemplates" class="form-select flex-grow-1 templates" mulitple size="20" style="height:200px;">
-                        </select>
-                    </div>
-        
-                    <!-- Tags Section Below -->
-                </div>
+        <div class="row mb-8">
+            <div class="col-md-8">                 
+                   <h4>Select docgen template(s) </h4>
             </div>
-        
-            <div class="col-md-6">
-                <h4>Preview</h4>
-                <div class="transfer-container section" style="height:400px !important">
-                    <div class="previewer" style="height:400px !important"></div>
-                </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-primary toggle-btn" data-bs-toggle="collapse" data-bs-target="#row1">[-]</button>
             </div>
         </div>
-        
-        <div class="row" id='tagsContainer'>
-            <h4 id="tagsHeader">Tags</h4>
-            <div class="col-md-12">
-
-                <div class="section mt-3">
-                    <div class="align-items-start" style="text-align: left;display:none;" id="textRandom">
-                    Edit the tag values. if you want to give a custom prompt like 'dates between 2005 and 2010', 'this id should be INV-random number' or '3 randoms paragraphs about contract clauses'. <br/>
-                    Leave the values as is to let the built-in randomiser generate the data.  (Don't change the tag keys as these are part of the docgen template)
-                    </div>
-                    <div class="d-flex align-items-start">
-                        
-                        <img src="ajax-loader.gif" id="loader" style="display:none"/>
-                        <div id="tags" class="w-100" style="text-align: left;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <h4 id="folderHeader">Select folder</h4>
-            <div class="col-md-12">
-
-                <div class="section mt-3 selector" style="height:500px;">
-                    
-                </div>
-            </div>
+        <div id="row1" class="collapse show">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="transfer-container section d-flex flex-column" style="height:400px !important">
+                        <div class="d-flex w-100">
+                            <!-- Select Box 1 -->
+                            <select id="allTemplates" class="form-select flex-grow-1 templates" size="20" style="height:200px;">
+                            </select>
             
+                            <!-- Transfer Buttons -->
+                            <div class="d-flex flex-column justify-content-center mx-2" style="width:50px;">
+                                <button class="btn btn-primary mb-2" id="moveRight"> > </button>
+                                <button class="btn btn-primary" id="moveLeft"> < </button>
+                            </div>
+            
+                            <!-- Select Box 2 -->
+                            <select id="selectedTemplates" class="form-select flex-grow-1 templates" mulitple size="20" style="height:200px;">
+                            </select>
+                        </div>
+            
+                        <!-- Tags Section Below -->
+                    </div>
+                </div>
+            
+                <div class="col-md-6">
+                    
+                    <div class="transfer-container section" style="height:400px !important">
+                        <div class="previewer" style="height:400px !important"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-8">
+            <div class="col-md-8">                 
+                <h4 id="tagsHeader">Tags</h4>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-primary toggle-btn" data-bs-toggle="collapse" data-bs-target="#row2">[-]</button>
+            </div>
+        </div>
+        <div id="row2" class="collapse show">
+
+            <div class="row" id='tagsContainer'>
+                <div class="col-md-12">
+
+                    <div class="section mt-3">
+                        <div class="align-items-start" style="text-align: left;display:none;" id="textRandom">
+                        Edit the tag values. if you want to give a custom prompt like 'dates between 2005 and 2010', 'this id should be INV-random number' or '3 randoms paragraphs about contract clauses'. <br/>
+                        Leave the values as is to let the built-in randomiser generate the data.  (Don't change the tag keys as these are part of the docgen template)<br/>
+                        You can also enter fixed values and choose to generate a document with those exact values
+                        </div>
+                        <div class="d-flex align-items-start">
+                            
+                            <img src="ajax-loader.gif" id="loader" style="display:none"/>
+                            <div id="tags" class="w-100" style="text-align: left;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-8">
+            <div class="col-md-8">                 
+                <h4 id="folderHeader">Select folder</h4>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-primary toggle-btn" data-bs-toggle="collapse" data-bs-target="#row3">[-]</button>
+            </div>
+        </div>
+        <div id="row3" class="collapse show">
+
+            <div class="row">
+                <div class="col-md-12">
+
+                    <div class="section mt-3 selector" style="height:500px;">
+                        
+                    </div>
+                </div>
+                
+            </div>
         </div>
         
 
@@ -436,7 +479,9 @@
                 
             </div>
         
-            <button class="btn btn-primary action" id="generate" disabled >Generate</button>
+            <button class="btn btn-primary action" id="generateAI" disabled >Generate with AI data</button>
+            <button class="btn btn-primary action" id="generateFixed" disabled >Generate with Fixed Data</button>
+            <img src="ajax-loader.gif" id="loaderGen" style="display:none"/>
         </div>
         
         <div class="row">
@@ -470,6 +515,16 @@
                 </div>
             </div>
         </div>
+        <div class="row" id="files" style="display:none">
+            <h4 id="folderHeader">View files</h4>
+            <div class="col-md-12">
+
+                <div class="section mt-3 explorer" style="height:500px;">
+                    
+                </div>
+            </div>
+            
+        </div>
        
        
     
@@ -477,6 +532,6 @@
     <!-- Bootstrap JS and dependencies -->
     
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
