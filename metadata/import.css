@@ -207,3 +207,7 @@ option {
 .close-modal:hover {
     background-color: #0056b3;
 }
+
+.normalHeight {
+    height:auto !important
+}

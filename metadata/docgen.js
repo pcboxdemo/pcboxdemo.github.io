@@ -140,7 +140,7 @@ class DocGenProcessor {
             });
             //console.log(result);
             this.completedJobs++;
-            this.jobResults.set(job.uniqueId, result); // Store result
+            this.jobResults.set(job.uniqueId, {result:result,userInput:job.userInput}); // Store result
 
         } catch (error) {
             console.error("DocGen Job failed:", error);
@@ -199,22 +199,18 @@ function generateNameCriteria() {
     // Use filter to modify the original array while avoiding rechecking completed batches
     let i =0;
     const result = await Promise.all(
-        batchesArray.map(async (docgenBatch) => {
+        //batchesArray.map(async (docgenBatch) => {
+            Array.from(docgenBatches, async ([key, value]) => {
+
             console.log('batches:' + batchesArray.length + "::completedBatches:" + completedBatches.size);
-            if (completedBatches.has(docgenBatch.id)) {
+            if (completedBatches.has(key) || completedWithErrorBatches.has(key)) {
                 console.log('skipping: completed');
-                // Skip API call if batch is already marked as completed
-                return docgenBatch;
+                return value.result;
             }
-            if (completedWithErrorBatches.has(docgenBatch.id)) {
-                console.log('skipping: completed with errors');
-                // Skip API call if batch is already marked as completed
-                return docgenBatch;
-            }
-            //only check 10 to avoid 
+            //only check 10 to avoid rate limits
             if(i<=10) {
                 try {
-                    const jobDetails = await client.docgen.getDocgenBatchJobByIdV2025R0(docgenBatch.id);
+                    const jobDetails = await client.docgen.getDocgenBatchJobByIdV2025R0(value.result.id);
                     i++;
                     if (Array.isArray(jobDetails.entries)) {
                         let allCompleted = true;
@@ -222,13 +218,18 @@ function generateNameCriteria() {
                         for (const entry of jobDetails.entries) {
                             if (entry.status === "completed") {
                                 completedCount++;
-                                console.log('adding to completed batches');
-                                completedBatches.add(docgenBatch.id); 
+                                console.log(jobDetails);
+                                console.log('adding to completed batches ' + entry.templateFile.id);
+                                console.log(metadataMap);
+                                let template = metadataMap.find(f => entry.templateFile.id === f.id);
+                                console.log('apply ' + value.userInput + ' to ' + template.template.templateKey + ' for file ' + entry.outputFile.id);
+                                await client.fileMetadata.createFileMetadataById(entry.outputFile.id, 'enterprise',template.template.templateKey,  mapFieldValues(template.fieldMappings,value.userInput,template.template.fields));
+                                completedBatches.add(key); 
 
                             } else if (entry.status === "completed_with_error") {
                                 completed_with_errors++;
                                 console.log('adding to completed with errors batches');
-                                completedWithErrorBatches.add(docgenBatch.id); 
+                                completedWithErrorBatches.add(key); 
 
                             } else {
                                 inProgressCount++;
@@ -237,12 +238,15 @@ function generateNameCriteria() {
                         }
                     }
                     } catch (error) {
-                        console.error(`Error fetching job ${docgenBatch.id}:`, error);
-                        return docgenBatch; // Keep batch if there's an error
+                        console.error(`Error fetching job ${value.id}:`, error);
+                        completed_with_errors++;
+                        console.log('adding to completed with errors batches');
+                        completedWithErrorBatches.add(key); 
+                        return docgenBatches[key]; // Keep batch if there's an error
                     }
             }
                 
-            return docgenBatch; // Keep ongoing batches
+            return docgenBatches[key]; // Keep ongoing batches
         })
     );
     console.log(`Completed: ${completedCount}, Completed with errors: ${completed_with_errors} In Progress: ${inProgressCount}`);
@@ -289,7 +293,6 @@ function generateFieldHints(jsonString) {
                     newObj[key] = traverse(obj[key]); // Recursively process nested objects
                 } else {
                     // Ignore fields with date, number, or id in their name
-                        console.log(obj[key]);
                         if (obj[key]==null || obj[key]==='null' || obj[key].startsWith('{{')) {
                             if(ignoreKeywords.some(kw => key.toLowerCase().includes(kw))) {
                                 newObj[key] = 'use random ' + key;
@@ -353,4 +356,172 @@ async function getTagsFromDoc(id) {
         return JSON.parse(resp);
     }
     
+}
+const flattenObject = (obj, prefix = '') => {
+    let result = {};
+    for (let key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            const newKey = prefix ? `${prefix}.${key}` : key;
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+                Object.assign(result, flattenObject(obj[key], newKey)); // Recurse into object
+            } else {
+                result[newKey] = obj[key]; // Add the value to the result object
+            }
+        }
+    }
+    return result;
+};
+
+async function getDocGenTemplates() {
+    let url = "https://api.box.com/2.0/docgen_templates";
+
+    await $.ajax({
+        url:url,
+        type: "get",
+        headers: {
+            "Authorization":"Bearer " + accessToken
+        },
+        success: function (response) {
+            resp= response.entries;
+        }
+    });
+    return resp;
+}
+
+ // Find matching field based on path
+ const findMatchingField = (path, fields) => {
+    return fields.find(field => path.toLowerCase().endsWith(field.key.toLowerCase()));
+};
+
+function generateFieldsTable(fields) {
+    // Retrieve fields based on templateKey (you would use the lookup mechanism)
+    //const fields = getFieldsForTemplate(templateKey); // This is just an example function
+  
+    // Get the answer JSON from editor.get()
+    const answer = editor.get();
+    const flattenedAnswer = flattenJson(answer);
+
+    // Clear previous rows in the table body
+    $('#fieldTableBody').empty();
+  
+    fields.forEach(field => {
+      // Prepare the field label (displayName + type)
+      const fieldLabel = `${field.displayName} (${field.type})`;
+  
+      // Build dropdown options based on keys in the answer JSON
+      const dropdown = buildDropdown(answer, field.key);
+  
+      // Check if the field's key exists in the answer JSON to pre-select the matching value
+      
+  
+      // Add a new row to the table with the field label and dropdown
+      $('#fieldTableBody').append(`
+        <tr>
+          <td>${fieldLabel}</td>
+          <td>=></td>
+          <td>
+            <select class="form-control field-dropdown normalHeight" data-field-key="${field.key}">
+              ${dropdown}
+            </select>
+          </td>
+        </tr>
+      `);
+      const selectedValue = matchFieldWithAnswer(flattenedAnswer,field.key);
+      // If a value was found in the answer, pre-select it
+      if (selectedValue!=null) {
+        $(`select[data-field-key="${field.key}"]`).val(selectedValue);
+      }
+    });
+  }
+  
+  function buildDropdown(answer, fieldKey) {
+    const flattenedAnswer = flattenJson(answer); // Flatten the answer JSON
+    const matchedPath = matchFieldWithAnswer(flattenedAnswer, fieldKey); // Find matching path
+
+    let options = [`<option value="" selected>----</option>`]; // Default blank option
+
+    Object.keys(flattenedAnswer).forEach(path => {
+        options.push(
+            `<option value="${path}" ${path === matchedPath ? "selected" : ""}>${path}</option>`
+        );
+    });
+
+    return options.join('');
+}
+  function matchFieldWithAnswer(flattenedAnswer, fieldKey) {
+    fieldKey = fieldKey.toLowerCase(); // Normalize for case-insensitive comparison
+    let matchedPaths = [];
+
+    for (const answerPath in flattenedAnswer) {
+        if (answerPath.toLowerCase().endsWith(`.${fieldKey}`) || answerPath.toLowerCase() === fieldKey) {
+            matchedPaths.push(answerPath); // Store matching paths
+        }
+    }
+
+    // Return the best match (or all matches if needed)
+    return matchedPaths.length > 0 ? matchedPaths[0] : null; // Return the first (or improve selection logic)
+}
+
+  function flattenJson(json, prefix = '') {
+    let result = {};
+    for (let key in json) {
+      if (json.hasOwnProperty(key)) {
+        const newKey = prefix ? `${prefix}.${key}` : key;
+        if (typeof json[key] === 'object' && json[key] !== null) {
+          Object.assign(result, flattenJson(json[key], newKey)); // Recurse into nested objects
+        } else {
+          result[newKey] = json[key]; // Add the flat key-value pair
+        }
+      }
+    }
+    return result;
+  }
+  function mapFieldValues(fieldMapping, json, fields) {
+    const result = {}; // To store the mapped values
+
+    // Iterate over the field mappings
+    for (let [fieldKey, jsonPath] of Object.entries(fieldMapping)) {
+        // Use the jsonPath to access the value in the JSON
+        const pathParts = jsonPath.split('.'); // Split the path (e.g., "aContract.agreementType" -> ["aContract", "agreementType"])
+        let value = pathParts.reduce((obj, key) => obj && obj[key], json); // Traverse the JSON
+
+        // Get the field type from the fields array
+        const field = fields.find(f => f.key === fieldKey);
+        if (field && value !== undefined) {
+            // Validate the value based on the field type
+            const isValid = validateFieldValue(field.type, value, field.options);
+
+            if (isValid) {
+                // If valid, add the transformed value (e.g., lowercase string) to the result
+                result[fieldKey] = field.type === "string" ? value.toString().toLowerCase() : value;
+            } else {
+                console.warn(`Invalid value for ${fieldKey}: ${value}`);
+            }
+        }
+    }
+
+    return result;
+}
+
+// Validation function based on field type
+function validateFieldValue(type, value, options) {
+    switch (type) {
+        case 'string':
+            return typeof value === 'string';  // Ensure value is a string
+        case 'number':
+            // Allow string that can be converted to a number
+            const numValue = Number(value);  // Convert to number
+            return !isNaN(numValue) && typeof numValue === 'number';  // Ensure it's a valid number
+        case 'datetime':
+            return !isNaN(new Date(value).getTime());  // Ensure value is a valid date
+        case 'enum':
+            // Validate if value is exactly in the options array for enum (exact match)
+            if (options && Array.isArray(options)) {
+                return options.some(option => option.key === value.toString()); // Exact match (case-sensitive)
+            }
+            return false;  // Invalid if no options or the value is not in options
+        default:
+            return false;  // Invalid type
+    }
+}
 }

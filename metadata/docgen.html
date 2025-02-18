@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D1L3M4X20Q"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-D1L3M4X20Q');
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generate demo documents</title>
@@ -42,17 +52,20 @@
         font-family: 'Courier New', Courier, monospace;
 
      }
+     #fields {
+        font-size:12px;
+        font-family: 'Lato, "Helvetica Neue", Helvetica, Arial, sans-serif';
+     }
     </style>
 
     <script>
         const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
-        var client;
+        var client,eid,editor,metadataTemplates;
         var folderPicker = new Box.FolderPicker();
         var contentExplorer = new Box.ContentExplorer();
-        var accessToken=sessionStorage.getItem("token");//'1!ovMAnpXZqiVIIHfEmAgKsaxAYGqT54wQLOCjDudE9OOlot9_RhQXRncyKgiw1-eymQjVGe4YONcsCZZ2JUcmc9GyHLCYGfEOwMg8lP2pghjtJg_BpbgXerqucuVnYQJkknxTeJvNfSfEiu8GhShkgxupj02JPjdxoy4Eyj6AfavchgCS0x1huzmUPv4Q-Wi6zjqTjwATWXwWbVutAJ4_GSEFydHf751iqRWxA-bJaVuqB7FtVArcie7jDUuTcu3OsDZfRYzZZIvg5OWmOLKS-jbO0Gbj3MmXSDv__elJVQANjVDRWE6N5nzBM-ii1fQZtqiERKioKN3dxGI-M4NOZfEIh6MsHHtcbL9aJKvXpa05Ln76ro5IjzC01YfuRI0Ap1vf7c57b1G1gXprd4NvODd2mQqj_hUy43kk-v2Z2TSijyTuhj7yeF2BAgS5MyXBCNZctNVsPIGnBpR6bD1_lwsLZNkUz4ND-3b0iksLw7aZJhcT3FQW0vsrhu8QA3RJ-mQRl42pJ65dh4Ri5A9dsvGxr1uq2lCCwiemwR6zILZoSVoOp6q4d81EEMyaXXPtZHlD0eOeVO1krm6RnlaG9y6ZMXvS4nzJBv8tHiD3VxRap9ye_YeD6xXR_5rZHHiXpxwpBUM4bsDSUEsiyNYCuNMrcwNnpf0eYll6KOlnG908Xt6SYuyzqNgflrNWWhG_wT3-sVdqy-TVftYeLHYkCKPzyN2GYPb47awVjyBLUQZhWDrTItJRmwjc30b3-NfYfIhFiwnnKa-N6VthbRsCBB1NcjhwCpcKF9AWWl_iM4dqyNZ0myghxR0ZqNXnfWDNOpKmSFZtQTEpz-NVupTteW-EmAgOmn0vyG1y';        var selectedFolder=null;
-        var eid;
+        var accessToken=sessionStorage.getItem("token");
         var tagsMap = [];
-        var editor ;
+        var metadataMap = [];
         const completedBatches = new Set(); // Store completed batch IDs
         const completedWithErrorBatches = new Set(); // Store completed batch IDs
 
@@ -86,6 +99,15 @@
             catch (e) {
                 console.error(e);
             }
+            metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
+            metadataTemplates.entries.forEach(function(temp) {
+                if(temp.hidden==false) {
+                    $('#allMDTemplates').append($('<option>', {
+                        value: temp.templateKey,
+                        text: temp.displayName + ' (' + temp.templateKey + ')',
+                    }));
+                }
+            })
             folderPicker.show('0', accessToken, {
                 container: ".selector",
                 maxSelectable:1,
@@ -117,8 +139,6 @@
                 }).get();
                 const templatesArray = Array.isArray(selectedTemplates) ? selectedTemplates : [selectedTemplates];
                 const numberOfDocs = parseInt($("#numberofdocs").val(), 10); // Get number of docs
-                console.log(templatesArray);
-                console.log(numberOfDocs);
                 if (selectedTemplates.length === 0 || isNaN(numberOfDocs) || numberOfDocs <= 0) {
                     alert("Please select at least one template and enter a valid number of documents.");
                     return;
@@ -137,7 +157,7 @@
                                     fileId: uniqueFileId,  
                                     boxFileId: boxFileId,  
                                     folderId: selectedFolder, 
-                                    prompt: 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. Do not use values from the document itself. For any names use ' + generateNameCriteria() + '. Also include a real world business random value for fileName based on this value:' + fileName + ' - call the attribute fileName. Only return the valid JSON, do not start the answer with three backticks and the word json',
+                                    prompt: 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. Do not use values from the document itself. For any names use ' + generateNameCriteria() + '. Also include a real world business random value for fileName based on this value:' + fileName + ' - call the attribute fileName. For any dates returned, use RFC399 format. Only return the valid JSON, do not start the answer with three backticks and the word json',
                                     content: generateFieldHints(tagsMap.find(item => item.id === templateId).json)
                                 };
                             }
@@ -202,20 +222,49 @@
                 },4000)
 
             });
+            $("#match").click(function () {
+                let selectedTemplateKey = $(this).attr("selectedTemplate"); // Get selected template key
+                let selectedTemplate = metadataTemplates.entries.find(t => t.templateKey === selectedTemplateKey); // Find the matching template
+            
+                if (!selectedTemplate) {
+                    console.error("Selected template not found in metadataTemplates.");
+                    return;
+                }
+            
+                let fields = selectedTemplate.fields; // Extract the fields array
+                let updatedJson = editor.get(); // Get the current JSON from jsoneditor
+                let fieldMappings = {}; // Object to store mappings
 
-            $("#increment").click(function () {
-                let currentValue = parseInt($("#numberofdocs").val(), 10);
-                if (currentValue < 999) {
-                    $("#numberofdocs").val(currentValue + 1);
-                }
+                $(".normalHeight").each(function () { // Loop through all select elements
+                    let fieldKey = $(this).data("field-key"); // Get field key from the data attribute
+                    let selectedPath = $(this).val(); // Get the selected JSON path
+            
+                    if (!selectedPath) return; // Skip if no selection
+                    fieldMappings[fieldKey] = selectedPath;
+
+                    // Find the corresponding field definition
+                    let field = fields.find(f => f.key.toLowerCase() === fieldKey.toLowerCase());
+            
+                    if (field && field.type === "enum") {
+                        let enumOptions = field.options.map(opt => opt.key).join(", "); // Convert to comma-separated string
+                        updateJsonPath(updatedJson, selectedPath, enumOptions); // Update JSON dynamically
+                    }
+                });
+       
+                editor.set(updatedJson);
+                editor.options.onChange(); // Manually trigger the event
+                metadataMap.push({id:$(this).attr('selectedId'),template:selectedTemplate,fieldMappings:fieldMappings});
             });
-        
-            $("#decrement").click(function () {
-                let currentValue = parseInt($("#numberofdocs").val(), 10);
-                if (currentValue > 1) {
-                    $("#numberofdocs").val(currentValue - 1);
-                }
-            });
+            
+            $('#allMDTemplates').on('change', function (e) {
+                $("#fields").empty();
+                var optionSelected = $("option:selected", this);
+                var valueSelected = this.value;
+                $("#match").attr("selectedTemplate",valueSelected);
+                let template =  metadataTemplates.entries.find(t => t.templateKey === $('#allMDTemplates option:selected').val());
+                generateFieldsTable(template.fields);
+                //checkButton();
+            }); 
             $('#moveRight').click(function() {
                 $('#allTemplates option:selected').each(function() {
                     $(this).remove().appendTo('#selectedTemplates');
@@ -235,10 +284,12 @@
             });
             $('.templates').on('change',async function (e) {
                 let id = this.value;
+                $("#match").attr('selectedId',id);
                 let text = $(this).find("option:selected").text(); 
                 $("#tags").empty();
-                
+                $("#fields").empty();
                 $("#loader").show();
+                $("#mdsection").hide();
                 var valueSelected = this.value;
                 //load preview on right
                 var preview = new Box.ContentPreview();
@@ -251,10 +302,11 @@
 
                 $("#textRandom").show();
                 $("#tagsHeader").text("Tags for " + text);
-                //$('#tags').JSONView(tagsJson,{ collapsed: true });
+                $("#mdsection").show();
                 editor = new JSONEditor(document.getElementById('tags'), {
-                    mode: 'tree', // Use tree mode for better viewing
+                    mode: 'tree', 
                     onChange: function () {
+                        console.log('editor changed');
                         const obj = tagsMap.find(item => item.id === id);
                         if (obj) {
                             obj.json = editor.get();
@@ -270,9 +322,8 @@
             }); 
            
         
-            //let metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
+            metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
             let docgenTemplates = await getDocGenTemplates();
-            console.log(docgenTemplates);
             docgenTemplates.forEach(function(temp) {
                 $('#allTemplates').append($('<option>', {
                     value: temp.file.id,
@@ -282,10 +333,26 @@
             })
             function loadExplorer() {
                 $("#files").show();
+                try {
+                    contentExplorer.clearCache();
+                    contentExplorer.hide();
+                }
+                catch(error) {};
                 contentExplorer.show(selectedFolder, accessToken, {
                     container: ".explorer"
                 });
             }
+            function updateJsonPath(json, path, options) {
+                let keys = path.split("."); // Convert dot notation into an array of keys
+                let obj = json;
+            
+                for (let i = 0; i < keys.length - 1; i++) {
+                    obj = obj[keys[i]] = obj[keys[i]] || {}; // Traverse JSON or create missing objects
+                }
+            
+                obj[keys[keys.length - 1]] = 'Choose one of these values: ' + options; // Store the enum options as a comma-separated string
+            }
+            
            function checkButton() {
                 if ($('#selectedTemplates option').length === 0 || selectedFolder==null) {
                     $('.action').attr("disabled",true);
@@ -294,21 +361,7 @@
                 }
            }
             });
-            async function getDocGenTemplates() {
-                let url = "https://api.box.com/2.0/docgen_templates";
-
-                await $.ajax({
-                    url:url,
-                    type: "get",
-                    headers: {
-                        "Authorization":"Bearer " + accessToken
-                    },
-                    success: function (response) {
-                        resp= response.entries;
-                    }
-                });
-                return resp;
-            }
+           
             function sortOptions(selectBox) {
                 var options = $(selectBox + ' option');
                 options.sort(function(a, b) {
@@ -392,7 +445,7 @@
                     <div class="transfer-container section d-flex flex-column" style="height:400px !important">
                         <div class="d-flex w-100">
                             <!-- Select Box 1 -->
-                            <select id="allTemplates" class="form-select flex-grow-1 templates" size="20" style="height:200px;">
+                            <select id="allTemplates" class="form-select flex-grow-1 templates" size="5" style="height:200px;">
                             </select>
             
                             <!-- Transfer Buttons -->
@@ -402,7 +455,7 @@
                             </div>
             
                             <!-- Select Box 2 -->
-                            <select id="selectedTemplates" class="form-select flex-grow-1 templates" mulitple size="20" style="height:200px;">
+                            <select id="selectedTemplates" class="form-select flex-grow-1 templates" size="20" style="height:200px;">
                             </select>
                         </div>
                         
@@ -429,13 +482,13 @@
         <div id="row2" class="collapse show">
 
             <div class="row" id='tagsContainer'>
-                <div class="col-md-12">
+                <div class="col-md-6">
 
                     <div class="section mt-3">
                         <div class="align-items-start" style="text-align: left;display:none;" id="textRandom">
                         Edit the tag values. if you want to give a custom prompt like 'dates between 2005 and 2010', 'this id should be INV-random number' or '3 randoms paragraphs about contract clauses'. <br/>
                         Leave the values as is to let the built-in randomiser generate the data.  (Don't change the tag keys as these are part of the docgen template)<br/>
-                        You can also enter fixed values and choose to generate a document with those exact values
+                        You can also enter fixed values and choose to generate a document with those exact values. 
                         </div>
                         <div class="d-flex align-items-start">
                             
@@ -443,6 +496,36 @@
                             <div id="tags" class="w-100" style="text-align: left;"></div>
                         </div>
                     </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="section mt-3" >
+                            <!-- Select Box 1 -->
+                            <div id="mdsection" style="display:none;text-align:left;">
+                                Choose a metadata template and map the template with the tags. This will automatically apply the generated values
+                                to the generated documents based on your mapping. Click the match button to confirm the choices
+                                <select id="allMDTemplates" class="form-select"   size="8">
+                                    
+                                </select>
+                                <div id="fields1">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Field</th>
+                                                <th></th>
+                                                <th>JSON Path</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fieldTableBody">
+                                            <!-- Table rows will be generated here dynamically -->
+                                        </tbody>
+                                    </table>
+
+
+                                </div>
+                                <button class="btn btn-primary" name="match" id="match" selectedTemplate="">Match with docgen tags</button>
+                            </div>
+                    </div>
+
                 </div>
             </div>
         </div>
