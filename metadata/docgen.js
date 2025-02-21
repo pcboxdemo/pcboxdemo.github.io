@@ -317,6 +317,7 @@ function generateFieldHints(jsonString) {
                 }
             }
         }
+        newObj['fileName'] = getRandomHint('fileName');
         return newObj;
     }
 
@@ -348,7 +349,7 @@ async function getTagsFromDoc(id) {
                 {
                     "mode": "single_item_qa",
                     "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. Only return the valid JSON, do not start the answer with three backticks and the word json" + 
-                    "If the tag name is 'items' assume that the sub structure is an array of json objects",
+                    "If any tag is referenced as a tablerow, return as an array with child tags as json object",
                     "items": [
                         {
                             "id": id,
@@ -560,7 +561,7 @@ function transformStaticJson(json) {
 function getPrompt(fileName) {
     return 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. ' + 
     ' Do not use values from the document itself. For any person names use ' + generateNameCriteria() + '. ' + 
-    'Also include a real world business value for fileName based on this value:' + fileName + ' - call the attribute fileName and this should be a root attribute of the returned json. Extension is always PDF. Do not use the word random in the file name' + 
+    //'Also include a real world business value for fileName based on this value:' + fileName + ' - call the attribute fileName and this should be a root attribute of the returned json. Extension is always PDF. Do not use the word random in the file name' + 
     'For any dates returned, use RFC399 format. For any dates or years or other time based values select a random value in the last 25 years unless otherwise instructed' +  
     ' Only return the valid JSON, do not start the answer with three backticks and the word json'
 }
