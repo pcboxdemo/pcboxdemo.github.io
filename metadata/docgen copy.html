@@ -118,6 +118,7 @@
                 rootFolderId:'0'
             });
             folderPicker.addListener("choose", async function (response) {
+                console.log('clicked');
                 $.each(response, function (k, data) {
                     selectedFolder = data.id;
                     selectedFolderName = data.name;
@@ -136,10 +137,12 @@
                 let type = $(this).attr('id');
                 const docGenProcessor = new DocGenProcessor(client, 8);
                 const aiProcessor = new AIProcessor(client, docGenProcessor,accessToken, 8);
-                let templatesArray = [];
-                templatesArray.push($("#allTemplates").find("option:selected").val());
+                const selectedTemplates = $("#selectedTemplates option").map(function() {
+                    return $(this).val();
+                }).get();
+                const templatesArray = Array.isArray(selectedTemplates) ? selectedTemplates : [selectedTemplates];
                 const numberOfDocs = parseInt($("#numberofdocs").val(), 10); // Get number of docs
-                if (templatesArray.length === 0 || isNaN(numberOfDocs) || numberOfDocs <= 0) {
+                if (selectedTemplates.length === 0 || isNaN(numberOfDocs) || numberOfDocs <= 0) {
                     alert("Please select at least one template and enter a valid number of documents.");
                     return;
                 }
@@ -148,7 +151,6 @@
                         for (const templateId of templatesArray) {
                             for (let i = 0; i < numberOfDocs; i++) {
                                 console.log('creating job:' + templateId);
-                                console.log(tagsMap);
                                 const boxFileId = templateId; 
 
                                 // Use the Box file ID and template/document combination to create a unique fileId for the job
@@ -158,7 +160,7 @@
                                     fileId: uniqueFileId,  
                                     boxFileId: boxFileId,  
                                     folderId: selectedFolder, 
-                                    prompt: getPrompt(fileName),
+                                    prompt: 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. Do not use values from the document itself. For any names use ' + generateNameCriteria() + '. Also include a real world business random value for fileName based on this value:' + fileName + ' - call the attribute fileName and this should be a root attribute of the returned json. For any dates returned, use RFC399 format. Only return the valid JSON, do not start the answer with three backticks and the word json',
                                     content: generateFieldHints(tagsMap.find(item => item.id === templateId).json)
                                 };
                             }
@@ -179,7 +181,7 @@
                                     uploadedFileId: boxFileId,
                                     folderId: selectedFolder,
                                     fileName: `Generated_${uniqueFileId}`,
-                                    userInput:transformStaticJson(tagsMap.find(item => item.id === templateId).json)
+                                    userInput:tagsMap.find(item => item.id === templateId).json
                             }
                             docGenProcessor.addJob(docGenJob);
                         }
@@ -261,8 +263,6 @@
                 editor.options.onChange(); // Manually trigger the event
                 metadataMap.push({id:$(this).attr('selectedId'),template:selectedTemplate,fieldMappings:fieldMappings});
                 resetIcon();
-                $("button.toggle-btn[data-bs-target='#row2']").trigger("click");
-
             });
             
             $('#allMDTemplates').on('change', function (e) {
@@ -274,7 +274,23 @@
                 generateFieldsTable(template.fields);
                 //checkButton();
             }); 
-            
+            $('#moveRight').click(function() {
+                $('#allTemplates option:selected').each(function() {
+                    $(this).remove().appendTo('#selectedTemplates');
+                });
+                sortOptions('#allTemplates');
+                sortOptions('#selectedTemplates');
+                checkButton();
+            });
+             // Move items from SelectBox2 back to SelectBox1
+             $('#moveLeft').click(function() {
+                $('#selectedTemplates option:selected').each(function() {
+                    $(this).remove().appendTo('#allTemplates');
+                });
+                sortOptions('#allTemplates');
+                sortOptions('#selectedTemplates');
+                checkButton();
+            });
             $('.templates').on('change',async function (e) {
                 let id = this.value;
                 $("#match").attr('selectedId',id);
@@ -347,7 +363,7 @@
             }
             
                 function checkButton() {
-                        if ($('#allTemplates option').length === 0 || selectedFolder==null) {
+                        if ($('#selectedTemplates option').length === 0 || selectedFolder==null) {
                             $('.action').attr("disabled",true);
                         } else {
                             $('.action').attr("disabled",false);
@@ -414,9 +430,8 @@
                     <li>Select docgen template</li>
                     <li>Edit the tags for your docgen template. For each tag you can provide a prompt to generate the value or let the tool do it </li>
                     <li>All values are generated with Box TextGen AI API or you can choose to input exact values instead. This is useful for testing </li>
-                    <li>You can also enable metadata and map a template to the fields in the docgen templates. This will apply the generated values as metadata to the completed documents </li>
                     <li>Select target folder</li>
-                    <li>Select number of documents to generate and let the magic happen</li>
+                    <li>Select number of documents per template and hit Generate</li>
                 </ul>
                 
                     </div>
@@ -440,8 +455,15 @@
                             <select id="allTemplates" class="form-select flex-grow-1 templates" size="5" style="height:200px;">
                             </select>
             
-                           
-                           
+                            <!-- Transfer Buttons -->
+                            <div class="d-flex flex-column justify-content-center mx-2" style="width:50px;">
+                                <button class="btn btn-primary mb-2" id="moveRight"> > </button>
+                                <button class="btn btn-primary" id="moveLeft"> < </button>
+                            </div>
+            
+                            <!-- Select Box 2 -->
+                            <select id="selectedTemplates" class="form-select flex-grow-1 templates" size="20" style="height:200px;">
+                            </select>
                         </div>
                         
                         <!-- Tags Section Below -->
@@ -548,7 +570,7 @@
 
          
         <div class="button-section d-flex align-items-center gap-2">
-            <label for="numberofdocs" class="mb-0">Number of docs to create:</label>
+            <label for="numberofdocs" class="mb-0">Number of docs per template:</label>
             
             <div class="d-flex align-items-center">
                 

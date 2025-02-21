@@ -48,7 +48,7 @@ class AIProcessor {
     }
 
     addJob(job) {
-        console.log(job.content);
+        
         this.jobQueue.push(job);
         this.totalJobs++;
         this.processNextJob();
@@ -92,6 +92,7 @@ class AIProcessor {
                 }),
                 success: function(response) {
                     _this.dialogueHistory.push({prompt:job.prompt,answer:response.answer,createdAt:response.created_at});
+                    console.log(JSON.stringify(JSON.parse(job.content)) + "::" + JSON.stringify(JSON.parse(response.answer)));
                     resolve(response); // Resolve the Promise with API response
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
@@ -138,7 +139,6 @@ class DocGenProcessor {
                     },
                 ],
             });
-            //console.log(result);
             this.completedJobs++;
             this.jobResults.set(job.uniqueId, {result:result,userInput:job.userInput}); // Store result
 
@@ -195,7 +195,7 @@ function generateNameCriteria() {
     let completed_with_errors = 0;
     let inProgressCount = 0;
     const batchesArray = Array.from(docgenBatches.values());
-    console.log(batchesArray);
+    
     // Use filter to modify the original array while avoiding rechecking completed batches
     let i =0;
     const result = await Promise.all(
@@ -218,12 +218,17 @@ function generateNameCriteria() {
                         for (const entry of jobDetails.entries) {
                             if (entry.status === "completed") {
                                 completedCount++;
-                                console.log(jobDetails);
                                 console.log('adding to completed batches ' + entry.templateFile.id);
-                                console.log(metadataMap);
+                                
+                                try {
+                                    console.log(metadataMap);
                                 let template = metadataMap.find(f => entry.templateFile.id === f.id);
                                 console.log('apply ' + value.userInput + ' to ' + template.template.templateKey + ' for file ' + entry.outputFile.id);
-                                await client.fileMetadata.createFileMetadataById(entry.outputFile.id, 'enterprise',template.template.templateKey,  mapFieldValues(template.fieldMappings,value.userInput,template.template.fields));
+                                    await client.fileMetadata.createFileMetadataById(entry.outputFile.id, 'enterprise',template.template.templateKey,  mapFieldValues(template.fieldMappings,value.userInput,template.template.fields));
+                                }
+                                catch(error) {
+                                    console.log(error);
+                                }
                                 completedBatches.add(key); 
 
                             } else if (entry.status === "completed_with_error") {
@@ -257,31 +262,39 @@ function generateNameCriteria() {
 function generateFieldHints(jsonString) {
     const ignoreKeywords = ["date", "number", "id"]; // Ignore fields containing these words
     const hintCategories = [
-        "modern",
-        "old-fashioned",
-        "European",
-        "American",
-        "business-style",
-        "celebrity-inspired",
-        "futuristic",
-        "startup-friendly",
-        "traditional",
-        "artistic",
-        "Tech",
-        "Medical",
+        "Technology",
+        "Finance",
+        "Insurance",
+        "Healthcare",
+        "Retail",
+        "Education",
+        "Real Estate",
+        "Manufacturing",
         "Transportation",
+        "Hospitality",
+        "Legal",
+        "Marketing",
+        "Construction",
+        "E-commerce",
+        "Telecommunications",
+        "Entertainment",
+        "Energy",
+        "Aerospace",
+        "Government",
+        "Non-Profit",
+        "Automotive",
+        "Pharmaceutical",
     ];
 
-    function getRandomHint(fieldName) {
-        
-        if(fieldName.toLowerCase().includes('summary') ||  fieldName.toLowerCase().includes('description')) {
-            return `Use a ${hintCategories[Math.floor(Math.random() * hintCategories.length)]} two or three paragraph text for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+    // Select a single random category for all hints in this function call
+    const selectedCategory = hintCategories[Math.floor(Math.random() * hintCategories.length)];
 
+    function getRandomHint(fieldName) {
+        if (fieldName.toLowerCase().includes('summary') || fieldName.toLowerCase().includes('description')) {
+            return `Use a random ${selectedCategory} two or three paragraph text for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+        } else {
+            return `Use a random ${selectedCategory} value for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
         }
-        else {
-            return `Use a ${hintCategories[Math.floor(Math.random() * hintCategories.length)]} value for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
-        }
-        
     }
 
     function traverse(obj) {
@@ -292,18 +305,15 @@ function generateFieldHints(jsonString) {
                 if (typeof obj[key] === "object" && obj[key] !== null) {
                     newObj[key] = traverse(obj[key]); // Recursively process nested objects
                 } else {
-                    // Ignore fields with date, number, or id in their name
-                        if (obj[key]==null || obj[key]==='null' || obj[key].startsWith('{{')) {
-                            if(ignoreKeywords.some(kw => key.toLowerCase().includes(kw))) {
-                                newObj[key] = 'use random ' + key;
-                            }
-                            else {
-                                newObj[key] = getRandomHint(key);
-                            }
-                            
+                    if (obj[key] == null || obj[key] === 'null' || obj[key].startsWith('{{')) {
+                        if (ignoreKeywords.some(kw => key.toLowerCase().includes(kw))) {
+                            newObj[key] = 'use random ' + key;
                         } else {
-                            newObj[key] = obj[key]; // Keep original value for ignored fields
+                            newObj[key] = getRandomHint(key);
                         }
+                    } else {
+                        newObj[key] = obj[key]; // Keep original value for ignored fields
+                    }
                 }
             }
         }
@@ -318,6 +328,7 @@ function generateFieldHints(jsonString) {
         return jsonString; // Return original JSON if parsing fails
     }
 }
+
 
 async function getTagsFromDoc(id) {
     const json = tagsMap.find(item => item.id === id);
@@ -512,8 +523,8 @@ function validateFieldValue(type, value, options) {
             // Allow string that can be converted to a number
             const numValue = Number(value);  // Convert to number
             return !isNaN(numValue) && typeof numValue === 'number';  // Ensure it's a valid number
-        case 'datetime':
-            return !isNaN(new Date(value).getTime());  // Ensure value is a valid date
+        case 'date':
+            return !isNaN(new Date(value).getTime());
         case 'enum':
             // Validate if value is exactly in the options array for enum (exact match)
             if (options && Array.isArray(options)) {
@@ -524,4 +535,31 @@ function validateFieldValue(type, value, options) {
             return false;  // Invalid type
     }
 }
+
+
+async function getEid() {
+    let user = await  client.users.getUserMe({"fields":["id,name,enterprise"]});
+    eid = user.enterprise.id;
+}
+
+function transformStaticJson(json) {
+    return Object.fromEntries(
+        Object.entries(json).map(([key, value]) => {
+            const match = value.match(/^Choose one of these values: (.+)$/);
+            if (match) {
+                const options = match[1].split(", ").map(option => option.trim());
+                return [key, options[Math.floor(Math.random() * options.length)]];
+            }
+            return [key, value];
+        })
+    );
+}
+
+
+function getPrompt(fileName) {
+    return 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. ' + 
+    ' Do not use values from the document itself. For any names use ' + generateNameCriteria() + '. ' + 
+    'Also include a real world business random value for fileName based on this value:' + fileName + ' - call the attribute fileName and this should be a root attribute of the returned json.' + 
+    'For any dates returned, use RFC399 format. For any dates or years or other time based values select a random value in the last 25 years unless otherwise instructed' +  
+    ' Only return the valid JSON, do not start the answer with three backticks and the word json'
 }
