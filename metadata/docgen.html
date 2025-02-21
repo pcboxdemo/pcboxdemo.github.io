@@ -277,6 +277,7 @@
             
             $('.templates').on('change',async function (e) {
                 let id = this.value;
+                $(this).attr('disabled',true);
                 $("#match").attr('selectedId',id);
                 let text = $(this).find("option:selected").text(); 
                 $("#tags").empty();
@@ -292,7 +293,7 @@
                 //Load tags 
                 let tagsJson = await getTagsFromDoc(this.value);
                 $("#loader").hide();
-
+                $(this).attr('disabled',false);
                 $("#textRandom").show();
                 $("#tagsHeader").text("Tags for " + text);
                 $("#mdsection").show();
