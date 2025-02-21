@@ -135,7 +135,7 @@ class DocGenProcessor {
                 documentGenerationData: [
                     {
                         generatedFileName: job.fileName,
-                        userInput: job.userInput,
+                        userInput: removeTimeFromDates(job.userInput),
                     },
                 ],
             });
@@ -347,7 +347,8 @@ async function getTagsFromDoc(id) {
             data: JSON.stringify(
                 {
                     "mode": "single_item_qa",
-                    "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. Only return the valid JSON, do not start the answer with three backticks and the word json",
+                    "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. Only return the valid JSON, do not start the answer with three backticks and the word json" + 
+                    "If the tag name is 'items' assume that the sub structure is an array of json objects",
                     "items": [
                         {
                             "id": id,
@@ -563,3 +564,27 @@ function getPrompt(fileName) {
     'For any dates returned, use RFC399 format. For any dates or years or other time based values select a random value in the last 25 years unless otherwise instructed' +  
     ' Only return the valid JSON, do not start the answer with three backticks and the word json'
 }
+function removeTimeFromDates(obj) {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+
+    function traverse(data) {
+        if (Array.isArray(data)) {
+            return data.map(traverse);
+        } else if (typeof data === "object" && data !== null) {
+            let newObj = {};
+            for (let key in data) {
+                if (data.hasOwnProperty(key)) {
+                    newObj[key] = traverse(data[key]);
+                }
+            }
+            return newObj;
+        } else if (typeof data === "string" && dateRegex.test(data)) {
+            return data.split("T")[0]; // Remove time part
+        }
+        return data;
+    }
+
+    return traverse(obj);
+}
+
+
