@@ -559,7 +559,7 @@ function transformStaticJson(json) {
 function getPrompt(fileName) {
     return 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. ' + 
     ' Do not use values from the document itself. For any names use ' + generateNameCriteria() + '. ' + 
-    'Also include a real world business random value for fileName based on this value:' + fileName + ' - call the attribute fileName and this should be a root attribute of the returned json.' + 
+    'Also include a real world business random value for fileName based on this value:' + fileName + ' - call the attribute fileName and this should be a root attribute of the returned json. Extension is always PDF' + 
     'For any dates returned, use RFC399 format. For any dates or years or other time based values select a random value in the last 25 years unless otherwise instructed' +  
     ' Only return the valid JSON, do not start the answer with three backticks and the word json'
 }
