@@ -74,17 +74,19 @@
                 //first load
                 //then data
               });
-            $(".toggle-btn").click(function () {
+              $(".toggle-btn").each(function () {
                 var target = $($(this).data("bs-target"));
                 var button = $(this);
-    
-                setTimeout(function () {
-                    if (target.hasClass("show")) {
-                        button.html("[-]");
-                    } else {
-                        button.html("[+]");
-                    }
-                }, 200); // Delay to allow Bootstrap animation to complete
+        
+                // Listen for when collapse completes opening
+                target.on("shown.bs.collapse", function () {
+                    button.html("[-]");
+                });
+        
+                // Listen for when collapse completes closing
+                target.on("hidden.bs.collapse", function () {
+                    button.html("[+]");
+                });
             });
             
             $("#toggleSection").on("change", function () {
@@ -350,7 +352,21 @@
                 }
                 catch(error) {};
                 contentExplorer.show(selectedFolder, accessToken, {
-                    container: ".explorer"
+                    container: ".explorer",
+                    contentPreviewProps: {
+                        contentSidebarProps: {
+                          detailsSidebarProps: {
+                            hasNotices: true,
+                            hasProperties: true,
+                            hasAccessStats: true,
+                            hasVersions: true
+                          },
+                          hasActivityFeed: true,
+                          hasSkills: true,
+                          hasMetadata: true
+                        }
+                      }
+
                 });
             }
             function updateJsonPath(json, path, options) {
