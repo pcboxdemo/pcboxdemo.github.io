@@ -415,8 +415,7 @@ async function getTagsFromDoc(id) {
             data: JSON.stringify(
                 {
                     "mode": "single_item_qa",
-                    "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. Only return the valid JSON, do not start the answer with three backticks and the word json" + 
-                    "If any tag is referenced as a tablerow, return as an array with child tags as json object",
+                    "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. Only return the valid JSON, do not start the answer with three backticks and the word json. If any tag is referenced specifically as 'tablerow', return as an array with child tags as json object. Otherwise return a json object that matches the tags exactly",
                     "items": [
                         {
                             "id": id,
@@ -646,6 +645,9 @@ function getCountryPart() {
     let value = $("#countrySelect").find("option:selected").val();
     if(value==='NONE') {
         return '';
+    }
+    else if(value==='Marvel/DC') {
+        return 'Base values such as names, addresses, cities and company names on : Marvel and DC comic book characters, places and names';
     }
     else {
         return 'Base country specific values such as names, addresses, postcodes, currency etc on this country: ' +  $("#countrySelect").find("option:selected").val();
