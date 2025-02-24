@@ -47,7 +47,8 @@
               crossDomain: true,
               cache: false,
               success: function(response) {
-               $("#loader").hide();sessionStorage.setItem("token",response.token);
+               $("#loader").hide();
+               sessionStorage.setItem("token",response.token);
                $("#loader").hide();
                $(".container").show();
                

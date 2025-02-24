@@ -61,6 +61,19 @@
         const completedWithErrorBatches = new Set(); // Store completed batch IDs
 
         $(document).ready(async function() {
+            $("#tryAI").click(async function() {
+                $("#exampleModal").modal("show");
+                $("#tryLoader").show();
+                $("#jsonview").empty();
+                //generate the json for json view
+                let selectedTemplate = $("#allTemplates").find("option:selected").val();
+                let response = await callBoxAIAPI(accessToken,getPrompt('fileName'),selectedTemplate, generateFieldHints(tagsMap.find(item => item.id === selectedTemplate).json))
+                $("#tryLoader").hide();
+                $("#jsonview").JSONView(JSON.parse(response.answer), { collapsed: false });
+
+                //first load
+                //then data
+              });
             $(".toggle-btn").click(function () {
                 var target = $($(this).data("bs-target"));
                 var button = $(this);
@@ -99,6 +112,7 @@
             }
             catch (e) {
                 console.error(e);
+                
             }
             metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
@@ -115,13 +129,16 @@
                 canSetShareAccess:false,
                 logoUrl:'logo-small.png',
                 currentFolderId:'0',
-                rootFolderId:'0'
+                rootFolderId:'0',
+                sortBy:'date',
+                sortDirection:'desc'
+
             });
             folderPicker.addListener("choose", async function (response) {
                 $.each(response, function (k, data) {
                     selectedFolder = data.id;
                     selectedFolderName = data.name;
-                    $("#folderHeader").text("Select folder:" + selectedFolderName);
+                    $("#folderHeader").text("Select target folder:" + selectedFolderName);
                     $("button.toggle-btn[data-bs-target='#row3']").trigger("click");
 
                     checkButton();
@@ -390,10 +407,10 @@
     <!-- Center links -->
     <div class="center">
         <a href="export.html"><i class="bi bi-arrow-up-circle"></i> Export</a>
-        <a href="import.html" class="active"><i class="bi bi-arrow-down-circle"></i> Import</a>
+        <a href="import.html"><i class="bi bi-arrow-down-circle"></i> Import</a>
         <a href="apply.html"><i class="bi bi-check-circle"></i> Apply</a>
         <a href="delete.html" class="text-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Delete Template</a>
-        <a href="docgen.html" ><i class="bi bi-tools"></i> Generate documents</a>
+        <a href="docgen.html" class="active" ><i class="bi bi-tools"></i> Generate documents</a>
 
 
     </div>
@@ -472,14 +489,31 @@
 
                     <div class="section mt-3 d-flex flex-column">
                         
-                        <div class="align-items-start" style="text-align: left;display:none;" id="textRandom">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="toggleSection">
-                                <label class="form-check-label" for="toggleSection">Enable metadata</label>
+                        <div class="align-items-start" style="text-align: left; display: none;" id="textRandom">
+                            <div class="form-check d-flex align-items-center">
+                                <input class="form-check-input me-2" type="checkbox" id="toggleSection">
+                                <label class="form-check-label me-3" for="toggleSection">Enable metadata</label><br/>
+                        
+                                <select class="form-select form-select-sm me-3" id="countrySelect" style="width: auto; min-width: 80px; height: auto; padding: 2px 6px;">
+                                    <option value="NONE">---</option>
+                                    <option value="USA">US</option>
+                                    <option value="United Kingdom">UK</option>
+                                    <option value="France">France</option>
+                                    <option value="German">German</option>
+                                    <option value="Japan">Japan</option>
+                                </select>
+                                <label class="form-check-label me-3" for="toggleSection">Enable country specific data</label>
+                                <button class="btn btn-primary me-3" id="tryAI">See example</button>
+
                             </div>
-                        Edit the tag values. if you want to give a custom prompt like 'dates between 2005 and 2010', 'this id should be INV-random number' or '3 randoms paragraphs about contract clauses'. <br/>
-                        Leave the values as is to let the built-in randomiser generate the data.  (Don't change the tag keys as these are part of the docgen template)<br/>
-                        You can also enter fixed values and choose to generate a document with those exact values. 
+                            <br/>
+                            Edit the tag values. If you want to give a custom prompt like 
+                            'this ID should be INV-random number' or '3 random paragraphs about contract clauses'.<br/>
+                            Leave the values as is to let the built-in randomizer generate the data. Select a country if you want to instruct the AI to try to use values for that country
+                            (Don't change the tag keys as these are part of the docgen template)<br/>
+                            You can also enter fixed values and choose to generate a document with those exact values or remove tags if you don't need them<br/>
+                            Enable metadata to apply metadata to the generated documents
+                            
                         </div>
                         <div class="d-flex align-items-start">
                             
@@ -527,7 +561,7 @@
         </div>
         <div class="row mb-8">
             <div class="col-md-8">                 
-                <h4 id="folderHeader">Select folder</h4>
+                <h4 id="folderHeader">Select target folder</h4>
             </div>
             <div class="col-md-4 text-end">
                 <button class="btn btn-primary toggle-btn" data-bs-toggle="collapse" data-bs-target="#row3">[-]</button>
@@ -604,7 +638,23 @@
             </div>
             
         </div>
-       
+        <div class="modal fade" id="exampleModal" tabindex="-1000" aria-labelledby="exampleModalLabel" aria-hidden="true" style="display:none;">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">Example of AI generated values (actual values will be different for each call)</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <img src="ajax-loader.gif" id="tryLoader"/>
+                  <div id="jsonview"></div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
        
     
 

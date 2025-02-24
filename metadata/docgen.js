@@ -69,6 +69,16 @@ class AIProcessor {
         };
     }
     async createAiTextGen(job, accessToken) {
+        try {
+            const response = await callBoxAIAPI(accessToken, job.prompt, job.boxFileId, job.content);
+            console.log(JSON.stringify(JSON.parse(job.content)) + "::" + JSON.stringify(JSON.parse(response.answer)));
+            return response;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+    async createAiTextGen1(job, accessToken) {
         const _this = this;
         return new Promise((resolve, reject) => {
             $.ajax({
@@ -178,6 +188,36 @@ class DocGenProcessor {
         return this.jobResults;
     }
 }
+function callBoxAIAPI(accessToken, prompt, boxFileId, content) {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: "https://api.box.com/2.0/ai/ask",
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+            },
+            data: JSON.stringify({
+                mode: "single_item_qa",
+                prompt: prompt,
+                items: [
+                    {
+                        id: boxFileId,
+                        type: "file",
+                        content: JSON.stringify(content),
+                    },
+                ]
+            }),
+            success: function(response) {
+                resolve(response); // Resolve the Promise with API response
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                reject(new Error(`AI API Error: ${textStatus}, ${errorThrown}, ${jqXHR.responseText}`));
+            },
+        });
+    });
+}
+
 function generateNameCriteria() {
     const gender = Math.random() < 0.5 ? "male" : "female";
     const x = Math.floor(Math.random() * 6) + 3; // Random number between 3 and 8
@@ -291,9 +331,9 @@ function generateFieldHints(jsonString) {
 
     function getRandomHint(fieldName) {
         if (fieldName.toLowerCase().includes('summary') || fieldName.toLowerCase().includes('description')) {
-            return `Use a random ${selectedCategory} two or three paragraph text for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+            return `Use a random ${selectedCategory} ${Math.floor(Math.random() * 3) + 2} paragraph text for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
         } else {
-            return `Use a random ${selectedCategory} value for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+            return `Use a ${getRandomLength()} random ${selectedCategory} value for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
         }
     }
 
@@ -307,7 +347,13 @@ function generateFieldHints(jsonString) {
                 } else {
                     if (obj[key] == null || obj[key] === 'null' || obj[key].startsWith('{{')) {
                         if (ignoreKeywords.some(kw => key.toLowerCase().includes(kw))) {
-                            newObj[key] = 'use random ' + key;
+                            if(key.toLowerCase().includes('date')) {
+                                newObj[key] = getRandomDateInstruction(key);
+                            }
+                            else {
+                                newObj[key] = 'use random ' + key;
+                            }
+                            
                         } else {
                             newObj[key] = getRandomHint(key);
                         }
@@ -317,17 +363,38 @@ function generateFieldHints(jsonString) {
                 }
             }
         }
-        newObj['fileName'] = getRandomHint('fileName');
         return newObj;
     }
 
     try {
         const parsedData = jsonString;
-        return JSON.stringify(traverse(parsedData), null, 2); // Pretty-print JSON output
+        let parsed = traverse(parsedData);
+        parsed['fileName'] = getRandomHint('fileName');
+
+        return JSON.stringify(parsed, null, 2); // Pretty-print JSON output
     } catch (error) {
         console.error("Invalid JSON:", error);
         return jsonString; // Return original JSON if parsing fails
     }
+}
+function getRandomDateInstruction(key ) {
+    const now = new Date();
+    const past25Years = new Date();
+    past25Years.setFullYear(now.getFullYear() - 25);
+
+    // Generate two random dates within the last 25 years
+    const x = new Date(past25Years.getTime() + Math.random() * (now.getTime() - past25Years.getTime()));
+    const y = new Date(past25Years.getTime() + Math.random() * (now.getTime() - past25Years.getTime()));
+
+    // Ensure x is the earlier date and y is the later date
+    const start = x < y ? x : y;
+    const end = x < y ? y : x;
+
+    // Format dates as YYYY-MM-DD
+    const startDate = start.toISOString().split("T")[0];
+    const endDate = end.toISOString().split("T")[0];
+
+    return `Use random ${key} between ${startDate} and ${endDate}`;
 }
 
 
@@ -405,7 +472,10 @@ async function getDocGenTemplates() {
  const findMatchingField = (path, fields) => {
     return fields.find(field => path.toLowerCase().endsWith(field.key.toLowerCase()));
 };
-
+function getRandomLength() {
+    const options = ["short", "medium", "long"];
+    return options[Math.floor(Math.random() * options.length)];
+}
 function generateFieldsTable(fields) {
     // Retrieve fields based on templateKey (you would use the lookup mechanism)
     //const fields = getFieldsForTemplate(templateKey); // This is just an example function
@@ -506,7 +576,18 @@ function generateFieldsTable(fields) {
 
             if (isValid) {
                 // If valid, add the transformed value (e.g., lowercase string) to the result
-                result[fieldKey] = field.type === "string" ? value.toString().toLowerCase() : value;
+                switch(field.type) {
+                    case 'string':
+                    case 'enum':
+                    case 'date':
+                        result[fieldKey] = value;
+                        break;
+                    case 'float':
+                        result[fieldKey] = extractNumber(value);
+                    default:
+                        break;
+                }
+                
             } else {
                 console.warn(`Invalid value for ${fieldKey}: ${value}`);
             }
@@ -515,15 +596,19 @@ function generateFieldsTable(fields) {
 
     return result;
 }
-
+function extractNumber(value) {
+    if (!value) return null; // Handle empty or null values
+    return parseFloat(value.replace(/[^0-9.-]/g, ''));
+}
 // Validation function based on field type
 function validateFieldValue(type, value, options) {
     switch (type) {
         case 'string':
             return typeof value === 'string';  // Ensure value is a string
-        case 'number':
+        case 'float':
             // Allow string that can be converted to a number
-            const numValue = Number(value);  // Convert to number
+            const numValue = extractNumber(value);  // Convert to number
+            console.log(value + "-->" + numValue);
             return !isNaN(numValue) && typeof numValue === 'number';  // Ensure it's a valid number
         case 'date':
             return !isNaN(new Date(value).getTime());
@@ -557,10 +642,19 @@ function transformStaticJson(json) {
     );
 }
 
+function getCountryPart() {
+    let value = $("#countrySelect").find("option:selected").val();
+    if(value==='NONE') {
+        return '';
+    }
+    else {
+        return 'Base country specific values such as names, addresses, postcodes, currency etc on this country: ' +  $("#countrySelect").find("option:selected").val();
+    }
 
+}
 function getPrompt(fileName) {
-    return 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. ' + 
-    ' Do not use values from the document itself. For any person names use ' + generateNameCriteria() + '. ' + 
+    return 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. ' + getCountryPart() + 
+    '. For any numberic value to do with money such as price, use a the currency symbol for the country and separators for values. Do not use values from the document itself. For any person names use ' + generateNameCriteria() + '. ' + 
     //'Also include a real world business value for fileName based on this value:' + fileName + ' - call the attribute fileName and this should be a root attribute of the returned json. Extension is always PDF. Do not use the word random in the file name' + 
     'For any dates returned, use RFC399 format. For any dates or years or other time based values select a random value in the last 25 years unless otherwise instructed' +  
     ' Only return the valid JSON, do not start the answer with three backticks and the word json'
