@@ -415,7 +415,7 @@ async function getTagsFromDoc(id) {
             data: JSON.stringify(
                 {
                     "mode": "single_item_qa",
-                    "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. Only return the valid JSON, do not start the answer with three backticks and the word json. If any tag is referenced specifically as 'tablerow', return as an array with child tags as json object. Otherwise return a json object that matches the tags exactly",
+                    "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. Only return the valid JSON, do not start the answer with three backticks and the word json. If any tag is referenced specifically as 'tablerow', return as an array with child tags as json object. Otherwise return a json object that matches the tags exactly. Eg. if the tag is {{account.name}} the json should be {'account':{'name':'{{account.name}}'}}",
                     "items": [
                         {
                             "id": id,
