@@ -86,7 +86,9 @@
                 canSetShareAccess:false,
                 logoUrl:'logo-small.png',
                 currentFolderId:'0',
-                rootFolderId:'0'
+                rootFolderId:'0',
+                sortBy:'date',
+                sortDirection:'desc'
             });
             folderPicker.addListener("choose", async function (response) {
                 $.each(response, function (k, data) {
@@ -198,9 +200,6 @@
                         $("#zipper").text(response.message);
                         $("#sharedLink").show();
                         setupExportHandler();
-                        
-                        
-                        
                     }
                     ,
                     error: function(xhr, status, error) {
