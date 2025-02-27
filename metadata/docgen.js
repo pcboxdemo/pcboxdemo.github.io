@@ -358,7 +358,7 @@ function generateFieldHints(jsonString) {
                             newObj[key] = getRandomHint(key);
                         }
                     } else {
-                        newObj[key] = obj[key]; // Keep original value for ignored fields
+                        newObj[key] = getRandomHint(key) + ' ' + obj[key]; 
                     }
                 }
             }
@@ -415,7 +415,13 @@ async function getTagsFromDoc(id) {
             data: JSON.stringify(
                 {
                     "mode": "single_item_qa",
-                    "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. Only return the valid JSON, do not start the answer with three backticks and the word json. If any tag is referenced specifically as 'tablerow', return as an array with child tags as json object. Otherwise return a json object that matches the tags exactly. Eg. if the tag is {{account.name}} the json should be {'account':{'name':'{{account.name}}'}}",
+                    "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. " + 
+                    "Only return the valid JSON, do not start the answer with three backticks and the word json. " + 
+                    "If any tag is referenced specifically as 'tablerow', return as an array with child tags as json object. " + 
+                    "Otherwise return a json object that matches the tags exactly . Eg. if the tag is {{account.name}} the json should be {'account':{'name':'{{account.name}}'}}" + 
+                    " if the tag is snake case or camel case it is always one tag. The only way a tag can have children is if it uses the dot notation. " + 
+                    ". Please scan the whole document as similar tags are not always grouped together. So there could be a tag like {{account.name}} in the beginning of the document " + 
+                    "and another one like {{account.address}} at the end of the document. ", 
                     "items": [
                         {
                             "id": id,
@@ -472,7 +478,7 @@ async function getDocGenTemplates() {
     return fields.find(field => path.toLowerCase().endsWith(field.key.toLowerCase()));
 };
 function getRandomLength() {
-    const options = ["short", "medium", "long"];
+    const options = ["tiny", "very short", "short", "compact", "medium", "moderate", "long", "extended", "very long", "massive"];   
     return options[Math.floor(Math.random() * options.length)];
 }
 function generateFieldsTable(fields) {
@@ -659,7 +665,8 @@ function getPrompt(fileName) {
     '. For any numberic value to do with money such as price, use a the currency symbol for the country and separators for values. Do not use values from the document itself. For any person names use ' + generateNameCriteria() + '. ' + 
     //'Also include a real world business value for fileName based on this value:' + fileName + ' - call the attribute fileName and this should be a root attribute of the returned json. Extension is always PDF. Do not use the word random in the file name' + 
     'For any dates returned, use RFC399 format. For any dates or years or other time based values select a random value in the last 25 years unless otherwise instructed' +  
-    ' Only return the valid JSON, do not start the answer with three backticks and the word json'
+    ' When you use numbers in values not representing an actual number such as ID numbers, invoice numbers, purchase order numbers, account numbers etc., do NOT use consequtive digits like 1234 or 5432. ' + 
+    'Only return the valid JSON, do not start the answer with three backticks and the word json. '
 }
 function removeTimeFromDates(obj) {
     const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
