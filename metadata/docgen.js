@@ -98,7 +98,19 @@ class AIProcessor {
                             content: JSON.stringify(job.content),
                         },
                     ],
-                    dialogueHistory:this.dialogueHistory
+                    dialogueHistory:this.dialogueHistory,
+                    "ai_agent_config": {
+                        "basic_text": {
+                            "llm_endpoint_params": {
+                                "type": "openai_params",
+                                "frequency_penalty": 1.5,
+                                "presence_penalty": 1.5,
+                                "stop": "<|im_end|>",
+                                "temperature": 2,
+                                "top_p": 2
+                                }
+                        }
+                    }
                 }),
                 success: function(response) {
                     _this.dialogueHistory.push({prompt:job.prompt,answer:response.answer,createdAt:response.created_at});
@@ -301,39 +313,47 @@ function generateNameCriteria() {
 
 function generateFieldHints(jsonString) {
     const ignoreKeywords = ["date", "number", "id"]; // Ignore fields containing these words
-    const hintCategories = [
-        "Technology",
-        "Finance",
-        "Insurance",
-        "Healthcare",
-        "Retail",
-        "Education",
-        "Real Estate",
-        "Manufacturing",
-        "Transportation",
-        "Hospitality",
-        "Legal",
-        "Marketing",
-        "Construction",
-        "E-commerce",
-        "Telecommunications",
-        "Entertainment",
-        "Energy",
-        "Aerospace",
-        "Government",
-        "Non-Profit",
-        "Automotive",
-        "Pharmaceutical",
-    ];
-
+    const hintCategories = {
+        "Technology": ["AI", "Cybersecurity", "Cloud Computing", "Software Development", "IoT"],
+        "Finance": ["Banking", "Investment", "Accounting", "FinTech", "Personal Finance"],
+        "Insurance": ["Health Insurance", "Auto Insurance", "Life Insurance", "Property Insurance", "Reinsurance"],
+        "Healthcare": ["Hospitals", "Pharmaceuticals", "Telemedicine", "Mental Health", "Medical Devices"],
+        "Retail": ["E-commerce", "Brick-and-Mortar", "Luxury Goods", "Fast Fashion", "Grocery Stores"],
+        "Education": ["K-12", "Higher Education", "E-Learning", "Vocational Training", "EdTech"],
+        "Real Estate": ["Residential", "Commercial", "Property Management", "REITs", "Luxury Real Estate"],
+        "Manufacturing": ["Automotive", "Textile", "Electronics", "Heavy Machinery", "Food Processing"],
+        "Transportation": ["Aviation", "Shipping", "Public Transit", "Logistics", "Ride-Sharing"],
+        "Hospitality": ["Hotels", "Resorts", "Restaurants", "Event Planning", "Cruise Lines"],
+        "Legal": ["Corporate Law", "Intellectual Property", "Criminal Law", "Family Law", "Real Estate Law"],
+        "Marketing": ["Digital Marketing", "SEO", "Content Marketing", "Brand Management", "Advertising"],
+        "Construction": ["Residential", "Commercial", "Infrastructure", "Green Building", "Project Management"],
+        "E-commerce": ["Dropshipping", "Marketplaces", "Subscription Services", "B2B E-commerce", "Direct-to-Consumer"],
+        "Telecommunications": ["5G", "Broadband", "Mobile Networks", "Satellite Communications", "VoIP"],
+        "Entertainment": ["Streaming", "Gaming", "Film Industry", "Music Industry", "Theater"],
+        "Energy": ["Renewable Energy", "Oil & Gas", "Nuclear Energy", "Energy Storage", "Smart Grids"],
+        "Aerospace": ["Commercial Aviation", "Space Exploration", "Defense", "Aircraft Manufacturing", "Drones"],
+        "Government": ["Policy Making", "Public Safety", "Infrastructure", "Defense", "Education"],
+        "Non-Profit": ["Charity", "Environmental Organizations", "Education Initiatives", "Healthcare Aid", "Animal Welfare"],
+        "Automotive": ["Electric Vehicles", "Autonomous Vehicles", "Luxury Cars", "Motorsports", "Aftermarket Parts"],
+        "Pharmaceutical": ["Drug Development", "Biotechnology", "Clinical Trials", "Generic Drugs", "Vaccines"]
+    };
+    
+    // Select a random category
+    const selectedCategory = Object.keys(hintCategories)[Math.floor(Math.random() * Object.keys(hintCategories).length)];
+    
+    // Select a random subcategory from the chosen category
+    const selectedSubcategory = hintCategories[selectedCategory][Math.floor(Math.random() * hintCategories[selectedCategory].length)];
+    
+    // Return the result as "category subcategory"
+    const categoryHint = `${selectedCategory} ${selectedSubcategory}`;
     // Select a single random category for all hints in this function call
-    const selectedCategory = hintCategories[Math.floor(Math.random() * hintCategories.length)];
+    //const selectedCategory = hintCategories[Math.floor(Math.random() * hintCategories.length)];
 
     function getRandomHint(fieldName) {
         if (fieldName.toLowerCase().includes('summary') || fieldName.toLowerCase().includes('description')) {
-            return `Use a random ${selectedCategory} ${Math.floor(Math.random() * 3) + 2} paragraph text for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+            return `Use a realistic but random ${categoryHint} ${Math.floor(Math.random() * 3) + 2} paragraph text for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
         } else {
-            return `Use a ${getRandomLength()} random ${selectedCategory} value for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+            return `Use a ${getRandomLength()} realistic but random ${categoryHint} value for ${fieldName.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
         }
     }
 
@@ -358,7 +378,7 @@ function generateFieldHints(jsonString) {
                             newObj[key] = getRandomHint(key);
                         }
                     } else {
-                        newObj[key] = getRandomHint(key) + ' ' + obj[key]; 
+                        newObj[key] = getRandomHint(key) + ' and ' + obj[key]; 
                     }
                 }
             }
@@ -661,7 +681,7 @@ function getCountryPart() {
 
 }
 function getPrompt(fileName) {
-    return 'Given this json object, for each attribute return a random, plausible, real world value using the hint in the value for each field. ' + getCountryPart() + 
+    return 'Given this json object, for each attribute return realistic but random value using the hint in the value for each field. ' + getCountryPart() + 
     '. For any numberic value to do with money such as price, use a the currency symbol for the country and separators for values. Do not use values from the document itself. For any person names use ' + generateNameCriteria() + '. ' + 
     //'Also include a real world business value for fileName based on this value:' + fileName + ' - call the attribute fileName and this should be a root attribute of the returned json. Extension is always PDF. Do not use the word random in the file name' + 
     'For any dates returned, use RFC399 format. For any dates or years or other time based values select a random value in the last 25 years unless otherwise instructed' +  
