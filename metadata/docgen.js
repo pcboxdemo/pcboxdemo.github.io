@@ -80,7 +80,19 @@ class AIProcessor {
     }
     async createAiTextGen1(job, accessToken) {
         const _this = this;
-        return new Promise((resolve, reject) => {
+        const it = [];
+
+        const item = {
+            id: job.boxFileId,
+            type: "file"
+        };
+        
+        if (content) {
+            item.content = JSON.stringify(job.content);
+        }
+        
+        it.push(item);
+            return new Promise((resolve, reject) => {
             $.ajax({
                 url: "https://api.box.com/2.0/ai/ask",
                 method: "POST",
@@ -91,13 +103,7 @@ class AIProcessor {
                 data: JSON.stringify({
                     mode: "single_item_qa",
                     prompt: job.prompt,
-                    items: [
-                        {
-                            id: job.boxFileId,
-                            type: "file",
-                            content: JSON.stringify(job.content),
-                        },
-                    ],
+                    items: it,
                     dialogueHistory:this.dialogueHistory,
                     "ai_agent_config": {
                         "basic_text": {
@@ -418,50 +424,7 @@ function getRandomDateInstruction(key ) {
 }
 
 
-async function getTagsFromDoc(id) {
-    const json = tagsMap.find(item => item.id === id);
-    if(json) {
-        return json.json;
-    }
-    else {
-        let url = "https://api.box.com/2.0/ai/ask";
 
-        await $.ajax({
-            url:url,
-            type: "post",
-            headers: {
-                "Authorization":"Bearer " + accessToken
-            },
-            data: JSON.stringify(
-                {
-                    "mode": "single_item_qa",
-                    "prompt": "In this document are a number of tags on this format {{tag}}. Generate a json object based on avaiable tags. " + 
-                    "Only return the valid JSON, do not start the answer with three backticks and the word json. " + 
-                    "If any tag is referenced specifically as 'tablerow', return as an array with child tags as json object. " + 
-                    "Otherwise return a json object that matches the tags exactly . Eg. if the tag is {{account.name}} the json should be {'account':{'name':'{{account.name}}'}}" + 
-                    " if the tag is snake case or camel case it is always one tag. The only way a tag can have children is if it uses the dot notation. " + 
-                    ". Please scan the whole document as similar tags are not always grouped together. So there could be a tag like {{account.name}} in the beginning of the document " + 
-                    "and another one like {{account.address}} at the end of the document. ", 
-                    "items": [
-                        {
-                            "id": id,
-                            "type": "file"
-                        }
-                    ],
-                    "dialogue_history": [],
-                    "include_citations": true
-                }
-
-            ),
-            success: function (response) {
-                resp= response.answer;
-                tagsMap.push({id:id,json:JSON.parse(response.answer)})
-            }
-        });
-        return JSON.parse(resp);
-    }
-    
-}
 const flattenObject = (obj, prefix = '') => {
     let result = {};
     for (let key in obj) {
@@ -476,9 +439,18 @@ const flattenObject = (obj, prefix = '') => {
     }
     return result;
 };
-
+async function loadDocGenTemplates() {
+    let docgenTemplates = await getDocGenTemplates();
+            docgenTemplates.forEach(function(temp) {
+                $('#allTemplates').append($('<option>', {
+                    value: temp.file.id,
+                    text: temp.file_name,
+                }));
+               
+            })
+}
 async function getDocGenTemplates() {
-    let url = "https://api.box.com/2.0/docgen_templates";
+    let url = "https://api.box.com/2.0/docgen_templates?limit=1000";
 
     await $.ajax({
         url:url,
@@ -710,5 +682,110 @@ function removeTimeFromDates(obj) {
 
     return traverse(obj);
 }
+
+
+async function fetchTextRepresentationFromBox(fileId, token) {
+    const json = tagsMap.find(item => item.id === fileId);
+    if(json) {
+        return json.json;
+    }
+    else {
+        const url = `https://api.box.com/2.0/files/${fileId}?fields=representations`; // URL to fetch the file representations
+
+        try {
+            let response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) throw new Error("Failed to fetch file representations from Box");
+
+            let data = await response.json();
+            // Find the extracted_text representation
+            const textRepresentation = data.representations.entries.find(rep => rep.representation === 'extracted_text'); 
+
+            if (!textRepresentation) throw new Error("Extracted text representation not found");
+
+            const infoUrl = textRepresentation.info.url;
+            response = await fetch(infoUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            data = await response.json();
+
+            // Replace the `{+asset_path}` part of the URL template, if necessary (it might be empty)
+            const contentUrl = data.content.url_template.replace("{+asset_path}", ""); // In this case, it may not have an asset path
+
+            // Fetch the extracted text content
+            const textResponse = await fetch(contentUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!textResponse.ok) throw new Error("Failed to fetch text content from the extracted text representation");
+
+            const text = await textResponse.text();
+            const jsonData = extractTagsFromText(text);
+            tagsMap.push({id:fileId,json:jsonData})
+
+
+            return jsonData
+        } catch (error) {
+            console.error("Error fetching text representation:", error);
+            return null;
+        }
+    }
+}
+
+function extractTagsFromText(text) {
+    // Match all placeholders (e.g., {{vendor.name}}, {{pricing.total}}, {{Name}})
+    const tagRegex = /\{\{(.*?)\}\}/g;
+    let match;
+    const tags = new Set();
+
+    while ((match = tagRegex.exec(text)) !== null) {
+        tags.add(match[1].trim());
+    }
+
+    // Generate structured JSON
+    let jsonStructure = {};
+    let itemsArray = [];
+
+    tags.forEach(tag => {
+        if (tag.startsWith("tablerow")) return; // Skip row indicator
+
+        if (tag.startsWith("row.")) {
+            // Handle "row." tags separately and add to items array
+            itemsArray.push({ [tag.replace("row.", "")]: `{{${tag}}}` });
+        } else if (tag.includes(".")) {
+            // Handle dot-separated tags (e.g., vendor.name)
+            let parts = tag.split(".");
+            let obj = jsonStructure;
+
+            for (let i = 0; i < parts.length - 1; i++) {
+                if (!obj[parts[i]]) obj[parts[i]] = {};
+                obj = obj[parts[i]];
+            }
+            obj[parts[parts.length - 1]] = `{{${tag}}}`;
+        } else {
+            // Handle single-word tags (e.g., {{Name}})
+            jsonStructure[tag] = `{{${tag}}}`;
+        }
+    });
+
+    if (itemsArray.length > 0) {
+        jsonStructure["items"] = itemsArray;
+    }
+
+    return jsonStructure;
+}
+
+
 
 
