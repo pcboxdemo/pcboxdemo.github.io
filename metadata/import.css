@@ -211,3 +211,33 @@ option {
 .normalHeight {
     height:auto !important
 }
+
+
+  /* Unique modal styling */
+  .custom-modal-dialog {
+    max-width: 95vw !important;
+    width: 95vw !important;
+    margin: auto;
+  }
+  
+  .custom-modal-content {
+    height: 100%;
+  }
+  
+  .custom-modal-body {
+    display: flex;
+    height: 100%;
+  }
+
+  /* Ensure 70/30 layout */
+  .custom-left-panel {
+    flex: 6;
+    border-right: 1px solid #ccc;
+    padding-right: 15px;
+  }
+  
+  .custom-right-panel {
+    flex: 4;
+    padding-left: 15px;
+    overflow-y: auto;
+  }

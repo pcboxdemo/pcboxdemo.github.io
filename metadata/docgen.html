@@ -26,7 +26,8 @@
 <script src="https://cdn.jsdelivr.net/npm/jsoneditor/dist/jsoneditor.min.js"></script>
 
     <script src="./lib/bundle.js"></script>
-
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.css"/>
+    <script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.js"></script>
     <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/picker.css"/>
 <script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/picker.js"></script>
 <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/preview.css"/>
@@ -51,7 +52,9 @@
 
     <script>
         const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
-        var client,eid,editor,metadataTemplates;
+        var client,eid,editor,createEditor,metadataTemplates;
+        let selectedFile = null;
+        let selectedFileName = null;
         var folderPicker = new Box.FolderPicker();
         var contentExplorer = new Box.ContentExplorer();
         var accessToken=sessionStorage.getItem("token");
@@ -61,6 +64,84 @@
         const completedWithErrorBatches = new Set(); // Store completed batch IDs
 
         $(document).ready(async function() {
+            $("#create").click(async function() {
+                $("#createModal").modal("show");
+                $("#saveAsNewTemplate").hide();
+                var picker = new Box.ContentExplorer();
+                picker.show("0", accessToken,{
+                    container: "#box-file-picker-create",
+                    
+                    canSetShareAccess:false,
+                    logoUrl:'logo-small.png',
+                    currentFolderId:'0',
+                    rootFolderId:'0',
+                    sortBy:'date',
+                    sortDirection:'desc'
+
+                    }
+                );
+                picker.addListener("preview", async function (response) {
+                    $("#createLoader").show();
+                    console.log(response);
+                    $.each(response, function (k, data) {
+                        selectedFile = data.id;
+                        selectedFileName = data.name;
+                        console.log(selectedFile);
+                     });
+                     let prompt = "I am creating a document generation template based on this document. I need you to scan the whole document, identify any variable data. " + 
+                     " That means data that could be generated. Names, addresses, dates, values, IDs, account numbers and others. I need you to return these in a json structure. Only return valid JSON. No backticks or other unnecessary characters. " + 
+                     ". Where it makes sense you can create child objects. Let the root be 'tags'. Let the value of the tag be the identified value. For example: {\"tags\":{\"name\":\"John Doe\",\"address\":{\"street\":\"123 Main St\",\"city\":\"Anytown\",\"state\":\"CA\",\"zip\":\"12345\"}}}";
+                    let askResponse = await callBoxAIAPI(accessToken,prompt,selectedFile);
+                    //Show loader in right col
+                    let json = JSON.parse(askResponse.answer);
+                    console.log(json);
+                    //populate the json editor  
+                    $("#createLoader").hide();
+                    $("#saveAsNewTemplate").show();
+                    //$("#jsonview-create").JSONView(json, { collapsed: false });
+                    createEditor = new JSONEditor(document.getElementById('jsoneditor-create'), {
+                        mode: 'tree', 
+                        onChange: function () {
+                            console.log('editor changed');
+                            //const obj = tagsMap.find(item => item.id === id);
+                            //if (obj) {
+                            //    obj.json = editor.get();
+                            //} else {
+                            //    console.warn(`ID ${id} not found in array`);
+                           // }
+                            
+                        }
+                    });
+                    createEditor.set(json);
+                    //save the json
+                    //Copy doc and replace values in new doc?
+                 
+
+                });
+                
+            })
+            $("#saveAsNewTemplate").click(async function() {
+                $("#createLoader").show();
+                let downloadUrl = await client.downloads.getDownloadFileUrl(selectedFile);
+                let newFile = await $.ajax({
+                    url: 'http://localhost:5006/docxreplacer',
+                    type: 'POST',
+                    data: {
+                        docUrl: downloadUrl,
+                        jsonData: JSON.stringify(createEditor.get()),
+                        boxFileId: selectedFile,
+                        boxToken:accessToken
+                    },
+                    success: function(response) {
+                        console.log('File saved successfully:', response);
+                        $("#createModal").modal("hide");
+                    },
+                    error: function(error) {
+                        console.error('Error saving file:', error);
+                    }
+                });
+
+            });
             $("#tryAI").click(async function() {
                 $("#exampleModal").modal("show");
                 $("#tryLoader").show();
@@ -98,6 +179,10 @@
                     $("#rightCol, #mdsection").fadeOut();
                 }
             });
+            $(document).on("click", ".bcpr-PreviewHeader-button-close", function() {
+                $("#jsoneditor-create").empty();
+            });
+            
             $(document).on('click', 'input[type="radio"]', function() {
                 const $button = $('button[aria-label="Choose"]');
 
@@ -310,7 +395,8 @@
                     container:'.previewer'
                 });
                 //Load tags 
-                let tagsJson = await getTagsFromDoc(this.value);
+                //let tagsJson = await getTagsFromDoc(this.value);
+                let tagsJson = await fetchTextRepresentationFromBox(this.value,accessToken);
                 $("#loader").hide();
                 $(this).attr('disabled',false);
                 $("#textRandom").show();
@@ -387,7 +473,7 @@
                             $('.action').attr("disabled",false);
                         }
                 }
-        });
+             });
            
             function sortOptions(selectBox) {
                 var options = $(selectBox + ' option');
@@ -474,11 +560,11 @@
                             <!-- Select Box 1 -->
                             <select id="allTemplates" class="form-select flex-grow-1 templates" size="5" style="height:200px;">
                             </select>
-            
                            
                            
                         </div>
-                        
+                        <button class="btn btn-primary create" id="create">No template - no problem</button>   
+
                         <!-- Tags Section Below -->
                     </div>
                 </div>
@@ -660,7 +746,7 @@
         </div>
         <div class="modal fade" id="exampleModal" tabindex="-1000" aria-labelledby="exampleModalLabel" aria-hidden="true" style="display:none;">
             <div class="modal-dialog">
-              <div class="modal-content">
+              <div class="modal-content ">
                 <div class="modal-header">
                   <h5 class="modal-title" id="exampleModalLabel">Example of AI generated values (actual values will be different for each call)</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -675,8 +761,39 @@
               </div>
             </div>
           </div>
-       
-    
+
+
+         
+<!-- Modal -->
+<div class="modal fade custom-modal" id="createModal" tabindex="-1000" aria-labelledby="createModalLabel" aria-hidden="true" style="display:none;">
+    <div class="modal-dialog modal-xl custom-modal-dialog">
+      <div class="modal-content custom-modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createModalLabel">Select and existing document or upload new document. Select the document and the tool will generate the tags using AI. Then click the save button and you will have a new doc gen template</h5><br/>
+          
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body custom-modal-body">
+            
+          <div class="custom-left-panel">
+            <!-- Box File Picker -->
+            <div id="box-file-picker-create" style="height:450px"></div>
+          </div>
+          <div class="custom-right-panel">
+            <!-- JSON Viewer -->
+             AI Identified tags
+             <div id="jsoneditor-create"></div>
+             <img src="ajax-loader.gif" id="createLoader" style="display:none;"/>
+          </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="saveAsNewTemplate">Save as new doc gen template</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
 
     <!-- Bootstrap JS and dependencies -->
     
