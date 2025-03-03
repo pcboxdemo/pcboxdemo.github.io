@@ -422,14 +422,7 @@
            
         
             metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
-            let docgenTemplates = await getDocGenTemplates();
-            docgenTemplates.forEach(function(temp) {
-                $('#allTemplates').append($('<option>', {
-                    value: temp.file.id,
-                    text: temp.file_name,
-                }));
-               
-            })
+            loadDocGenTemplates();
             function loadExplorer() {
                 $("#files").show();
                 try {
@@ -563,7 +556,7 @@
                            
                            
                         </div>
-                        <button class="btn btn-primary create" id="create">No template - no problem</button>   
+                        <button class="btn btn-primary create" id="create">No template - no problem (experimental)</button>   
 
                         <!-- Tags Section Below -->
                     </div>
