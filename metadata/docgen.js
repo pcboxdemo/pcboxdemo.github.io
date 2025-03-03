@@ -755,14 +755,15 @@ function extractTagsFromText(text) {
 
     // Generate structured JSON
     let jsonStructure = {};
-    let itemsArray = [];
+    let itemsObject = {}; // Store row.* fields in a single object
 
     tags.forEach(tag => {
-        if (tag.startsWith("tablerow")) return; // Skip row indicator
+        if (tag === "endtablerow" || tag.startsWith("tablerow")) return; // Skip unwanted tags
 
         if (tag.startsWith("row.")) {
-            // Handle "row." tags separately and add to items array
-            itemsArray.push({ [tag.replace("row.", "")]: `{{${tag}}}` });
+            // Store all row.* values inside a single object
+            let fieldName = tag.replace("row.", "");
+            itemsObject[fieldName] = `{{${tag}}}`;
         } else if (tag.includes(".")) {
             // Handle dot-separated tags (e.g., vendor.name)
             let parts = tag.split(".");
@@ -779,12 +780,14 @@ function extractTagsFromText(text) {
         }
     });
 
-    if (itemsArray.length > 0) {
-        jsonStructure["items"] = itemsArray;
+    // If we have row.* attributes, wrap them in an array
+    if (Object.keys(itemsObject).length > 0) {
+        jsonStructure["items"] = [itemsObject]; // Array with one object
     }
 
     return jsonStructure;
 }
+
 
 
 
