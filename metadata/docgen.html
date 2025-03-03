@@ -82,40 +82,43 @@
                 );
                 picker.addListener("preview", async function (response) {
                     $("#createLoader").show();
-                    console.log(response);
-                    $.each(response, function (k, data) {
-                        selectedFile = data.id;
-                        selectedFileName = data.name;
-                        console.log(selectedFile);
-                     });
-                     let prompt = "I am creating a document generation template based on this document. I need you to scan the whole document, identify any variable data. " + 
-                     " That means data that could be generated. Names, addresses, dates, values, IDs, account numbers and others. I need you to return these in a json structure. Only return valid JSON. No backticks or other unnecessary characters. " + 
-                     ". Where it makes sense you can create child objects. Let the root be 'tags'. Let the value of the tag be the identified value. For example: {\"tags\":{\"name\":\"John Doe\",\"address\":{\"street\":\"123 Main St\",\"city\":\"Anytown\",\"state\":\"CA\",\"zip\":\"12345\"}}}";
-                    let askResponse = await callBoxAIAPI(accessToken,prompt,selectedFile);
-                    //Show loader in right col
-                    let json = JSON.parse(askResponse.answer);
-                    console.log(json);
-                    //populate the json editor  
-                    $("#createLoader").hide();
-                    $("#saveAsNewTemplate").show();
-                    //$("#jsonview-create").JSONView(json, { collapsed: false });
-                    createEditor = new JSONEditor(document.getElementById('jsoneditor-create'), {
-                        mode: 'tree', 
-                        onChange: function () {
-                            console.log('editor changed');
-                            //const obj = tagsMap.find(item => item.id === id);
-                            //if (obj) {
-                            //    obj.json = editor.get();
-                            //} else {
-                            //    console.warn(`ID ${id} not found in array`);
-                           // }
-                            
-                        }
-                    });
-                    createEditor.set(json);
-                    //save the json
-                    //Copy doc and replace values in new doc?
-                 
+                    if(!response.file.name.endsWith('.docx')) {
+                        document.getElementById('jsoneditor-create').innerHTML = 'Please select a .docx file';
+                        $("#createLoader").hide();
+                    } else {
+                        $.each(response, function (k, data) {
+                            selectedFile = data.id;
+                            selectedFileName = data.name;
+                            console.log(selectedFile);
+                        });
+                        let prompt = "I am creating a document generation template based on this document. I need you to scan the whole document, identify any variable data. " + 
+                        " That means data that could be generated. Names, addresses, dates, values, IDs, account numbers and others. I need you to return these in a json structure. Only return valid JSON. No backticks or other unnecessary characters. " + 
+                        ". Where it makes sense you can create child objects. Let the root be 'tags'. Let the value of the tag be the identified value. For example: {\"tags\":{\"name\":\"John Doe\",\"address\":{\"street\":\"123 Main St\",\"city\":\"Anytown\",\"state\":\"CA\",\"zip\":\"12345\"}}}";
+                        let askResponse = await callBoxAIAPI(accessToken,prompt,selectedFile);
+                        //Show loader in right col
+                        let json = JSON.parse(askResponse.answer);
+                        console.log(json);
+                        //populate the json editor  
+                        $("#createLoader").hide();
+                        $("#saveAsNewTemplate").show();
+                        //$("#jsonview-create").JSONView(json, { collapsed: false });
+                        createEditor = new JSONEditor(document.getElementById('jsoneditor-create'), {
+                            mode: 'tree', 
+                            onChange: function () {
+                                console.log('editor changed');
+                                //const obj = tagsMap.find(item => item.id === id);
+                                //if (obj) {
+                                //    obj.json = editor.get();
+                                //} else {
+                                //    console.warn(`ID ${id} not found in array`);
+                            // }
+                                
+                            }
+                        });
+                        createEditor.set(json);
+                        //save the json
+                        //Copy doc and replace values in new doc?
+                    }
 
                 });
                 
@@ -124,7 +127,7 @@
                 $("#createLoader").show();
                 let downloadUrl = await client.downloads.getDownloadFileUrl(selectedFile);
                 let newFile = await $.ajax({
-                    url: 'http://localhost:5006/docxreplacer',
+                    url: 'https://box-java-sandpit.herokuapp.com/docxreplacer',
                     type: 'POST',
                     data: {
                         docUrl: downloadUrl,
@@ -135,6 +138,7 @@
                     success: function(response) {
                         console.log('File saved successfully:', response);
                         $("#createModal").modal("hide");
+                        loadDocGenTemplates();
                     },
                     error: function(error) {
                         console.error('Error saving file:', error);
@@ -525,7 +529,7 @@
             <div class="col-md-12">
                 <div class="section la">Instructions: <ul>
                     <li>This page will allow you to generate a number of documents based on existing doc gen templates and randomly generated data</li>
-                    <li>Select docgen template</li>
+                    <li>Select docgen template (if you haven't got any try the button...)</li>
                     <li>Edit the tags for your docgen template. For each tag you can provide a prompt to generate the value or let the tool do it </li>
                     <li>All values are generated with Box TextGen AI API or you can choose to input exact values instead. This is useful for testing </li>
                     <li>You can also enable metadata and map a template to the fields in the docgen templates. This will apply the generated values as metadata to the completed documents </li>

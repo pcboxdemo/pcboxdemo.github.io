@@ -440,6 +440,7 @@ const flattenObject = (obj, prefix = '') => {
     return result;
 };
 async function loadDocGenTemplates() {
+    $('#allTemplates').empty();
     let docgenTemplates = await getDocGenTemplates();
             docgenTemplates.forEach(function(temp) {
                 $('#allTemplates').append($('<option>', {
