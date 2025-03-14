@@ -384,7 +384,7 @@ function generateFieldHints(jsonString) {
                             newObj[key] = getRandomHint(key);
                         }
                     } else {
-                        newObj[key] = obj[key];//  + ' and ' + getRandomHint(key) ; 
+                        newObj[key] = obj[key].replace('random',categoryHint + ' random');//  + ' and ' + getRandomHint(key) ; 
                     }
                 }
             }
