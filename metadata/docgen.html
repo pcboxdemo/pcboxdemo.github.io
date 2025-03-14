@@ -189,13 +189,16 @@
             });
             
             $(document).on('click', 'input[type="radio"]', function() {
-                const $button = $('button[aria-label="Choose"]');
-
-                if ($button.length) {
-                  $button.click();
-                }
+                // Check if the clicked radio button is NOT in the "docFormat" group
+                if (!$(this).is('[name="docFormat"]')) {
+                    const $button = $('button[aria-label="Choose"]');
             
-          });
+                    if ($button.length) {
+                        $button.click();
+                    }
+                }
+            });
+            
             try {
                 //Create a Box client using the token
                 client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
@@ -694,6 +697,17 @@
                 <input class="form-control text-center" type="number" name="number" id="numberofdocs" 
                        value="1" min="1" max="999" style="width: 60px; padding: 4px;" />
                 
+            </div>
+            <div class="mt-2">
+                <label class="mb-0">Format:</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="docFormat" id="formatPdf" value="pdf" checked>
+                    <label class="form-check-label" for="formatPdf">PDF</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="docFormat" id="formatDocx" value="docx">
+                    <label class="form-check-label" for="formatDocx">DOCX</label>
+                </div>
             </div>
         
             <button class="btn btn-primary action" id="generateAI" disabled >Generate with AI data</button>

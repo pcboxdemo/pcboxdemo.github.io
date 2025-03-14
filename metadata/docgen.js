@@ -159,7 +159,7 @@ class DocGenProcessor {
                     id: job.folderId,
                     type:'folder'
                 },
-                outputType: 'pdf',
+                outputType: $("input[name='docFormat']:checked").val(),
                 documentGenerationData: [
                     {
                         generatedFileName: job.fileName,
@@ -384,7 +384,7 @@ function generateFieldHints(jsonString) {
                             newObj[key] = getRandomHint(key);
                         }
                     } else {
-                        newObj[key] = obj[key].replace('random',categoryHint + ' random');//  + ' and ' + getRandomHint(key) ; 
+                        newObj[key] = obj[key].replace('random',getRandomLength() + ' ' + categoryHint + ' random');//  + ' and ' + getRandomHint(key) ; 
                     }
                 }
             }
