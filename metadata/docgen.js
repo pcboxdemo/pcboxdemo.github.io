@@ -395,8 +395,9 @@ function generateFieldHints(jsonString) {
     try {
         const parsedData = jsonString;
         let parsed = traverse(parsedData);
-        parsed['fileName'] = getRandomHint('fileName');
-
+        if (!parsed.hasOwnProperty('fileName')) {
+            parsed['fileName'] = getRandomHint('fileName');
+        }
         return JSON.stringify(parsed, null, 2); // Pretty-print JSON output
     } catch (error) {
         console.error("Invalid JSON:", error);
