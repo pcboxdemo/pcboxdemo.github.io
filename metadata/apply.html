@@ -85,7 +85,9 @@
                 canSetShareAccess:false,
                 logoUrl:'logo-small.png',
                 currentFolderId:'0',
-                rootFolderId:'0'
+                rootFolderId:'0',
+                sortBy:'date',
+                sortDirection:'desc'
             });
             folderPicker.addListener("choose", async function (response) {
                 $.each(response, function (k, data) {
@@ -278,24 +280,55 @@
                     populate(data.id,template,values,action);
                 }
                 else {
-                    let md;
-                    if(action=='applyAI') {
-                        md = await getMetadataSuggestionsFromAI(template.templateKey,data.id);
-                        md = fixDatesInFields(template,md);
-                    }
-                    else {
-                        md =await  generateRandomData(template,values);
-                    }
-                    
-                    //client.fileMetadata.createFileMetadataById(
-                     //   data.id,'enterprise',
-                     //   template.templateKey,
-                     //   md
-                     upsertMetadata(data.id,md,template.templateKey,'file').then(increment('fileApplyCount'));    
+                    processFileMetadata(data,template,values,action);
                 }
             }
         }
-       
+        class TaskQueue {
+            constructor(concurrency) {
+                this.concurrency = concurrency;
+                this.running = 0;
+                this.queue = [];
+            }
+        
+            async runTask(task) {
+                this.running++;
+                try {
+                    await task();
+                } finally {
+                    this.running--;
+                    this.next();
+                }
+            }
+        
+            next() {
+                if (this.queue.length > 0 && this.running < this.concurrency) {
+                    const task = this.queue.shift();
+                    this.runTask(task);
+                }
+            }
+        
+            add(task) {
+                this.queue.push(task);
+                this.next();
+            }
+        }
+        const queue = new TaskQueue(16);
+
+        async function processFileMetadata(data, template, values, action) {
+            queue.add(async () => {
+                let md;
+                if (action === 'applyAI') {
+                    md = await getMetadataSuggestionsFromAI(template.templateKey, data.id);
+                    md = fixDatesInFields(template, md);
+                } else {
+                    md = await generateRandomData(template, values);
+                }
+        
+                await upsertMetadata(data.id, md, template.templateKey, 'file');
+                increment('fileApplyCount');
+            });
+        }
        async function generateRandomData(template,values) {
             const randomData = {};
             
@@ -537,19 +570,18 @@
                 //await client.fileMetadata.updateFileMetadataById(fileID,'enterprise', templateKey,  updates);
                 console.log(`Metadata updated for  ID: ${fileID}`);
             } catch (error) {
-                console.log("error caught:" + JSON.stringify(error));
                 if (error.responseInfo.statusCode === 404) {
                 // If metadata does not exist, create it
-                if(type=='file') {
-                    await client.fileMetadata.createFileMetadataById(fileID, 'enterprise',templateKey,  metadata);
-                }
-                else {
-                    await client.fileMetadata.createFolderMetadataById(fileID, 'enterprise',templateKey,  metadata);
-                }
+                    if(type=='file') {
+                        await client.fileMetadata.createFileMetadataById(fileID, 'enterprise',templateKey,  metadata);
+                    }
+                    else {
+                        await client.fileMetadata.createFolderMetadataById(fileID, 'enterprise',templateKey,  metadata);
+                    }
                     console.log(`Metadata created for  ID: ${fileID}`);
                 } else {
                     console.error(`Error updating or creating metadata: ${error.message}`);
-                throw error;
+                    //throw error;
                 }
             }
         }
