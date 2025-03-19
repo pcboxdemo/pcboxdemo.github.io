@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box AI Document Categorization</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet">
+    <script src="./lib/bundle.js"></script>
+    <script src="util.js"></script>
+
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Box AI Document Categorization</h2>
+        <div class="mb-3">
+            
+            <select id="aiAgentSelector" class="form-select d-inline-block w-auto mx-2 actions"></select>
+            <select id="aiMethodSelector" class="form-select d-inline-block w-auto mx-2 actions">
+                <option value="ask">Ask</option>
+                <option value="extract_structured">Extract structured</option>
+            </select>
+            <select id="batchSizeSelector" class="form-select d-inline-block w-auto actions">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+                <option value="25">25</option>
+            </select>
+            
+            <button id="loadDataBtn" class="btn btn-primary actions">Load Data</button>
+            <button id="startProcessingBtn" class="btn btn-success actions" disabled>Start Processing</button>
+            <img src="ajax-loader (3).gif" style="display: none;" class="loader"/>
+
+            <span class="badge rounded-pill bg-primary actions " id="dfound">Documents found:0</span>
+            <span class="badge rounded-pill bg-primary actions " id="dproc">Documents processed:0</span>
+
+            <span class="badge rounded-pill bg-primary actions " id="dqueue">Queue size: 0</span>
+            
+
+        </div>
+        <table id="documentTable" class="table table-striped">
+            <thead>
+                <tr>
+                    
+                    <th>File ID </th>
+                    <th>Filename</th>
+                    <th>Department</th>
+                    <th>Customer ID</th>
+                    <th>PO Number</th>
+                    <th>Customer Name</th>
+                    <th>Total Amount</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    
+    <script>
+        const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
+        const folderQueue = []; // Queue for folder creation requests
+        const MAX_CONCURRENT_FOLDER_CREATION = 1; // Limit concurrent folder creations
+        let activeFolderCreations = 0;
+        let categoryToFolderPath = {};
+        let categoryToFolderId = {};
+        let moveQueue = [];
+        let runningMoves = 0;
+        let maxConcurrentMoves = 10;
+        let client;
+        //50
+        let rootFolderId = '312307276328';
+        let metadataTemplateKey='invoiceGoogle';
+        //excption test
+        //let rootFolderId = '311333209846';    
+        let rootTargetFolderId = '312308499901';
+      
+         let table ;
+         let fileIdMapping = [];
+         let fileProcessedCounter=0,fileFoundCounter=0;
+         let apiQueue = [];
+         let runningCalls = 0;
+         let params = new URLSearchParams(window.location.search);
+         let boxToken = params.get('token');
+        $(document).ready(function() {
+            
+            try {
+                //Create a Box client using the token
+                client = new BoxClient({auth: new BoxDeveloperTokenAuth({token:boxToken }),
+                });
+                client.users.getUserMe().then(user=>console.log(user));
+              } catch (e) {
+                console.error(e);
+              }
+            table = $('#documentTable').DataTable({
+                paging: true,
+                pageLength: 200,
+                searching: true,
+                ordering: true,
+            });
+            $.fn.dataTable.ext.errMode = 'none';  // Disable alerts
+            $('#documentTable').on('error.dt', function(e, settings, techNote, message) {
+                console.error("DataTables error:", message);
+            });
+            let maxConcurrentCalls = 5;
+            let selectedAgentId = null;
+            let batchSize = 1;
+
+            let globalPrompt = "Categorize these documents";
+            
+            $('#loadDataBtn').click(function() {
+                //table.clear().draw();
+                fetchDocuments(rootFolderId);
+            });
+            function fetchAgents() {
+                $.ajax({
+                    url: "https://api.box.com/2.0/ai_agents",
+                    headers: { Authorization: `Bearer ${boxToken}` },
+                    success: function(response) {
+                        response.entries.forEach(agent => {
+                            $('#aiAgentSelector').append(new Option(agent.name, agent.id));
+                        });
+                        selectedAgentId = $('#aiAgentSelector').val();
+                    }
+                });
+            }
+
+            $('#aiAgentSelector').change(function() {
+                selectedAgentId = $(this).val();
+            });
+            $('#aiMethodSelector').change(function() {
+               if($(this).val()==='ask'){
+                   $('#batchSizeSelector').prop('disabled', false);
+               }else{
+                    $('#batchSizeSelector').val('1');
+                    $('#batchSizeSelector').prop('disabled', true);
+               }
+            });
+
+            $('#batchSizeSelector').change(function() {
+                batchSize = parseInt($(this).val());
+            });
+            let batch = [];
+            
+            let pendingRequests = 0;
+
+            function fetchDocuments(folderId) {
+                pendingRequests++; // Track the start of a request
+
+                $.ajax({
+                    url: `https://api.box.com/2.0/folders/${folderId}/items`,
+                    headers: { Authorization: `Bearer ${boxToken}` },
+                    success: function(response) {
+                        response.entries.forEach(file => {
+                            if (file.type === 'file') {
+                                fileIdMapping.push({ name: file.name, id: file.id });
+                                table.row.add([file.id,file.name,"","","","",""]).draw();
+
+                                fileFoundCounter++;
+                                batch.push(file);
+                                updateFoundStats();
+
+                                // Only push full batches
+                                if (batch.length === batchSize) {
+                                    apiQueue.push([...batch]); // Push a copy of batch
+                                    batch = []; // Reset batch after pushing
+                                }
+                            } else {
+                                fetchDocuments(file.id); // Recursive call for subfolders
+                            }
+                        });
+
+                        // Push remaining batch ONLY ONCE after all files are processed
+                        if (batch.length > 0) {
+                            apiQueue.push([...batch]); // Push a copy of batch
+                            batch = []; // Reset batch after pushing
+                        }
+                    },
+                    complete: function () {
+                        pendingRequests--; // Track the completion of a request
+                        checkCompletion(); // Check if all requests are done
+                    }
+                });
+            }
+
+            function checkCompletion() {
+                if (pendingRequests === 0) {
+                    $("#startProcessingBtn").prop("disabled", false); // Enable the button
+                }
+            }
+
+            
+
+            function processQueue() {
+                console.log('processing queue');
+                if (runningCalls >= maxConcurrentCalls || apiQueue.length === 0) {
+                    return;
+                }
+            
+                let files = apiQueue.shift();
+                runningCalls++;
+                updateQueueStats();
+                //updateCallsStats();
+                callBoxAI(files).then(() => {
+                    runningCalls--;
+                    //updateCallsStats();
+                    processQueue(); // Recursively continue processing
+                }).catch(() => {
+                    runningCalls--;
+                    //updateCallsStats();
+                    processQueue(); // Retry failed requests
+                });
+            }
+            
+            // Use `setInterval` to continuously process the queue
+            
+            
+
+            async function callBoxAI(files, retries = 5, delay = 5000) {
+                //let aiMode = $("#aiMethodSelector").val();
+                let aiMode = $("#aiMethodSelector").find("option:selected").val();
+                let mode = "multiple_item_qa";
+                let data = aiMode === 'ask' ? {
+                    "prompt": appendNamesAndCountToPrompt(files),
+                    "ai_agent": { "id": selectedAgentId, "type": "ai_agent_id" },
+                    "mode": mode,
+                    "items": files.map(f => ({ "type": "file", "id": f.id }))
+                } : {
+                    "items": files.map(f => ({ "type": "file", "id": f.id })),
+                    "metadata_template": {
+                        "type": "metadata_template",
+                        "scope": "enterprise_47757585",
+                        "template_key": metadataTemplateKey
+                    }
+                };
+            
+                let url = aiMode === 'ask' ? 'https://api.box.com/2.0/ai/ask' : 'https://api.box.com/2.0/ai/extract_structured';
+            
+                let startTime = performance.now();
+            
+                return new Promise((resolve, reject) => {
+                    function attemptRequest(attempt) {
+                        $.ajax({
+                            url: url,
+                            headers: { Authorization: `Bearer ${boxToken}`, "Content-Type": "application/json" },
+                            method: 'POST',
+                            data: JSON.stringify(data),
+                            success: function(response) {
+                                let endTime = performance.now();
+                                let executionTime = ((endTime - startTime) / 1000).toFixed(1);
+                                console.log(response.answer);
+            
+                                let goodAnswer = typeof response.answer === 'string' && response.answer.trim() !== '' 
+                                    ? parseJsonFromString(response.answer) 
+                                    : response.answer;
+            
+                                let answers = Array.isArray(goodAnswer) ? goodAnswer : [goodAnswer];
+            
+                                fileProcessedCounter += files.length; // Update processed count
+                                updateProcStats();
+            
+                                answers.forEach(answer => {
+                                    let fileNameToCheck = answer.fileName || files[0].name;
+                                    let result = fileIdMapping.find(item => item.name === fileNameToCheck);
+                                    if (result) {
+                                        copyDocument(result.id, answer.department, answer);
+                                        table.rows().every(function() {
+                                            let rowData = this.data();
+                                             if (rowData[1] === fileNameToCheck) {
+                                                 
+                                                 this.data([rowData[0],rowData[1], answer.department,answer.customerId,answer.invoice_id,answer.customer_name,answer.total_amount]).draw();
+                                             }
+                                         });
+                                        //table.row.add([fileNameToCheck,answer.department,answer.customerId,answer.invoice_id,answer.customer_name,answer.total_amount]).draw();
+                                    }
+                                    else {
+                                        console.log("File not found in mapping:", fileNameToCheck);
+                                    }
+            
+                                    
+                                });
+            
+                                resolve();
+                            },
+                            error: function(err) {
+                                if (err.status === 412 && attempt < retries) {
+                                    console.warn(`AI API not ready (attempt ${attempt}/${retries}). Retrying in ${delay / 1000} seconds...`);
+                                    setTimeout(() => attemptRequest(attempt + 1), delay);
+                                } else {
+                                    console.error("AI Processing Error:", err);
+                                    reject(err);
+                                }
+                            },
+                            complete: function() {
+                                runningCalls--;
+                                processQueue(); // Continue processing even on failure
+                            }
+                        });
+                    }
+            
+                    attemptRequest(1);
+                });
+            }
+            
+
+            $('#startProcessingBtn').click(function() {
+                processQueue();
+                setInterval(() => {
+                    processQueue();
+                }, 500)
+            }); // Check the queue every 500ms);
+            fetchAgents();
+
+        });
+        
+        
+        function updateFoundStats() {
+            $("#dfound").text("Documents found: " + fileFoundCounter);
+        }
+        function updateProcStats() {
+            $("#dproc").text("Documents processed: " + fileProcessedCounter);
+        }
+        function updateQueueStats() {
+            let total = apiQueue.reduce((sum, subArray) => sum + subArray.length, 0);
+
+            $("#dqueue").text("API Queue size: " + apiQueue.length + " (" + total + ")");
+        }
+        const folderCache  = new Map();
+
+        async function createFolderByPath(parentFolderId, path) {
+            console.log('creating:' + path);
+            const folders = path.split("/");
+            let currentParentId = parentFolderId;
+            let lastFolderId = null;
+            let fullPath = "";
+
+            for (let i = 0; i < folders.length; i++) {
+                const folderName = folders[i];
+                const isLastFolder = i === folders.length - 1;
+                fullPath = fullPath ? `${fullPath}/${folderName}` : folderName; // Build full path key for cache
+
+                // Check cache first
+                if (folderCache.has(fullPath)) {
+                    currentParentId = folderCache.get(fullPath);
+                    lastFolderId = currentParentId;
+                    continue;
+                }
+
+                try {
+                const response = await client.folders.createFolder({
+                    parent: { id: currentParentId },
+                    name: folderName
+                
+                });
+
+                currentParentId = response.id;
+                lastFolderId = response.id;
+                folderCache.set(fullPath, response.id); // Store in cache
+                } catch (error) {
+                if (error.responseInfo.statusCode === 409) {
+                    // Folder exists, extract its ID
+                    const existingFolder = JSON.parse(error.responseInfo.rawBody).context_info.conflicts;
+                    if (existingFolder && existingFolder[0].id) {
+                    currentParentId = existingFolder[0].id;
+                    lastFolderId = existingFolder[0].id;
+                    folderCache.set(fullPath, existingFolder[0].id); // Store in cache
+                    } else {
+                        throw new Error("Folder conflict occurred, but could not retrieve existing folder ID.");
+                    }
+                } else {
+                    console.error("Error creating folder:", error);
+                    throw error;
+                }
+                }
+            }
+
+            return lastFolderId; // Return the last folder's ID
+        }
+
+     
+    
+        async function copyDocument(fileId, category,answer) {
+            
+            let destinationFolderId =await  createFolderByPath(rootTargetFolderId, answer.department + "/" + answer.customerId);
+            let data = { parent: { id: destinationFolderId } };
+        
+            $.ajax({
+                url: `https://api.box.com/2.0/files/${fileId}/copy`,
+                headers: { Authorization: `Bearer ${boxToken}`, "Content-Type": "application/json" },
+                method: "POST",
+                data: JSON.stringify(data),
+                success: async function (response) {
+                    console.log(`Copied file ${fileId} to folder ${destinationFolderId}`);
+                    //Also apply metadata to the new document in response.id
+                    let m = await applyMetadata(response.id, answer);
+                    console.log('done');
+                    //if(answer.category==='Exception') {
+                    //   let a =  await createApprovalTask(response.id, '30329835816');
+                   // }
+                    
+                },
+                error: function (err) {
+                    if (err.status === 409 && err.responseJSON && err.responseJSON.context_info) {
+                        let conflictFiles = err.responseJSON.context_info.conflicts;
+                       
+                            let existingFileId = conflictFiles.id;
+                            console.warn(`File conflict detected. Deleting existing file ID: ${existingFileId} before re-uploading.`);
+                            deleteAndReupload(fileId, existingFileId, destinationFolderId);
+                       
+                    } else {
+                        console.error("Error copying file:", err);
+                    }
+                },
+                complete: function () {
+                    runningMoves--;
+                }
+            });
+        }
+        
+        
+    
+        function processCopyQueue() {
+            console.log('processing copy queue');
+            while (runningMoves < maxConcurrentMoves && moveQueue.length > 0) {
+                let { fileId, category,answer } = moveQueue.shift();
+                runningMoves++;
+                copyDocument(fileId, category,answer);
+            }
+        }
+    
+        function queueFileMove(fileId, category,answer) {
+            moveQueue.push({ fileId, category,answer });
+            //processCopyQueue();
+        }
+
+function processFolderQueue() {
+    console.log('prcoessing folder queue:' + folderQueue.length); 
+   
+    while (activeFolderCreations < MAX_CONCURRENT_FOLDER_CREATION && folderQueue.length > 0) {
+        const { rootId, pathSegments, index, callback } = folderQueue.shift();
+        activeFolderCreations++;
+        
+        findOrCreateFolder(rootId, pathSegments, index, (folderId) => {
+            activeFolderCreations--;
+            callback(folderId);
+            processFolderQueue(); // Continue processing
+        });
+    }
+    if(folderQueue.length>0) {
+        $(".loader").show();
+        $(".actions").hide();
+    }
+    else {
+
+        $(".loader").hide();
+        $(".actions").show();
+    }
+}
+        
+    </script>
+</body>
+</html>
