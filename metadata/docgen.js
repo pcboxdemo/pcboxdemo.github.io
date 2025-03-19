@@ -251,6 +251,7 @@ function generateNameCriteria() {
   async function checkDocgenBatchJobs(docgenBatches,client) {
     let completedCount = 0;
     let completed_with_errors = 0;
+    let failed = 0;
     let inProgressCount = 0;
     const batchesArray = Array.from(docgenBatches.values());
     
@@ -289,12 +290,17 @@ function generateNameCriteria() {
                                 }
                                 completedBatches.add(key); 
 
-                            } else if (entry.status === "completed_with_error") {
+                            } else if (entry.status === "completed_with_error" ) {
                                 completed_with_errors++;
                                 console.log('adding to completed with errors batches');
                                 completedWithErrorBatches.add(key); 
 
-                            } else {
+                            } else if(entry.status==="failed") {
+                                failed++;
+                                console.log('adding to failed batches');
+                                failedBatches.add(key);
+
+                            }else {
                                 inProgressCount++;
                                 allCompleted = false;
                             }
@@ -302,9 +308,9 @@ function generateNameCriteria() {
                     }
                     } catch (error) {
                         console.error(`Error fetching job ${value.id}:`, error);
-                        completed_with_errors++;
+                        failed++;
                         console.log('adding to completed with errors batches');
-                        completedWithErrorBatches.add(key); 
+                        failed.add(key); 
                         return docgenBatches[key]; // Keep batch if there's an error
                     }
             }
@@ -312,8 +318,8 @@ function generateNameCriteria() {
             return docgenBatches[key]; // Keep ongoing batches
         })
     );
-    console.log(`Completed: ${completedCount}, Completed with errors: ${completed_with_errors} In Progress: ${inProgressCount}`);
-    return { completedCount, completed_with_errors,inProgressCount, remainingBatches: docgenBatches };
+    console.log(`Completed: ${completedCount}, Completed with errors: ${completed_with_errors}, Failed ${failed} In Progress: ${inProgressCount}`);
+    return { completedCount, completed_with_errors,failed,inProgressCount, remainingBatches: docgenBatches };
 }
 // Example Usage
 
@@ -383,6 +389,9 @@ function generateFieldHints(jsonString) {
                         } else {
                             newObj[key] = getRandomHint(key);
                         }
+                    } else if(obj[key].startsWith('Use one of these values:')) {
+                        newObj[key] = getRandomValueFromString(obj[key]);
+
                     } else {
                         newObj[key] = obj[key].replace('random',getRandomLength() + ' ' + categoryHint + ' random');//  + ' and ' + getRandomHint(key) ; 
                     }
@@ -403,6 +412,16 @@ function generateFieldHints(jsonString) {
         console.error("Invalid JSON:", error);
         return jsonString; // Return original JSON if parsing fails
     }
+}
+function getRandomValueFromString(input) {
+    // Extract the part after "Use one of these values:"
+    let valuesPart = input.split("Use one of these values:")[1];
+
+    // Trim spaces and split by comma to get an array
+    let valuesArray = valuesPart.split(",").map(val => val.trim());
+
+    // Pick a random value from the array
+    return valuesArray[Math.floor(Math.random() * valuesArray.length)];
 }
 function getRandomDateInstruction(key ) {
     const now = new Date();
@@ -791,6 +810,13 @@ function extractTagsFromText(text) {
 }
 
 
+
+function fixQuotes(jsonString) {
+    return jsonString
+        .replace(/[\u201C\u201D\u275D\u275E]/g, '"') // Replace fancy quotes “ ” with "
+        .replace(/”/g, '"') // Extra check for some cases
+        .trim(); // Remove unwanted spaces
+}
 
 
 
