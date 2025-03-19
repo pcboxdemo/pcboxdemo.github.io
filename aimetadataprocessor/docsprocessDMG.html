@@ -16,10 +16,11 @@
         <h2 class="mb-4">Box AI Document Categorization</h2>
         <div class="mb-3">
             
-            <select id="aiAgentSelector" class="form-select d-inline-block w-auto mx-2 actions"></select>
+            <select id="aiAgentSelector" class="form-select d-inline-block w-auto mx-2 actions" disabled></select>
             <select id="aiMethodSelector" class="form-select d-inline-block w-auto mx-2 actions">
-                <option value="ask">Ask</option>
                 <option value="extract_structured">Extract structured</option>
+                <option value="ask">Ask</option>
+                
             </select>
             <select id="batchSizeSelector" class="form-select d-inline-block w-auto actions">
                 <option value="1">1</option>
@@ -139,9 +140,11 @@
             $('#aiMethodSelector').change(function() {
                if($(this).val()==='ask'){
                    $('#batchSizeSelector').prop('disabled', false);
+                   $('#aiAgentSelector').prop('disabled', false);
                }else{
                     $('#batchSizeSelector').val('1');
                     $('#batchSizeSelector').prop('disabled', true);
+                    $('#aiAgentSelector').prop('disabled', true);
                }
             });
 
