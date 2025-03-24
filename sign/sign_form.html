@@ -7,13 +7,22 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Sign Form tester</title>
 	<!-- Bootstrap CSS -->
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.js"></script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>	<!-- polyfill.io only loads the polyfills your browser needs -->
+  
 	<!-- Latest version of Box Content Preview for en-US locale -->
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/picker.css"/>
+  <script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/picker.js"></script>
 	<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
 	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css" />
+  <script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/preview.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/preview.css" />
   <style>
     code {
       white-space: pre;
@@ -35,9 +44,10 @@
     }
     .json {
       resize: both;
-  overflow: hidden;
+    overflow: hidden;
       border-width: 1px;;
       border-color: black;
+      font-size:12px
     }
     .nav-tabs{
       margin-bottom: 10px;;
@@ -59,6 +69,11 @@
     #blockTwo{
       background-color:green;
     }
+    .custom-modal {
+      max-width: 90%; /* Adjust width as needed */
+      width: 90%;
+      height:90%
+    }
     
   </style>
   <script src="defaultValues.js"></script>
@@ -67,74 +82,83 @@
     var templateFieldMap = [];
   var accessToken;
   var parentFolderId;
-
+  var templateFileId;
+  var filePicker = new Box.FilePicker();
   var isFullscreen = false;
-
+  var currentSigners = [];
+var selectedFile=null;
 		$(document).ready(function() {
-      $("#resp").click(function (){ 
-        console.log("clicked");
-          var prop = {};
-          var speed = 910;
-          if(!isFullscreen){ // MAXIMIZATION
-             prop.width = "100%";
-             prop.height = "100vh";
-             isFullscreen = true;
-            $("#resp").animate(prop,speed); 
-            setTimeout(function() { 
-              $("#resp").css("position","absolute");
-            }, 920);
-          }
-          else{         
-            prop.width = "50%";
-            prop.height = "250px";            
-            isFullscreen = false;
-            $("#resp").animate(prop,speed); 
-            setTimeout(function() { 
-              $("#resp").css("position","relative"); 
-            }, 920);
-          }
-          
+      $(document).on('click', '#viewTemplate', function() {
+        $('#boxPreviewModal').modal('show');
+        var preview = new Box.ContentPreview();
+        preview.show(templateFileId,accessToken,{
+          container: ".previewer"
+        })
+    });
+      $('#box-picker-tab').on('click', function() {
+        $(".tab-content").empty();
+        $("#elements").empty();
+        filePicker.show('0', accessToken, {
+          container: ".selector",
+          maxSelectable:1,
+          canSetShareAccess:false,
+          logoUrl:'logo-small.png',
+          currentFolderId:searchParams.get("templateFolder") || '0',
+          rootFolderId:'0',
+          sortBy:'date',
+          sortDirection:'desc'
       });
+      filePicker.addListener("choose", async function (response) {
+        console.log(response);
+        parentFolderId=response[0].parent.id;
+        $.each(response, function (k, data) {
+            selectedFile = data.id;
+            selectedFileName = data.name;
+            //load tags
+            
+         });
+         $("#boxPickerModal").modal("hide");
+         $("#taggedName").text(selectedFileName);
+         $(document).on('click', '#viewTagged', function() {
+            $('#boxPreviewModal').modal('show');
+            var preview = new Box.ContentPreview();
+            preview.show(selectedFile,accessToken,{
+              container: ".previewer"
+            })
+        });
+
+
+
+         let signers = await fetchTextRepresentationFromBox(selectedFile,accessToken);
+         var i =1;
+         currentSigners = JSON.parse(signers);
+         $(".tab-content").empty();
+         $("#elements").empty();
+         fillDefaultValues();
+         processSigners(JSON.parse(signers),'notactive',i);
+         $(".btn").attr("disabled",false);
+
+    });
+    });
       
       $('#templateChooser').on('change', function() {
-        console.log("change");
+        selectedFile=null;
         $(".jsoner").empty();
         templateFieldMap.forEach(function(templateField) {
           
           if(templateField.id==$("#templateChooser").find(":selected").val()) {
+            templateFileId = templateField.fileId;
             //find the signers - add tab for each
             parentFolderId=templateField.parentFolderId;
-            console.log(parentFolderId);
             $(".tab-content").empty();
             $("#elements").empty();
             fillDefaultValues();
-            let active='notActive'
+            
             var i =1;
-            templateField.signers.forEach(function(signer) {
-              
-              var foundEmail = false;
-              if(signer.role=='signer') {
-                let signLabel = signer.label?signer.label:'Signer ' + i;
-                $("#elements").append('<li class="' + active + '"><a class="nav-link" aria-current="page" data-bs-toggle="tab"  href="#signer' + i + '">' + signLabel +  '</a></li>');
-                
-                $(".tab-content").append('<div id="signer' +i +  '" class="tab-pane fade ' + active + '"></div>');
-                $("#signer" +  + i).append('<div class="mb-3"><label for="signeremail_' + i + '" class="form-label">Signer Email</label><input type="text" class="nofill form-control" required id="signeremail_' + i + '" placeholder="" value="" label="Signer Email"></div>');
-
-                signer.inputs.forEach(function(input) {
-                  console.log(input);
-                  if(input.type=='checkbox' && input.document_tag_id!=null) {
-                    let checked="checked";
-                    $("#signer" + i).append('<div class="mb-3"><input type="' + input.type + '" class="form-check-input" id="' + input.document_tag_id.trim() + '" placeholder="" ' + checked + '><label for="' + input.document_tag_id.trim() + '" class="form-label" style="margin-left:5px;">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim())) + '</label></div>');
-                  }
-                  else if(input.type=='text' && input.document_tag_id!=null) {
-                    $("#signer" +  +i).append('<div class="mb-3"><label for="' +input.document_tag_id.trim() + '" class="form-label">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '</label><input type="' + input.type + '" class="form-control" id="' + input.document_tag_id.trim() + '" placeholder="" value="' + '' + '" label="' +(input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '"></div>');
-                  }
-                })
-                active='notActive';
-                i++;
-              }
-              
-            })
+            let active='notActive'
+            currentSigners=templateField.signers;
+            processSigners(templateField.signers,active,i);
+           
 
           }
           $(".btn").attr("disabled",false);
@@ -169,20 +193,15 @@
        });
         //send to box sign 
         let actualSigners = [];
-        templateFieldMap.forEach(function(templateField) {
-        let sendEmail = $('#sendEmail').is(":checked");  
-        console.log(sendEmail);
-          if(templateField.id==$("#templateChooser").find(":selected").val()) {
-            var i = 1;
-            templateField.signers.forEach(function(signer) {
-              let externalId =$("#signeremail_" + i).val();
-              if(signer.role=='signer') {
-                actualSigners.push(sendEmail?{"role":"signer",email:$("#signeremail_" + i).val(),order:signer.order}:{"role":"signer",email:$("#signeremail_" + i).val(),order:signer.order,embed_url_external_user_id:externalId})
-                i++;
-              }
-            })
-          }
-        });
+        var i = 1;
+          currentSigners.forEach(function(signer) {
+            let sendEmail = $("#sendEmail").is(":checked");
+            let externalId =$("#signeremail_" + i).val();
+            if(signer.role=='signer') {
+              actualSigners.push(sendEmail?{"role":"signer",email:$("#signeremail_" + i).val(),order:signer.order}:{"role":"signer",email:$("#signeremail_" + i).val(),order:signer.order,embed_url_external_user_id:externalId})
+              i++;
+            }
+          })
 
         let data = {
           //file_from_url: "your_url_here",
@@ -196,14 +215,26 @@
           email_message:$("#customEmailMessage").val(),
           redirect_url: encodeURI("https://pcsignrequesttest.herokuapp.com/thanks?folderId="),
           declined_redirect_url: encodeURI("https://pcsignrequesttest.herokuapp.com/shame"),
-          template_id: $('#templateChooser').find(":selected").val(),
+          
           parent_folder: {
               type: "folder",
               id: parentFolderId
               },
              prefill_tags:prefilltags
         };
-        $("#source").html(syntaxHighlight(data));
+        if(selectedFile!=null) {
+          data['source_files'] = [
+          {
+              type: "file",
+              id: selectedFile
+          }
+        ];
+        }
+        else {
+          data['template_id'] = $('#templateChooser').find(":selected").val();
+        };
+        console.log(data);
+        $("#req").JSONView(data,{ collapsed: true });
         //send box sign request
         $("#loader").show();
         $.ajax({
@@ -219,7 +250,7 @@
             console.log(response);
             $("#loader").hide();
 
-            $("#response").html(syntaxHighlight(response));
+            $("#resp").JSONView(response,{ collapsed: true });
           }
           ,
           error: function(xhr, status, error) {
@@ -235,7 +266,115 @@
 
 		
 		});
+    function processSigners(signers,active,i) {
+      signers.forEach(function(signer) {
+              
+        var foundEmail = false;
+        if(signer.role=='signer') {
+          let signLabel = signer.label?signer.label:'Signer ' + i;
+          $("#elements").append('<li class="' + active + '"><a class="nav-link" aria-current="page" data-bs-toggle="tab"  href="#signer' + i + '">' + signLabel +  '</a></li>');
+          
+          $(".tab-content").append('<div id="signer' +i +  '" class="tab-pane fade ' + active + '"></div>');
+          $("#signer" +  + i).append('<div class="mb-3"><label for="signeremail_' + i + '" class="form-label">Signer Email</label><input type="text" class="nofill form-control" required id="signeremail_' + i + '" placeholder="" value="" label="Signer Email"></div>');
 
+          signer.inputs.forEach(function(input) {
+            if(input.type=='checkbox' && input.document_tag_id!=null) {
+              let checked="checked";
+              $("#signer" + i).append('<div class="mb-3"><input type="' + input.type + '" class="form-check-input" id="' + input.document_tag_id.trim() + '" placeholder="" ' + checked + '><label for="' + input.document_tag_id.trim() + '" class="form-label" style="margin-left:5px;">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim())) + '</label></div>');
+            }
+            else if(input.type=='text' && input.document_tag_id!=null) {
+              $("#signer" +  +i).append('<div class="mb-3"><label for="' +input.document_tag_id.trim() + '" class="form-label">' + (input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '</label><input type="' + input.type + '" class="form-control" id="' + input.document_tag_id.trim() + '" placeholder="" value="' + '' + '" label="' +(input.label==null?toNiceText(input.document_tag_id.trim()):toNiceText(input.label.trim()))  + '"></div>');
+            }
+          })
+          active='notActive';
+          i++;
+        }
+        
+      })
+    }
+    function extractTags(text) {
+      // Updated regex to handle optional "ro:1" anywhere before "n:" and "id:"
+      const tagRegex = /\[\[(s|t|d|c)\|(\d+)(?:\|ro:\d+)?(?:\|n:([^\]|]+))?(?:\|id:([^\]|]+))?\]\]/g;
+      let match;
+      let signersMap = new Map();
+  
+      while ((match = tagRegex.exec(text)) !== null) {
+          const [, tagType, signerId, name, id] = match;
+  
+          if (!signersMap.has(signerId)) {
+              signersMap.set(signerId, { signer_id: signerId, order: 1, role: "signer", inputs: [] });
+          }
+  
+          const signer = signersMap.get(signerId);
+  
+          if (id) {
+              if (!signer.inputs.some(input => input.document_tag_id === id)) {
+                  let inputType = tagType === 't' ? "text" :
+                                 tagType === 'd' ? "date" :
+                                 tagType === 'c' ? "checkbox" : "unknown";
+                  
+                  signer.inputs.push({ document_tag_id: id, type: inputType });
+              }
+          }
+      }
+  
+      console.log(signersMap);
+      return JSON.stringify(Array.from(signersMap.values()), null, 2);
+  }
+  
+  
+    async function fetchTextRepresentationFromBox(fileId, token) {
+    
+        const url = `https://api.box.com/2.0/files/${fileId}?fields=representations`; // URL to fetch the file representations
+
+        try {
+            let response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) throw new Error("Failed to fetch file representations from Box");
+
+            let data = await response.json();
+            // Find the extracted_text representation
+            const textRepresentation = data.representations.entries.find(rep => rep.representation === 'extracted_text'); 
+
+            if (!textRepresentation) throw new Error("Extracted text representation not found");
+
+            const infoUrl = textRepresentation.info.url;
+            response = await fetch(infoUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            data = await response.json();
+
+            // Replace the `{+asset_path}` part of the URL template, if necessary (it might be empty)
+            const contentUrl = data.content.url_template.replace("{+asset_path}", ""); // In this case, it may not have an asset path
+
+            // Fetch the extracted text content
+            const textResponse = await fetch(contentUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!textResponse.ok) throw new Error("Failed to fetch text content from the extracted text representation");
+
+            const text = await textResponse.text();
+            const jsonData = extractTags(text);
+            console.log(jsonData);
+            return jsonData
+        } catch (error) {
+            console.error("Error fetching text representation:", error);
+            return null;
+        }
+    
+  }
     function toNiceText(text) {
       const result = text.replace(/([A-Z])/g, " $1");
       const finalResult = result.charAt(0).toUpperCase() + result.slice(1);
@@ -266,6 +405,7 @@
             }));
             templateFieldMap.push({
               id:template.id,
+              fileId:template.source_files[0].id, 
               signers:template.signers,
               parentFolderId:template.parent_folder.id
             });
@@ -332,53 +472,92 @@
 		
 	</script>
 </head>
-
+<body>
   <div class="container mt-2">
     <h3 class="mb-4">Box Sign API Templates Demonstrator</h3>
     <div class="row">
-
       <div class="col-md-4">
-        
         <span style="color:red" id="msg"></span>
         <form id="form">
-          <select class="form-select nofill"  id="templateChooser">
-            
-            
-
-            
-
-            </select><br/>
-
-            <ul class="nav nav-tabs" id="elements">
-              
-
-              
-            </ul>
-            <div class="tab-content">
-              <div id="custom" class="tab-pane active"></div>
+          <ul class="nav nav-tabs" id="myTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="dropdown-tab" data-bs-toggle="tab" data-bs-target="#dropdown" type="button" role="tab">Sign UI Templates</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="box-picker-tab" data-bs-toggle="tab" data-bs-target="#box-picker" type="button" role="tab">Select tagged template</button>
+            </li>
+          </ul>
+          <div class="mt-3" id="myTabContent1">
+            <div class="tab-pane fade show active" id="dropdown" role="tabpanel">
+              <div class="d-flex align-items-center gap-2">
+                  <select class="form-select nofill" id="templateChooser"></select>
+                  <i id="viewTemplate" class="bi bi-eye" style="cursor: pointer;"></i>
+              </div>
+          </div>
+            <div class="tab-pane fade" id="box-picker" role="tabpanel">
+              <span id="taggedName">  </span>
+              <i id="viewTagged" class="bi bi-eye" style="cursor: pointer;"></i>
             </div>
-          <!-- First Name -->
+          </div>
           
-          <!-- Submit Button -->
-          <button type="submit" class="btn btn-primary">Submit</button>
-          <button type="button" class="btn btn-primary" id="prefill" onclick="prefillDefaultValues('label')">Prefill default values</button>
-        </form>
       </div>
-    
-    <div class="col-md-4">
-      <div class="mt-5 json" id="req">Request<br/><code style="font-size:10px;" id="source" class="jsoner"></code></div>
+      
+      <div class="col-md-4">
+        <div class="mt-5 json" id="req">Request<br/></div>
+      </div>
+      <div class="col-md-4">
+        <div class="mt-5 json" id="resp">Response<br/>
+          <div id="loader" style="display: none;"><img src="ajax-loader.gif"/></div>
+        </div>
+      </div>
     </div>
-    <div class="col-md-4">
-      
-      <div class="mt-5 json" id="resp">Response<br/><code style="font-size:10px;"  id="response"  class="jsoner"></code>
-      
-        <div id="loader" style="display: none;"><img src="ajax-loader.gif"/></div>
+
+    <div class="row">
+      <div class="col-md-4">
+        <ul class="nav nav-tabs" id="elements"></ul>
+        <div class="tab-content">
+          <div id="custom" class="tab-pane active"></div>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" class="btn btn-primary" id="prefill" onclick="prefillDefaultValues('label')">Prefill default values</button>
       </div>
     </div>
   </div>
-</div>
+
+  <!-- Box Picker Modal -->
+  <div class="modal fade" id="boxPickerModal" tabindex="-1" aria-labelledby="boxPickerModalLabel" aria-hidden="true" style="display:none;">
+    <div class="modal-dialog modal-xl custom-modal">
+      <div class="modal-content" style="height:100%">
+        <div class="modal-body" style="height:100%">
+          <div id="boxContentPicker" class="selector" style="height:100%"></div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  <!-- Box Preview} Modal -->
+  <div class="modal fade" id="boxPreviewModal" tabindex="-1" aria-labelledby="boxPreviewModalLabel" aria-hidden="true" style="display:none;">
+    <div class="modal-dialog modal-xl custom-modal">
+      <div class="modal-content" style="height:100%">
+        <div class="modal-body" style="height:100%">
+          <div id="boxPreviewPicker" class="previewer" style="height:100%"></div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
   <!-- Bootstrap JS Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.getElementById("box-picker-tab").addEventListener("click", function () {
+      //var tab = new bootstrap.Tab(this);
+      //tab.show();
+      var boxPickerModal = new bootstrap.Modal(document.getElementById("boxPickerModal"));
+      boxPickerModal.show();
+    });
+  </script>
+</body>
 
 
 </html>
