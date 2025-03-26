@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polling with DataTables</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-dt/css/jquery.dataTables.min.css">
+    <style>
+        #pollingStatus {
+            margin: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+        #pollingGif {
+            display: none;
+            width: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div id="pollingStatus">PollingStatus:<br/>
+        <img id="pollingGif" src="https://media.giphy.com/media/3og0IYlK5G10z5xkAg/giphy.gif" alt="Polling..." />
+        <span id="eventsFoundText"></span>
+    </div>
+    <hr/>
+    <table id="myTable" class="display">
+        <thead>
+            <tr>
+                <th>Event Type</th>
+                <th>Created By</th>
+                <th>Created At</th>
+                <th>Item Type</th>
+                <th>Item Name</th>
+            </tr>
+        </thead>
+    </table>
+
+    <!-- Polling Status Message -->
+    
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var table = $('#myTable').DataTable({
+                columns: [
+                    { title: "Event Type", data: "event_type" },
+                    { title: "Created By", data: "created_by.name" },
+                    {
+                        title: "Created At",
+                        data: "created_at",
+                        render: function (data) {
+                            var date = new Date(data);
+                            return date.toISOString(); // Display as GMT
+                        }
+                    },
+                    { title: "Item Type", data: "source.item_type" },
+                    { title: "Item Name", data: "source.item_name" }
+                ]
+            });
+            var params = new URLSearchParams(window.location.search);
+            var token = params.get('token');
+            var nextStream = null;
+            var allRows = [];
+            var startDate = new Date().toISOString();
+            // Polling every 10 seconds
+            setInterval(async function () {
+                $('#pollingGif').show();  // Show polling GIF
+                $('#eventsFoundText').text(''); // Clear the text from previous polling
+
+                // Fetch new rows
+                const response = await fetchNewRows();
+                $('#eventsFoundText').text(response.entries.length + ' new events found.');
+
+                // If new rows are returned
+                if (response && response.entries && response.entries.length > 0) {
+                    // Insert new rows at the top
+                    allRows.unshift(...response.entries);
+
+                    // Ensure there are no more than 1000 rows
+                    if (allRows.length > 1000) {
+                        allRows = allRows.slice(0, 1000); // Keep only the most recent 1000 rows
+                    }
+
+                    // Update the table with the new rows
+                    table.clear();
+                    table.rows.add(allRows);
+                    table.draw();
+
+                    // Show the number of events found
+                }
+
+                // Hide the polling GIF after the data is loaded
+                $('#pollingGif').hide();
+            }, 10000); // Poll every 10 seconds
+
+            // Function to fetch new rows (replace this with actual fetch logic)
+            async function fetchNewRows() {
+                const boxResponse = await fetch('https://api.box.com/2.0/events?limit=100&stream_type=admin_logs&created_after=' + startDate + (nextStream == null ? "" : "&stream_position=" + nextStream), {
+                    method: 'get',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                })
+                    .then(httpResponse => httpResponse.json())
+                    .then(response => {
+                        nextStream = response.next_stream_position;
+                        return response;
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        return null; // Return null in case of error
+                    });
+
+                return boxResponse;
+            }
+        });
+    </script>
+</body>
+</html>
