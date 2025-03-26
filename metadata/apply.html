@@ -610,6 +610,9 @@
                 // Match field keys in the template with the jsonObject
                 const fieldKey = field.key;
                 const fieldValue = jsonObject[fieldKey];
+                if(fieldValue==null) {
+                    delete jsonObject[fieldKey];
+                }
         
                 // Check if the field type is 'date' and if it matches one of the date formats
                 if (field.type === 'date' && typeof fieldValue === 'string') {
@@ -617,6 +620,10 @@
                         jsonObject[fieldKey] = formatDateToISO(fieldValue); // Convert date
                     }
                 }
+                else if (field.type === 'string' && Array.isArray(fieldValue)) {
+                    jsonObject[fieldKey] = fieldValue.join(", ");
+                }
+                
             });
         
             return jsonObject; // Return the updated jsonObject
