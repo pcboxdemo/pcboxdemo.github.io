@@ -231,13 +231,13 @@ option {
 
   /* Ensure 70/30 layout */
   .custom-left-panel {
-    flex: 6;
+    flex: 5;
     border-right: 1px solid #ccc;
     padding-right: 15px;
   }
   
   .custom-right-panel {
-    flex: 4;
+    flex: 5;
     padding-left: 15px;
     overflow-y: auto;
   }

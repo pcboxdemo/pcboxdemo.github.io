@@ -114,7 +114,7 @@
                 );
                 picker.addListener("preview", async function (response) {
                     $("#createLoader").show();
-                    if(!response.file.name.endsWith('.docx')) {
+                    if(!response.file.name.endsWith('.docx') && 1==2) {
                         document.getElementById('jsoneditor-create').innerHTML = 'Please select a .docx file';
                         $("#createLoader").hide();
                     } else {
@@ -439,7 +439,9 @@
                 });
                 //Load tags 
                 //let tagsJson = await getTagsFromDoc(this.value);
-                let tagsJson = await fetchTextRepresentationFromBox(this.value,accessToken);
+                //let tagsJson = await fetchTextRepresentationFromBox(this.value,accessToken);
+                let tags = await fetchTemplateTags(id,accessToken);
+                let tagsJson = convertArrayToNestedJsonWithArrays(tags);
                 $("#loader").hide();
                 $(this).attr('disabled',false);
                 $("#textRandom").show();
@@ -837,12 +839,12 @@
             
           <div class="custom-left-panel">
             <!-- Box File Picker -->
-            <div id="box-file-picker-create" style="height:450px"></div>
+            <div id="box-file-picker-create" style="height:450px;"></div>
           </div>
-          <div class="custom-right-panel">
+          <div class="custom-right-panel d-flex">
             <!-- JSON Viewer -->
              AI Identified tags
-             <div id="jsoneditor-create"></div>
+             <div id="jsoneditor-create" class="flex-grow-1"></div>
              <img src="ajax-loader.gif" id="createLoader" style="display:none;"/>
           </div>
         </div>

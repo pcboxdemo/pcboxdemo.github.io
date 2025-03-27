@@ -819,4 +819,81 @@ function fixQuotes(jsonString) {
 }
 
 
+function convertArrayToNestedJsonWithArrays(array) {
+    let result = {};
+   
+    // Process each item in the array
+    array.forEach(item => {
+        if (item.tag_type === 'conditional') {
+            return; // Ignore this entry and continue
+        }
+        let paths = item.json_paths;
+        let value = item.tag_content;
+        let obj = result;
 
+        // Check if tag type is table-loop (array)
+        const isTableLoop = item.tag_type === 'table-loop';
+
+        paths.forEach((path, index) => {
+            const key = path.split('.').pop(); // Extract only the last part
+
+            if (index === paths.length - 1) {
+                if (isTableLoop) {
+                    obj[key] = []; // Initialize an array for table-loop
+                } else {
+                    obj[key] = value;
+                }
+            } else {
+                obj[key] = obj[key] || {};
+                obj = obj[key];
+            }
+        });
+    });
+
+    // Process table-loop items separately to ensure correct row grouping
+    Object.keys(result).forEach(key => {
+        if (Array.isArray(result[key])) {
+            let itemRows = [];
+
+            array.forEach(subItem => {
+                if (subItem.json_paths[0].split('.').pop() === key && subItem.tag_type !== "table-loop") {
+                    let fieldKey = subItem.json_paths[1].split('.').pop();
+                    let fieldValue = subItem.tag_content;
+
+                    // Find the row that we are adding to
+                    let currentRow = itemRows[itemRows.length - 1];
+
+                    if (!currentRow || currentRow.hasOwnProperty(fieldKey)) {
+                        currentRow = {}; // Start a new row object if necessary
+                        itemRows.push(currentRow);
+                    }
+
+                    currentRow[fieldKey] = fieldValue;
+                }
+            });
+
+            result[key] = itemRows; // Assign the properly structured rows
+        }
+    });
+
+    return result;
+}
+
+function fetchTemplateTags(templateId, token) {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: `https://api.box.com/2.0/docgen_templates/${templateId}/tags`,
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            success: function(response) {
+                resolve(response.entries);
+            },
+            error: function(xhr, status, error) {
+                console.error(`Error fetching tags for template ${templateId}:`, error);
+                reject([]);
+            }
+        });
+    });
+}
