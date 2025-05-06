@@ -3,7 +3,6 @@
 <head>
 
 <!-- Google tag (gtag.js) -->
-<script defer src="https://cloud.umami.is/script.js" data-website-id="459f7581-de5e-40fb-a3c7-a330a23bfdaf"></script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -54,7 +53,7 @@
                 //Create a Box client using the token
                 client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
                 });
-               eid = getEid(client); 
+                await getEid(client); 
             }
             catch (e) {
                 console.error(e);
@@ -70,9 +69,11 @@
                     console.error('Error copying text: ', err);
                 });
             });
-            let metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
+            //let metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
+            let metadataTemplates =  await getMetadataTemplates();
+            console.log(metadataTemplates);
             metadataTemplates.entries.forEach(function(temp) {
-                if(temp.hidden==false) {
+                if(temp.hidden==false && !temp.templateKey.startsWith('securityClassification')) {
                     $('#allTemplates').append($('<option>', {
                         value: temp.templateKey,
                         text: temp.displayName + ' (' + temp.templateKey + ')',
@@ -150,6 +151,31 @@
                 checkButton();
             });
         });
+        async function getMetadataTemplates() {
+            const url = "https://api.box.com/2.0/metadata_templates/enterprise_" + eid;
+            console.log('getting templates ' + eid);   
+            return new Promise((resolve, reject) => {
+              $.ajax({
+                url: url,
+                type: "GET",
+                headers: {
+                  Authorization: "Bearer " + accessToken,
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                },
+                success: function (response) {
+                    console.log('ok')
+                  resolve(response); 
+                },
+                error: function (xhr, status, error) {
+                    console.log('not ok')
+                  reject(error);
+                },
+              });
+            });
+            
+          }
+          
         function startTimer() {
             startTime = Date.now();
             timerInterval = setInterval(function() {
@@ -410,6 +436,7 @@
         <a href="apply.html"><i class="bi bi-check-circle"></i> Apply</a>
         <a href="delete.html" class="text-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Delete Template</a>
         <a href="docgen.html" ><i class="bi bi-tools"></i> Generate documents</a>
+        <a href="taxonomy.html"><i class="bi bi-diagram-3"></i>Taxonomies</a>
 
     </div>
 
