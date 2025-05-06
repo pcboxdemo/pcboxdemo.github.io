@@ -158,25 +158,45 @@
             })
             $("#saveAsNewTemplate").click(async function() {
                 $("#createLoader").show();
-                let downloadUrl = await client.downloads.getDownloadFileUrl(selectedFile);
-                let newFile = await $.ajax({
-                    url: 'https://box-java-sandpit.herokuapp.com/docxreplacer',
-                    type: 'POST',
-                    data: {
-                        docUrl: downloadUrl,
-                        jsonData: JSON.stringify(createEditor.get()),
-                        boxFileId: selectedFile,
-                        boxToken:accessToken
-                    },
-                    success: function(response) {
-                        console.log('File saved successfully:', response);
-                        $("#createModal").modal("hide");
-                        loadDocGenTemplates();
-                    },
-                    error: function(error) {
-                        console.error('Error saving file:', error);
-                    }
-                });
+                if(!selectedFileName.endsWith('.docx')) {
+                    //first convert to docx
+                    //then run it through the docxreplacer
+                    let newId = await $.ajax({
+                        url: 'http://localhost:8080/convert?file_id=' + selectedFile + '&access_token=' + accessToken + '&postfix=_generated',
+                        type: 'POST',
+                        success: function(response) {
+                            console.log('File saved successfully:', response);
+                            return response.fileId;
+                        },
+                        error: function(error) {
+                            console.error('Error saving file:', error);
+                        } 
+
+                    });
+                    selectedFile = newId.fileId;
+                }   
+                    console.log(selectedFile);
+                    let downloadUrl = await client.downloads.getDownloadFileUrl(selectedFile);
+                    let newFile = await $.ajax({
+                        url: 'https://box-java-sandpit.herokuapp.com/docxreplacer',
+                        type: 'POST',
+                        data: {
+                            docUrl: downloadUrl,
+                            jsonData: JSON.stringify(createEditor.get()),
+                            boxFileId: selectedFile,
+                            boxToken:accessToken
+                        },
+                        success: function(response) {
+                            console.log('File saved successfully:', response);
+                            $("#createModal").modal("hide");
+                            loadDocGenTemplates();
+                        },
+                        error: function(error) {
+                            console.error('Error saving file:', error);
+                        }
+                    });
+                
+
 
             });
             $("#tryAI").click(async function() {
@@ -185,6 +205,7 @@
                 $("#jsonview").empty();
                 //generate the json for json view
                 let selectedTemplate = $("#allTemplates").find("option:selected").val();
+
                 let response = await callBoxAIAPI(accessToken,getPrompt('fileName'),selectedTemplate, generateFieldHints(tagsMap.find(item => item.id === selectedTemplate).json))
                 $("#tryLoader").hide();
                 $("#jsonview").JSONView(JSON.parse(response.answer), { collapsed: false });
@@ -241,7 +262,7 @@
                 console.error(e);
                 
             }
-            metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
+            metadataTemplates = await getEnterpriseMetadataTemplates(accessToken);//.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
                 if(temp.hidden==false) {
                     $('#allMDTemplates').append($('<option>', {
@@ -442,6 +463,7 @@
                 //let tagsJson = await fetchTextRepresentationFromBox(this.value,accessToken);
                 let tags = await fetchTemplateTags(id,accessToken);
                 let tagsJson = convertArrayToNestedJsonWithArrays(tags);
+                tagsMap.push({id:this.value,json:tagsJson});
                 $("#loader").hide();
                 $(this).attr('disabled',false);
                 $("#textRandom").show();
@@ -466,7 +488,7 @@
             }); 
            
         
-            metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
+            metadataTemplates = await getEnterpriseMetadataTemplates(accessToken);//.metadataTemplates.getEnterpriseMetadataTemplates();
             loadDocGenTemplates();
             function loadExplorer() {
                 $("#files").show();
@@ -552,6 +574,7 @@
         <a href="apply.html"><i class="bi bi-check-circle"></i> Apply</a>
         <a href="delete.html" class="text-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Delete Template</a>
         <a href="docgen.html" class="active" ><i class="bi bi-tools"></i> Generate documents</a>
+        <a href="taxonomy.html"><i class="bi bi-diagram-3"></i>Taxonomies</a>
 
 
     </div>
@@ -564,7 +587,7 @@
     <div class="container mt-5">
         <!-- Header -->
         <header class="text-center mb-2">
-            <h3>Generate documents (BETA)</h3>
+            <h3>Generate documents</h3>
         </header>
         <div class="row">
             <div class="col-md-12">

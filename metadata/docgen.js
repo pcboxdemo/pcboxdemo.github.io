@@ -821,7 +821,6 @@ function fixQuotes(jsonString) {
 
 function convertArrayToNestedJsonWithArrays(array) {
     let result = {};
-   
     // Process each item in the array
     array.forEach(item => {
         if (item.tag_type === 'conditional') {
