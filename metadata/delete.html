@@ -91,7 +91,7 @@ console.log(accessToken); // Confirm it exists immediately
         
             let metadataTemplates = await getEnterpriseMetadataTemplates(accessToken);//client.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
-                if(temp.hidden==false && !temp.templateKey==='securityClassification-6VMVochwUWo') {
+                if(temp.hidden==false && temp.templateKey!=='securityClassification-6VMVochwUWo') {
                     $('#allTemplates').append($('<option>', {
                         value: temp.templateKey,
                         text: temp.displayName + ' (' + temp.templateKey + ')',
