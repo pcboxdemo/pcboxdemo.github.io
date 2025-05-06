@@ -180,3 +180,23 @@ function generateFieldList(template, containerId) {
     // Append the list to the container
     $container.html($list);
 }
+
+
+async function getEnterpriseMetadataTemplates(accessToken) {
+    await getEid();
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: 'https://api.box.com/2.0/metadata_templates/enterprise_' + eid,
+            type: 'GET',
+            headers: {
+                Authorization: 'Bearer ' + accessToken
+            },
+            success: function(data) {
+                resolve(data);
+            },
+            error: function(xhr) {
+                reject(xhr.responseJSON || xhr.statusText);
+            }
+        });
+    });
+}

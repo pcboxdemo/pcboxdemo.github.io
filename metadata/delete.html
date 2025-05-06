@@ -37,6 +37,8 @@
         var accessToken=sessionStorage.getItem("token");//'1!ovMAnpXZqiVIIHfEmAgKsaxAYGqT54wQLOCjDudE9OOlot9_RhQXRncyKgiw1-eymQjVGe4YONcsCZZ2JUcmc9GyHLCYGfEOwMg8lP2pghjtJg_BpbgXerqucuVnYQJkknxTeJvNfSfEiu8GhShkgxupj02JPjdxoy4Eyj6AfavchgCS0x1huzmUPv4Q-Wi6zjqTjwATWXwWbVutAJ4_GSEFydHf751iqRWxA-bJaVuqB7FtVArcie7jDUuTcu3OsDZfRYzZZIvg5OWmOLKS-jbO0Gbj3MmXSDv__elJVQANjVDRWE6N5nzBM-ii1fQZtqiERKioKN3dxGI-M4NOZfEIh6MsHHtcbL9aJKvXpa05Ln76ro5IjzC01YfuRI0Ap1vf7c57b1G1gXprd4NvODd2mQqj_hUy43kk-v2Z2TSijyTuhj7yeF2BAgS5MyXBCNZctNVsPIGnBpR6bD1_lwsLZNkUz4ND-3b0iksLw7aZJhcT3FQW0vsrhu8QA3RJ-mQRl42pJ65dh4Ri5A9dsvGxr1uq2lCCwiemwR6zILZoSVoOp6q4d81EEMyaXXPtZHlD0eOeVO1krm6RnlaG9y6ZMXvS4nzJBv8tHiD3VxRap9ye_YeD6xXR_5rZHHiXpxwpBUM4bsDSUEsiyNYCuNMrcwNnpf0eYll6KOlnG908Xt6SYuyzqNgflrNWWhG_wT3-sVdqy-TVftYeLHYkCKPzyN2GYPb47awVjyBLUQZhWDrTItJRmwjc30b3-NfYfIhFiwnnKa-N6VthbRsCBB1NcjhwCpcKF9AWWl_iM4dqyNZ0myghxR0ZqNXnfWDNOpKmSFZtQTEpz-NVupTteW-EmAgOmn0vyG1y';        var selectedFolder=null;
         var eid;
         $(document).ready(async function() {
+            console.log(sessionStorage);
+console.log(accessToken); // Confirm it exists immediately
             $('#delete').click(function () {
                 if (!confirm("Are you sure you want to delete this template? This action cannot be undone and all metadata instances will be deleted!")) {
                     return;
@@ -87,9 +89,9 @@
                 console.error(e);
             }
         
-            let metadataTemplates = await client.metadataTemplates.getEnterpriseMetadataTemplates();
+            let metadataTemplates = await getEnterpriseMetadataTemplates(accessToken);//client.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
-                if(temp.hidden==false) {
+                if(temp.hidden==false && !temp.templateKey==='securityClassification-6VMVochwUWo') {
                     $('#allTemplates').append($('<option>', {
                         value: temp.templateKey,
                         text: temp.displayName + ' (' + temp.templateKey + ')',
@@ -188,6 +190,7 @@
         let totalSize=0;
         
         
+        
        
         
         // Function to process metadata entries
@@ -216,6 +219,7 @@
         <a href="apply.html"><i class="bi bi-check-circle"></i> Apply</a>
         <a href="delete.html" class="active text-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Delete Template</a>
         <a href="docgen.html" ><i class="bi bi-tools"></i> Generate documents</a>
+        <a href="taxonomy.html"><i class="bi bi-diagram-3"></i>Taxonomies</a>
 
     </div>
 

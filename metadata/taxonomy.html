@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="459f7581-de5e-40fb-a3c7-a330a23bfdaf"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taxonomies</title>
+    <!-- Bootstrap CSS -->
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link href='https://use.fontawesome.com/releases/v5.6.1/css/all.css' rel="stylesheet">
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Bootstrap Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- jQuery CDN -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="./lib/bundle.js"></script>
+  <!-- JSONEditor CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsoneditor/dist/jsoneditor.min.css">
+
+  <!-- JSONEditor JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  
+<script src="metadata.js"></script>
+<script src="taxonomy.js"></script>
+<script src="schemas.js"></script>
+<link rel="stylesheet" href="import.css"/>
+
+    <style>
+     .form-input {
+    width: auto;
+    max-width: 300px;  /* Adjust the max-width to your desired size */
+    margin: 0 auto;    /* Centers the input within its container */
+}
+/* Ensuring the JSON Editor fields align to the left */
+.json-editor {
+    display: block !important;  /* Ensures that the editor container uses block display */
+    text-align: left !important; /* Left-aligns the contents */
+  }
+  
+  /* Left-align labels */
+  .json-editor .json-editor-label {
+    text-align: left !important;
+  }
+  
+  /* Left-align the input fields */
+  .json-editor .json-editor-field input {
+    text-align: left !important; /* Left-aligns input fields */
+  }
+  .json-editor span {
+    font-size:14px;
+  }
+  .json-editor label {
+    font-size:12px;
+  }
+  .json-editor-btn-edit,
+.json-editor-btn-add,
+.json-editor-btn-delete,
+.json-editor-btn-moveup,
+.json-editor-btn-movedown {
+  padding: 2px 6px !important;
+  font-size: 12px !important;
+  height: 24px !important;
+  line-height: 1 !important;
+}
+.json-editor-container {
+  padding: 4px !important;
+  margin-bottom: 4px !important;
+}
+.json-editor-header {
+  font-size: 13px !important;
+  margin-bottom: 2px !important;
+}
+/* Make expand/collapse buttons smaller and flatter */
+.json-editor-btn-collapse {
+  width: 18px !important;
+  height: 18px !important;
+  padding: 0 !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  border-radius: 3px !important;
+  margin-right: 4px !important;
+}
+
+/* Optional: tone down the background color */
+.json-editor-btn-collapse {
+  background-color: #ccc !important;
+  color: #333 !important;
+  border: none !important;
+}
+
+
+
+    </style>
+    <link rel="stylesheet" href="jsonextmin.css">  
+
+    <script>
+        const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
+        var client;
+        var accessToken=sessionStorage.getItem("token");//'1!ovMAnpXZqiVIIHfEmAgKsaxAYGqT54wQLOCjDudE9OOlot9_RhQXRncyKgiw1-eymQjVGe4YONcsCZZ2JUcmc9GyHLCYGfEOwMg8lP2pghjtJg_BpbgXerqucuVnYQJkknxTeJvNfSfEiu8GhShkgxupj02JPjdxoy4Eyj6AfavchgCS0x1huzmUPv4Q-Wi6zjqTjwATWXwWbVutAJ4_GSEFydHf751iqRWxA-bJaVuqB7FtVArcie7jDUuTcu3OsDZfRYzZZIvg5OWmOLKS-jbO0Gbj3MmXSDv__elJVQANjVDRWE6N5nzBM-ii1fQZtqiERKioKN3dxGI-M4NOZfEIh6MsHHtcbL9aJKvXpa05Ln76ro5IjzC01YfuRI0Ap1vf7c57b1G1gXprd4NvODd2mQqj_hUy43kk-v2Z2TSijyTuhj7yeF2BAgS5MyXBCNZctNVsPIGnBpR6bD1_lwsLZNkUz4ND-3b0iksLw7aZJhcT3FQW0vsrhu8QA3RJ-mQRl42pJ65dh4Ri5A9dsvGxr1uq2lCCwiemwR6zILZoSVoOp6q4d81EEMyaXXPtZHlD0eOeVO1krm6RnlaG9y6ZMXvS4nzJBv8tHiD3VxRap9ye_YeD6xXR_5rZHHiXpxwpBUM4bsDSUEsiyNYCuNMrcwNnpf0eYll6KOlnG908Xt6SYuyzqNgflrNWWhG_wT3-sVdqy-TVftYeLHYkCKPzyN2GYPb47awVjyBLUQZhWDrTItJRmwjc30b3-NfYfIhFiwnnKa-N6VthbRsCBB1NcjhwCpcKF9AWWl_iM4dqyNZ0myghxR0ZqNXnfWDNOpKmSFZtQTEpz-NVupTteW-EmAgOmn0vyG1y';        var selectedFolder=null;
+        var eid;
+        var editor;
+        var namespace;
+        let originalEntries = []; // populate this when loading
+        let taxonomyLevels = [];  // also store this when loading
+        let taxonomyId;
+        var nodesToCreate=0;
+        var nodesCreated=0;
+        console.log(sessionStorage.getItem("token"))
+        $(document).ready(async function() {
+           $("#import").click(function() {
+                $("#fileInput").show();                            
+            });
+            $('#fileInput').on('change', function (e) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+              
+                reader.onload = function (e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: null });
+                originalEntries = [];
+                
+                const columns = Object.keys(sheet[0]);
+                taxonomyLevels = columns.map((name, i) => ({
+                    displayName: name,
+                    description:name
+                }));;
+                const tree = buildTree(sheet, columns);
+                const schema = {
+                    type: "object",
+                    title: "Taxonomy",
+                    properties: {
+                      key: {
+                        type: "string",
+                        title: "Taxonomy Key"
+                      },
+                      displayName: {
+                        type: "string",
+                        title: "Display Name"
+                      },
+                      nodes: {
+                        type: "array",
+                        title: columns[0],
+                        format: columns.length === 1 ? 'table' : undefined,
+                        items: buildSchema(columns, 0)  // this handles Country → State → City dynamically
+                      }
+                    },
+                    required: ["key", "displayName", "nodes"]
+                  };
+            
+                if (editor) editor.destroy();
+                const startval = {
+                    key: "new_taxonomy",
+                    displayName: "New Taxonomy",
+                    nodes: buildTree(sheet, columns)
+                  };
+                  console.log("Startval",startval);
+                console.log("Schema",schema);
+
+                loadEditor(schema,startval);    
+                };
+              
+                reader.readAsArrayBuffer(file);
+              });
+              
+            $('#allTemplates').on('change', async function (e) {
+                var optionSelected = $("option:selected", this);
+                var valueSelected = this.value;
+                $(".json-editor").empty();
+                taxonomyId = $('#allTemplates option:selected').val();
+                $('#selectedTemplates').html("Selected Taxonomy: " + $('#allTemplates option:selected').text());
+                let taxonomy =  metadataTaxonomies.entries.find(t => t.key === $('#allTemplates option:selected').val());
+                let taxonomyJSON = await getTaxonomyByKey(namespace, valueSelected);
+                let nodesJson = await getNodes(namespace,valueSelected);
+                originalEntries =  nodesJson.entries.sort((a, b) =>
+                  a.display_name.localeCompare(b.display_name)
+                );
+                taxonomyLevels = taxonomyJSON.levels;
+                const tree = buildTreeWithLevels(taxonomyJSON.levels, nodesJson.entries);
+                //const tree = buildTreeFromFlatList(taxonomyJSON.levels, nodesJson.entries);
+                const schema = {
+                    type: "array",
+                    title: taxonomy.levels[0].display_name,
+                    format: taxonomy.levels.length === 1 ? "table" : undefined,
+
+                    items: buildSchemaFromLevels(taxonomy.levels)
+                };
+                enhanceSchema(schema);
+
+                console.log("Schema",schema);
+                loadEditor(schema,tree);
+
+
+            }); 
+            try {
+                //Create a Box client using the token
+                client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
+                });
+                console.log(accessToken);
+               eid = await getEid(client); 
+
+            }
+            catch (e) {
+                console.error(e);
+            }
+            function loadEditor(schema,tree) {
+                editor = new JSONEditor(document.getElementById('editor'),{
+                    theme: 'bootstrap4',
+                    iconlib: 'fontawesome5',
+                    object_layout: 'grid',
+                    use_name_attributes: true,
+                    no_additional_properties: true,
+                    // The schema for the editor
+                    schema: schema,
+                    startval: tree,
+                  
+                    disable_properties:true,
+                    disable_edit_json:true
+                });
+
+                editor.on('change', function() {
+                    console.log(editor.getValue());
+                    $("#saveButton").prop("disabled", false);
+                })
+            }
+            let metadataTaxonomies = await getTaxonomiesByNamespace(namespace);
+            metadataTaxonomies.entries.forEach(function(temp) {
+                
+            $('#allTemplates').append($('<option>', {
+                value: temp.key,
+                text: temp.display_name + ' (' + temp.key + ')',
+            }));
+                
+            })
+                
+            $('#saveButton').on('click', function () {
+                $("#loader").show();
+                $(".action").prop("disabled", true);
+                if (editor.root && editor.root.toggleButton) {
+                    editor.root.toggleButton.click(); // simulate the collapse button click
+                  }
+                const currentTree = editor.getValue();
+                console.log(originalEntries);
+                console.log(currentTree);
+                if(originalEntries.length === 0) {
+                    
+                    createNewTaxonomyTree(currentTree, taxonomyLevels,namespace,taxonomyId);
+                } else {
+                    const currentEntries = flattenTreeToEntries(currentTree, taxonomyLevels);
+                
+                    const originalMap = Object.fromEntries(originalEntries.map(n => [n.id, n]));
+                    const currentMap = Object.fromEntries(currentEntries.map(n => [n.id, n]));
+                
+                    const toCreate = currentEntries.filter(n => n.id === 'NEW');
+                    const toDelete = originalEntries.filter(n => !currentMap[n.id]);
+                    const toUpdate = currentEntries.filter(n => 
+                        n.id !== 'NEW' &&
+                        originalMap[n.id] &&
+                        areNodesDifferent(originalMap[n.id], n)
+                        );
+
+                
+                    console.group("🔄 Taxonomy Change Detection");
+                    console.log("🆕 To Create", toCreate);
+                    console.log("🗑️ To Delete", toDelete);
+                    console.log("✏️ To Update", toUpdate);
+                    console.groupEnd();
+                
+                    // Hook your API calls here:
+                    createNodes(toCreate);
+                    deleteNodes(toDelete);
+                    updateNodes(toUpdate);
+                    $("#loader").hide();
+                    $(".action").prop("disabled", false);
+                }
+            });
+            let createdTaxonomyLevels = [];
+
+                $('#levelCount').on('input', function () {
+                const count = parseInt($(this).val());
+                const $container = $('#levelInputs');
+                $container.empty();
+
+                for (let i = 1; i <= count; i++) {
+                    $container.append(`
+                    <div class="mb-2">
+                        <label class="form-label">Level ${i} Name</label>
+                        <input type="text" class="form-control level-name" data-level="${i}" placeholder="e.g., Country" />
+                    </div>
+                    `);
+                }
+                });
+
+                $('#createTaxonomy').on('click', function () {
+                    createdTaxonomyLevels = [];
+                  
+                    $('.level-name').each(function (i) {
+                      const name = $(this).val().trim();
+                      if (name) {
+                        createdTaxonomyLevels.push({
+                          displayName: name,
+                          level: i + 1,
+                          type: "metadata_taxonomy_level"
+                        });
+                      }
+                    });
+                  
+                    const schema = {
+                      type: "array",
+                      title: "Taxonomy",
+                      items: generateLevelSchema(0)
+                    };
+                  
+                    const tree = [];
+                  
+                    $('#taxonomyModal').modal('hide');
+                    loadEditor(schema, tree);
+                  
+                    function generateLevelSchema(index) {
+                      const level = createdTaxonomyLevels[index];
+                      if (!level) return undefined;
+                  
+                      const isLastLevel = index === createdTaxonomyLevels.length - 1;
+                      const next = generateLevelSchema(index + 1);
+                  
+                      const schema = {
+                        type: "object",
+                        title: level.display_name,
+                        properties: {}
+                      };
+                  
+                      // Root level gets key/displayName/custom product name/id
+                      if (index === 0) {
+                        schema.properties.key = { type: "string", title: "Key" };
+                        schema.properties.displayName = { type: "string", title: "Name" };
+                  
+                        const secondLevel = createdTaxonomyLevels[1];
+                        if (secondLevel) {
+                          const fieldName = secondLevel.displayName;
+                          schema.properties[fieldName] = {
+                            type: "array",
+                            title: fieldName,
+                            items: {
+                              type: "object",
+                              properties: {
+                                name: { type: "string", title: `${fieldName} Name` },
+                                code: { type: "string", title: `${fieldName} Code` }
+                              }
+                            }
+                          };
+                        }
+                  
+                        schema.properties.id = {
+                          type: "string",
+                          default: "NEW",
+                          options: { hidden: true }
+                        };
+                      } else {
+                        schema.properties.displayName = { type: "string", title: "Name" };
+                      }
+                  
+                      if (next) {
+                        schema.properties.children = {
+                          type: "array",
+                          title: "Children",
+                          items: next
+                        };
+                      } else {
+                        schema.properties.children = {
+                          type: "array",
+                          title: "Values",
+                          items: { type: "string" }
+                        };
+                      }
+                  
+                      return schema;
+                    }
+                  });
+                                    
+                  
+              
+
+        })
+        
+        function setNodesToCreate() {
+            nodesToCreate = 0;
+            nodesCreated = 0;
+            $("#nodesToCreate").html(nodesToCreate);
+            $("#nodesCreated").html(nodesCreated);  
+        }   
+        function incrementNodesCreated() {
+            nodesCreated++;
+            $("#nodesCreated").html(nodesCreated);  
+        }
+              
+           
+            
+        
+        
+        async function getEid() {
+            let user = await  client.users.getUserMe({"fields":["id,name,enterprise"]});
+            eid = user.enterprise.id;
+            namespace = "enterprise_" + eid;
+        }
+        let metadataTemplateMap = [];
+        let totalSize=0;
+        
+        function enhanceSchema(schema) {
+          // Remove "children" label and array item titles
+          function recurse(sch) {
+            if (sch.type === 'object' && sch.properties) {
+              for (const key in sch.properties) {
+                recurse(sch.properties[key]);
+              }
+            } else if (sch.type === 'array') {
+              sch.title = ''; // remove e.g. "State 1"
+              recurse(sch.items);
+            }
+          }
+        
+          recurse(schema);
+          return schema;
+        }
+       
+        
+       
+        
+        
+        
+   
+    </script>
+</head>
+<body>   <header class="header">
+    <!-- Left side links -->
+    <div class="left">
+        <a href="index.html">
+            <i class="bi bi-house-door"></i> Home
+        </a>
+        <a href="index_oauth.html">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+        </a>
+    </div>
+
+    <!-- Center links -->
+    <div class="center">
+        <a href="export.html"><i class="bi bi-arrow-up-circle"></i> Export</a>
+        <a href="import.html" ><i class="bi bi-arrow-down-circle"></i> Import</a>
+        <a href="apply.html"><i class="bi bi-check-circle"></i> Apply</a>
+        <a href="delete.html" class="text-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Delete Template</a>
+        <a href="docgen.html" ><i class="bi bi-tools"></i> Generate documents</a>
+        <a href="taxonomy.html" class="active"><i class="bi bi-diagram-3"></i>Taxonomies</a>
+
+    </div>
+
+    <!-- Right side could have more links or branding if needed -->
+    <div class="right">
+        <!-- Placeholder for potential right-aligned content -->
+    </div>
+</header>
+    <div class="container mt-5">
+        <!-- Header -->
+        <header class="text-center mb-2">
+            <h3>Create and edit taxonomies (BETA)</h3>
+        </header>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="section la">Instructions: <ul>
+                    <li>This page will allow you to create and edit taxnomies</li>
+                    <li>Select a taxonomy, click 'Create new' or Import an xlsx file (<a href="https://peter-demo.box.com/s/u8fp9uagm8a2ccuxs8wmq7js3tfz3o8g" target="_blank">sample</a>)</li>
+                    <li>Use the editor to edit - you can add new nodes within each level, but not add new levels currently</li>
+                    <li>Coming soon: Associate with metadata templates, see metadata templates were taxonomy is used</li>
+                    </ul>
+                
+                 </div>
+            </div>
+        </div>
+        <!-- Row with two sections -->
+        <div class="row">
+            <div class="col-md-4">
+                <h4>Select Metadata Taxonomy</h4>
+                <div class="transfer-container section d-flex flex-column" style="height:400px !important">
+                    <!-- Select Box 1 -->
+                    <select id="allTemplates" class="form-select" multiple style="height:350px;" size="35">
+                        
+                    </select>
+                    <div class="section" style="width: 100%">
+                        <div class="">
+                            <ul class="list-group">
+                               
+                                <li class="list-group-item">
+                                    Taxonomy Nodes to create
+                                    <span class="badge rounded-pill bg-primary counter" id="nodesToCreate">0</span>
+                                </li>
+    
+                                <li class="list-group-item">
+                                    Taxonomy nodes created
+                                    <span class="badge rounded-pill bg-primary counter" id="nodesCreated">0</span>
+                                </li>
+                                
+                            </ul>
+    
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <h4>Edit</h4>
+
+                <div class="section">
+                    <h4 id="selectedTemplates"></h4>
+                    <div id="sec3content">
+                        <div class="button-section">
+                            <button class="btn btn-primary action" id="saveButton" disabled>Save</button>
+                            <button class="btn btn-primary action" data-bs-toggle="modal" data-bs-target="#taxonomyModal">Create New</button>
+                            <button class="btn btn-secondary action" id="import" >Import</button>
+                            <input type="file" id="fileInput" accept=".xlsx" style="display:none;">
+                            <img src="ajax-loader.gif" id="loader" height="32" class="loading" style="display:none;"/>
+                        </div>
+                       
+                    </div>
+
+                   
+                 
+                </div>
+
+                <div id="editor" style="height:500px;" class="json-editor"></div>
+                <div id="editor2">
+        
+            </div>
+            
+                </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+
+               
+            </div>
+
+        </div>
+       
+    </div>
+<!-- Trigger -->
+
+<!-- Modal -->
+<div class="modal fade" id="taxonomyModal" tabindex="-1" aria-labelledby="taxonomyModalLabel" aria-hidden="true" style="display:none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taxonomyModalLabel">Create New Taxonomy</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+            <input type="text" id="taxonomyKey" placeholder="Key" />
+            <input type="text" id="taxonomyDisplayName" placeholder="Display Name" /><br/>
+          <label for="levelCount" class="form-label">Number of Levels</label>
+          <input type="number" class="form-control" id="levelCount" min="0" max="5" value="0">
+        </div>
+        <div id="levelInputs"></div>
+        <button id="aiSuggest" class="btn btn-outline-secondary w-100 mt-2">🤖 Let AI create the taxonomy values</button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button id="createTaxonomy" type="button" class="btn btn-primary">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <!-- Bootstrap JS and dependencies -->
+    
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
