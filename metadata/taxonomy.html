@@ -113,7 +113,7 @@
         let taxonomyId;
         var nodesToCreate=0;
         var nodesCreated=0;
-        console.log(sessionStorage.getItem("token"))
+
         $(document).ready(async function() {
            $("#import").click(function() {
                 $("#fileInput").show();                            
@@ -185,19 +185,30 @@
                   a.display_name.localeCompare(b.display_name)
                 );
                 taxonomyLevels = taxonomyJSON.levels;
-                const tree = buildTreeWithLevels(taxonomyJSON.levels, nodesJson.entries);
-                //const tree = buildTreeFromFlatList(taxonomyJSON.levels, nodesJson.entries);
+                const tree = buildTreeWithLevels(taxonomyLevels, nodesJson.entries);
+                const wrappedTree = { [taxonomyLevels[0].display_name]: tree };
+                const topLevelName = taxonomyLevels[0].display_name; // "Country"
+
                 const schema = {
-                    type: "array",
-                    title: taxonomy.levels[0].display_name,
-                    format: taxonomy.levels.length === 1 ? "table" : undefined,
-
-                    items: buildSchemaFromLevels(taxonomy.levels)
+                  type: "object",
+                  title: "Taxonomy",
+                  properties: {
+                    [topLevelName]: {
+                      type: "array",
+                      title: "", // hides the label above the array
+                      format: taxonomy.levels.length === 1 ? "table" : undefined,
+                      items: {
+                        ...buildSchemaFromLevels(taxonomyLevels),
+                        title: topLevelName 
+                      }
+                    }
+                  }
                 };
-                enhanceSchema(schema);
-
-                console.log("Schema",schema);
-                loadEditor(schema,tree);
+                //enhanceSchema(schema);
+                console.log("wrappedTree",wrappedTree);
+                console.log("schema",schema);
+                loadEditor(schema, wrappedTree,taxonomyLevels);
+                
 
 
             }); 
@@ -205,14 +216,16 @@
                 //Create a Box client using the token
                 client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
                 });
-                console.log(accessToken);
                eid = await getEid(client); 
 
             }
             catch (e) {
                 console.error(e);
             }
-            function loadEditor(schema,tree) {
+            function loadEditor(schema,tree,levels) {
+              JSONEditor.defaults.options.getItemTitle = function(schema) {
+                return schema.title || '';
+              };
                 editor = new JSONEditor(document.getElementById('editor'),{
                     theme: 'bootstrap4',
                     iconlib: 'fontawesome5',
@@ -231,6 +244,10 @@
                     console.log(editor.getValue());
                     $("#saveButton").prop("disabled", false);
                 })
+                editor.on('ready', () => {
+                  removeLastLevelHeaderRow(levels);
+                  hideWrapperCollapseAndControls();
+                });
             }
             let metadataTaxonomies = await getTaxonomiesByNamespace(namespace);
             metadataTaxonomies.entries.forEach(function(temp) {
@@ -255,7 +272,9 @@
                     
                     createNewTaxonomyTree(currentTree, taxonomyLevels,namespace,taxonomyId);
                 } else {
-                    const currentEntries = flattenTreeToEntries(currentTree, taxonomyLevels);
+                    //const currentEntries = flattenTreeToEntries(currentTree, taxonomyLevels)
+                    const rootArray = Object.values(currentTree)[0];;
+                    const currentEntries = flattenTreeToEntries(rootArray, taxonomyLevels);
                 
                     const originalMap = Object.fromEntries(originalEntries.map(n => [n.id, n]));
                     const currentMap = Object.fromEntries(currentEntries.map(n => [n.id, n]));
@@ -415,28 +434,48 @@
         let totalSize=0;
         
         function enhanceSchema(schema) {
-          // Remove "children" label and array item titles
-          function recurse(sch) {
+          function recurse(sch, isRoot = false) {
             if (sch.type === 'object' && sch.properties) {
-              for (const key in sch.properties) {
-                recurse(sch.properties[key]);
-              }
+              if (!isRoot) sch.title = '';
+              Object.values(sch.properties).forEach(recurse);
             } else if (sch.type === 'array') {
-              sch.title = ''; // remove e.g. "State 1"
-              recurse(sch.items);
+              sch.title = '';
+              if (sch.items) {
+                recurse(sch.items);
+                sch.items.title = '';
+              }
             }
           }
-        
-          recurse(schema);
+          recurse(schema, true);
           return schema;
         }
+        
+        
        
-        
-       
-        
-        
-        
-   
+    function removeLastLevelHeaderRow(levels) {
+      const lastLevelName = levels[levels.length - 1].display_name;
+      document.querySelectorAll('table thead').forEach(thead => {
+        const tr = thead.querySelector('tr');
+        if (!tr) return;
+        const ths = [...tr.querySelectorAll('th')];
+        const match = ths.some(th => th.textContent.trim() === lastLevelName);
+        if (match) thead.remove();
+      });
+    }
+
+    function hideWrapperCollapseAndControls() {
+      document.querySelectorAll('.je-object__title').forEach(titleEl => {
+        const spans = titleEl.querySelectorAll('span');
+        if (spans.length < 2) return;
+        const label = spans[1].textContent.trim();
+        if (/^[A-Za-z]+ \d+$/.test(label)) {
+          titleEl.style.setProperty('display', 'none', 'important');
+          const controls = titleEl.parentElement?.querySelector('.je-object__controls');
+          if (controls) controls.style.setProperty('display', 'none', 'important');
+        }
+      });
+    }
+     
     </script>
 </head>
 <body>   <header class="header">
