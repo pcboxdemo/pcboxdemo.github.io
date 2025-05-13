@@ -19,15 +19,12 @@
 <!-- jQuery CDN -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="./lib/bundle.js"></script>
-  <!-- JSONEditor CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsoneditor/dist/jsoneditor.min.css">
-
-  <!-- JSONEditor JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
+  
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
 <script src="metadata.js"></script>
 <script src="taxonomy.js"></script>
 <script src="schemas.js"></script>
@@ -39,67 +36,12 @@
     max-width: 300px;  /* Adjust the max-width to your desired size */
     margin: 0 auto;    /* Centers the input within its container */
 }
-/* Ensuring the JSON Editor fields align to the left */
-.json-editor {
-    display: block !important;  /* Ensures that the editor container uses block display */
-    text-align: left !important; /* Left-aligns the contents */
-  }
-  
-  /* Left-align labels */
-  .json-editor .json-editor-label {
-    text-align: left !important;
-  }
-  
-  /* Left-align the input fields */
-  .json-editor .json-editor-field input {
-    text-align: left !important; /* Left-aligns input fields */
-  }
-  .json-editor span {
-    font-size:14px;
-  }
-  .json-editor label {
-    font-size:12px;
-  }
-  .json-editor-btn-edit,
-.json-editor-btn-add,
-.json-editor-btn-delete,
-.json-editor-btn-moveup,
-.json-editor-btn-movedown {
-  padding: 2px 6px !important;
-  font-size: 12px !important;
-  height: 24px !important;
-  line-height: 1 !important;
-}
-.json-editor-container {
-  padding: 4px !important;
-  margin-bottom: 4px !important;
-}
-.json-editor-header {
-  font-size: 13px !important;
-  margin-bottom: 2px !important;
-}
-/* Make expand/collapse buttons smaller and flatter */
-.json-editor-btn-collapse {
-  width: 18px !important;
-  height: 18px !important;
-  padding: 0 !important;
-  font-size: 12px !important;
-  line-height: 1 !important;
-  border-radius: 3px !important;
-  margin-right: 4px !important;
-}
 
-/* Optional: tone down the background color */
-.json-editor-btn-collapse {
-  background-color: #ccc !important;
-  color: #333 !important;
-  border: none !important;
-}
 
 
 
     </style>
-    <link rel="stylesheet" href="jsonextmin.css">  
+    
 
     <script>
         const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
@@ -119,99 +61,158 @@
                 $("#fileInput").show();                            
             });
             $('#fileInput').on('change', function (e) {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-              
-                reader.onload = function (e) {
+              const file = e.target.files[0];
+              const reader = new FileReader();
+            
+              reader.onload = function (e) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
-                const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: null });
-                originalEntries = [];
-                
-                const columns = Object.keys(sheet[0]);
-                taxonomyLevels = columns.map((name, i) => ({
-                    displayName: name,
-                    description:name
-                }));;
-                const tree = buildTree(sheet, columns);
-                const schema = {
-                    type: "object",
-                    title: "Taxonomy",
-                    properties: {
-                      key: {
-                        type: "string",
-                        title: "Taxonomy Key"
-                      },
-                      displayName: {
-                        type: "string",
-                        title: "Display Name"
-                      },
-                      nodes: {
-                        type: "array",
-                        title: columns[0],
-                        format: columns.length === 1 ? 'table' : undefined,
-                        items: buildSchema(columns, 0)  // this handles Country → State → City dynamically
-                      }
-                    },
-                    required: ["key", "displayName", "nodes"]
-                  };
+                let sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: null });
             
-                if (editor) editor.destroy();
-                const startval = {
-                    key: "new_taxonomy",
-                    displayName: "New Taxonomy",
-                    nodes: buildTree(sheet, columns)
-                  };
-                  console.log("Startval",startval);
-                console.log("Schema",schema);
-
-                loadEditor(schema,startval);    
-                };
-              
-                reader.readAsArrayBuffer(file);
-              });
-              
-            $('#allTemplates').on('change', async function (e) {
-                var optionSelected = $("option:selected", this);
-                var valueSelected = this.value;
-                $(".json-editor").empty();
-                taxonomyId = $('#allTemplates option:selected').val();
-                $('#selectedTemplates').html("Selected Taxonomy: " + $('#allTemplates option:selected').text());
-                let taxonomy =  metadataTaxonomies.entries.find(t => t.key === $('#allTemplates option:selected').val());
-                let taxonomyJSON = await getTaxonomyByKey(namespace, valueSelected);
-                let nodesJson = await getNodes(namespace,valueSelected);
-                originalEntries =  nodesJson.entries.sort((a, b) =>
-                  a.display_name.localeCompare(b.display_name)
-                );
-                taxonomyLevels = taxonomyJSON.levels;
-                const tree = buildTreeWithLevels(taxonomyLevels, nodesJson.entries);
-                const wrappedTree = { [taxonomyLevels[0].display_name]: tree };
-                const topLevelName = taxonomyLevels[0].display_name; // "Country"
-
-                const schema = {
-                  type: "object",
-                  title: "Taxonomy",
-                  properties: {
-                    [topLevelName]: {
-                      type: "array",
-                      title: "", // hides the label above the array
-                      format: taxonomy.levels.length === 1 ? "table" : undefined,
-                      items: {
-                        ...buildSchemaFromLevels(taxonomyLevels),
-                        title: topLevelName 
-                      }
+                if (!sheet.length) return;
+            
+                const columns = Object.keys(sheet[0]);
+                taxonomyLevels = columns.map(name => ({ displayName: name, description: name }));
+            
+                // Fill down empty cells
+                for (let i = 1; i < sheet.length; i++) {
+                  for (let col of columns) {
+                    if (!sheet[i][col]) {
+                      sheet[i][col] = sheet[i - 1][col];
                     }
                   }
+                }
+            
+                // Remove incomplete rows
+                sheet = sheet.filter(row => row[columns[columns.length - 1]]);
+            
+                const nestedTree = buildTree(sheet, columns);
+                const jsTreeNodes = convertNestedToJsTree(nestedTree, columns);
+            
+                const name = file.name.replace(/\.[^/.]+$/, "");
+                $('#taxonomyKey').val(name.toLowerCase().replace(/\s+/g, '_'));
+                $('#taxonomyDisplayName').val(name);
+            
+                renderTaxonomyTree(name, jsTreeNodes, taxonomyLevels);
+              };
+            
+              reader.readAsArrayBuffer(file);
+            });
+            
+            
+            function convertNestedToJsTree(nodes, columns, level = 0) {
+              const currentKey = columns[level];
+              const nextKey = columns[level + 1];
+              const isLastLevel = level === columns.length - 1;
+            
+              return nodes.map(node => {
+                const item = {
+                  id: node.id || `NEW_${Date.now() + Math.random()}`,
+                  text: node[currentKey],
+                  icon: isLastLevel ? 'jstree-file' : 'jstree-folder',
+                  children: []
                 };
-                //enhanceSchema(schema);
-                console.log("wrappedTree",wrappedTree);
-                console.log("schema",schema);
-                loadEditor(schema, wrappedTree,taxonomyLevels);
+            
+                if (!isLastLevel && Array.isArray(node[nextKey])) {
+                  item.children = convertNestedToJsTree(node[nextKey], columns, level + 1);
+                }
+            
+                return item;
+              });
+            }
+            
+            
+            
+                        
+              
+              
+              $('#allTemplates').on('change', async function () {
+                const taxonomyKey = this.value;
+                $('#selectedTemplates').html("Selected Taxonomy: " + $('#allTemplates option:selected').text());
+              
+                const taxonomy = metadataTaxonomies.entries.find(t => t.key === taxonomyKey);
+                const taxonomyJSON = await getTaxonomyByKey(namespace, taxonomyKey);
+                const nodesJson = await getNodes(namespace, taxonomyKey);
+              
+                taxonomyLevels = taxonomyJSON.levels;
+                originalEntries = nodesJson.entries.sort((a, b) => a.display_name.localeCompare(b.display_name));
+              
+                const nestedTree = buildTreeWithLevels(taxonomyLevels, originalEntries);
+                const jsTreeNodes = convertNestedToJsTree(nestedTree, taxonomyLevels.map(l => l.display_name));
+              
+                $('#taxonomyKey').val(taxonomy.key);
+                $('#taxonomyDisplayName').val(taxonomy.display_name);
+              
+                renderTaxonomyTree(taxonomy.display_name, jsTreeNodes, taxonomyLevels);
+              });
+              
+              function renderTaxonomyTree(displayName, jsTreeNodes, taxonomyLevels) {
+                if ($.jstree.reference('#tree')) {
+                  $('#tree').jstree('destroy').empty();
+                }
+              
+                $('#tree').jstree({
+                  core: {
+                    check_callback: true,
+                    data: [{
+                      id: 'taxonomy_root',
+                      text: displayName,
+                      icon: 'jstree-folder',
+                      state: { opened: true },
+                      children: jsTreeNodes
+                    }]
+                  },
+                  plugins: ['contextmenu', 'dnd', 'unique'],
+                  contextmenu: {
+                    items: function (node) {
+                      const tree = $('#tree').jstree(true);
+                      const depth = tree.get_path(node).length;
+                      const canAddChild = depth < taxonomyLevels.length + 1;
+              
+                      return {
+                        ...(canAddChild && {
+                          addChild: {
+                            label: `Add ${taxonomyLevels[depth - 1]?.display_name || 'Item'}`,
+                            action: function () {
+                              const newId = `NEW_${Date.now()}`;
+                              tree.create_node(node, {
+                                id: newId,
+                                text: `New ${taxonomyLevels[depth - 1]?.display_name}`,
+                                icon: depth === taxonomyLevels.length ? 'jstree-file' : 'jstree-folder'
+                              }, 'last');
+                            }
+                          }
+                        }),
+                        rename: {
+                          label: 'Rename',
+                          action: () => tree.edit(node)
+                        },
+                        delete: {
+                          label: 'Delete',
+                          action: () => tree.delete_node(node)
+                        }
+                      };
+                    }
+                  }
+                });
+              
+                $('#tree').on('select_node.jstree', function (e, data) {
+                  setTimeout(() => {
+                    $('#tree').jstree(true).edit(data.node);
+                  }, 100);
+                });
+                $('#tree').on('create_node.jstree rename_node.jstree delete_node.jstree move_node.jstree', function () {
+                  markTreeDirty();
+                });
                 
 
+              }
+              function markTreeDirty() {
+                $('#saveButton').prop('disabled', false);
+              }
 
-            }); 
+
             try {
                 //Create a Box client using the token
                 client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
@@ -222,33 +223,7 @@
             catch (e) {
                 console.error(e);
             }
-            function loadEditor(schema,tree,levels) {
-              JSONEditor.defaults.options.getItemTitle = function(schema) {
-                return schema.title || '';
-              };
-                editor = new JSONEditor(document.getElementById('editor'),{
-                    theme: 'bootstrap4',
-                    iconlib: 'fontawesome5',
-                    object_layout: 'grid',
-                    use_name_attributes: true,
-                    no_additional_properties: true,
-                    // The schema for the editor
-                    schema: schema,
-                    startval: tree,
-                  
-                    disable_properties:true,
-                    disable_edit_json:true
-                });
-
-                editor.on('change', function() {
-                    console.log(editor.getValue());
-                    $("#saveButton").prop("disabled", false);
-                })
-                editor.on('ready', () => {
-                  removeLastLevelHeaderRow(levels);
-                  hideWrapperCollapseAndControls();
-                });
-            }
+          
             let metadataTaxonomies = await getTaxonomiesByNamespace(namespace);
             metadataTaxonomies.entries.forEach(function(temp) {
                 
@@ -260,48 +235,91 @@
             })
                 
             $('#saveButton').on('click', function () {
-                $("#loader").show();
-                $(".action").prop("disabled", true);
-                if (editor.root && editor.root.toggleButton) {
-                    editor.root.toggleButton.click(); // simulate the collapse button click
+              $("#loader").show();
+              $(".action").prop("disabled", true);
+            
+              const treeData = $('#tree').jstree(true).get_json('#', { flat: false });
+              const flattened = [];
+            
+              function flatten(nodes, level = 1, parentId = null) {
+                for (const node of nodes) {
+                  if (node.id === 'taxonomy_root') {
+                    flatten(node.children || [], level, null);
+                    continue;
                   }
-                const currentTree = editor.getValue();
-                console.log(originalEntries);
-                console.log(currentTree);
-                if(originalEntries.length === 0) {
-                    
-                    createNewTaxonomyTree(currentTree, taxonomyLevels,namespace,taxonomyId);
-                } else {
-                    //const currentEntries = flattenTreeToEntries(currentTree, taxonomyLevels)
-                    const rootArray = Object.values(currentTree)[0];;
-                    const currentEntries = flattenTreeToEntries(rootArray, taxonomyLevels);
-                
-                    const originalMap = Object.fromEntries(originalEntries.map(n => [n.id, n]));
-                    const currentMap = Object.fromEntries(currentEntries.map(n => [n.id, n]));
-                
-                    const toCreate = currentEntries.filter(n => n.id === 'NEW');
-                    const toDelete = originalEntries.filter(n => !currentMap[n.id]);
-                    const toUpdate = currentEntries.filter(n => 
-                        n.id !== 'NEW' &&
-                        originalMap[n.id] &&
-                        areNodesDifferent(originalMap[n.id], n)
-                        );
-
-                
-                    console.group("🔄 Taxonomy Change Detection");
-                    console.log("🆕 To Create", toCreate);
-                    console.log("🗑️ To Delete", toDelete);
-                    console.log("✏️ To Update", toUpdate);
-                    console.groupEnd();
-                
-                    // Hook your API calls here:
-                    createNodes(toCreate);
-                    deleteNodes(toDelete);
-                    updateNodes(toUpdate);
-                    $("#loader").hide();
-                    $(".action").prop("disabled", false);
+              
+                  const entry = {
+                    id: node.id,
+                    display_name: node.text,
+                    level: level,
+                    parent_id: parentId
+                  };
+              
+                  flattened.push(entry);
+              
+                  console.log(`📦 Flattened node:`, entry);
+              
+                  if (node.children?.length) {
+                    flatten(node.children, level + 1, node.id);
+                  }
                 }
+              }
+              
+              flatten(treeData);
+            
+              const taxonomyKey = $('#taxonomyKey').val().trim();
+              const displayName = $('#taxonomyDisplayName').val().trim();
+              taxonomyId = taxonomyKey;
+            
+              const currentEntries = flattened;
+            
+              if (originalEntries.length === 0) {
+                // new taxonomy
+                const newTree = {
+                  key: taxonomyKey,
+                  displayName,
+                  nodes: currentEntries
+                };
+                createNewTaxonomyTree(newTree, taxonomyLevels, namespace, taxonomyId);
+                $("#loader").hide();
+                $(".action").prop("disabled", false);
+                return;
+              }
+            
+              // update existing
+              const originalMap = Object.fromEntries(originalEntries.map(n => [n.id, n]));
+              const currentMap = Object.fromEntries(currentEntries.map(n => [n.id, n]));
+            
+              const toCreate = currentEntries.filter(n => n.id.startsWith('NEW_'));
+              const toDelete = originalEntries.filter(n => !currentMap[n.id]);
+              currentEntries.forEach(n => {
+                if (!n.id.startsWith('NEW_') && originalMap[n.id]) {
+                  const orig = originalMap[n.id];
+                  if (areNodesDifferent(orig, n)) {
+                    console.log(`🧪 Diff:`, { id: n.id, original: orig, current: n });
+                  }
+                }
+              });
+              const toUpdate = currentEntries.filter(n =>
+                !n.id.startsWith('NEW_') &&
+                originalMap[n.id] &&
+                areNodesDifferent(originalMap[n.id], n)
+              );
+            
+              console.group("🔄 Taxonomy Change Detection");
+              console.log("🆕 To Create", toCreate);
+              console.log("🗑️ To Delete", toDelete);
+              console.log("✏️ To Update", toUpdate);
+              console.groupEnd();
+            
+              createNodes(toCreate);
+              deleteNodes(toDelete);
+              updateNodes(toUpdate);
+            
+              $("#loader").hide();
+              $(".action").prop("disabled", false);
             });
+            
             let createdTaxonomyLevels = [];
 
                 $('#levelCount').on('input', function () {
@@ -453,6 +471,7 @@
         
        
     function removeLastLevelHeaderRow(levels) {
+      console.log(levels);
       const lastLevelName = levels[levels.length - 1].display_name;
       document.querySelectorAll('table thead').forEach(thead => {
         const tr = thead.querySelector('tr');
@@ -514,7 +533,7 @@
             <div class="col-md-12">
                 <div class="section la">Instructions: <ul>
                     <li>This page will allow you to create and edit taxnomies</li>
-                    <li>Select a taxonomy, click 'Create new' or Import an xlsx file (<a href="https://peter-demo.box.com/s/u8fp9uagm8a2ccuxs8wmq7js3tfz3o8g" target="_blank">sample</a>)</li>
+                    <li>Select a taxonomy, click 'Create new' or Import an xlsx file (<a href="https://peter-demo.box.com/s/yxzlk3svu58v1wajkbxde7m44pvrwhfg" target="_blank">sample</a>)</li>
                     <li>Use the editor to edit - you can add new nodes within each level, but not add new levels currently</li>
                     <li>Coming soon: Associate with metadata templates, see metadata templates were taxonomy is used</li>
                     </ul>
@@ -559,7 +578,7 @@
                     <div id="sec3content">
                         <div class="button-section">
                             <button class="btn btn-primary action" id="saveButton" disabled>Save</button>
-                            <button class="btn btn-primary action" data-bs-toggle="modal" data-bs-target="#taxonomyModal">Create New</button>
+                            <button class="btn btn-primary action" data-bs-toggle="modal" data-bs-target="#taxonomyModal" disabled>Create New</button>
                             <button class="btn btn-secondary action" id="import" >Import</button>
                             <input type="file" id="fileInput" accept=".xlsx" style="display:none;">
                             <img src="ajax-loader.gif" id="loader" height="32" class="loading" style="display:none;"/>
@@ -571,7 +590,7 @@
                  
                 </div>
 
-                <div id="editor" style="height:500px;" class="json-editor"></div>
+                <div id="tree" style="height:500px;" class="tree"></div>
                 <div id="editor2">
         
             </div>

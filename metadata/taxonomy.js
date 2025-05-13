@@ -321,7 +321,7 @@ function buildSchemaFromLevels(levels, index = 0) {
         type: "string",
         default: "NEW",
         options: { hidden: true },
-        readOnly: true
+        //readOnly: true
       },
       [currentKey]: {
         type: "string",
@@ -420,22 +420,29 @@ function flattenTreeToEntries(tree, levels, level = 0, parentId = null, entries 
   if (level >= levels.length) return entries;
 
   const levelKey = levels[level].display_name;
-  console.log(tree);
-  tree.forEach(node => {
-    if (!node || typeof node !== 'object') return; // skip bad nodes
 
-    const id = node.id || "NEW";
-    const name = node[levelKey] || "Unnamed";
+  tree.forEach(node => {
+    if (!node || typeof node !== 'object') return;
+
+    if (!node.id || node.id === 'NEW') {
+      node.id = `NEW_${entries.length}`;
+    }
+
+    const id = node.id;
+    const name = node[levelKey] || node.display_name || "Unnamed";
 
     entries.push({
       id: id,
       display_name: name,
       level: level + 1,
-      parentId: parentId || null
+      parentId: parentId
     });
 
-    if (Array.isArray(node.children)) {
-      flattenTreeToEntries(node.children, levels, level + 1, id, entries);
+    const childKey = levels[level + 1]?.display_name;
+    const children = node[childKey];
+
+    if (Array.isArray(children)) {
+      flattenTreeToEntries(children, levels, level + 1, id, entries);
     }
   });
 
@@ -443,13 +450,16 @@ function flattenTreeToEntries(tree, levels, level = 0, parentId = null, entries 
 }
 
 
+
 function areNodesDifferent(original, current) {
-  
   return (
-    original.display_name?.trim() !== current.display_name?.trim() ||
-    (original.parentId || null) !== (current.parentId || null)
+    original.display_name !== current.display_name ||
+    original.parentId !== current.parentId ||
+    original.level !== current.level
   );
 }
+
+
 
 async function deleteNodes(nodes) {
   console.log('deleting (deprecating)');
@@ -468,89 +478,92 @@ async function updateNodes(nodes) {
 }
 
 async function createNodes(nodes) {
-  const idMap = {}; // tempId -> real ID
+  const idMap = {}; // tempId → real Box ID
   setNodesToCreate(nodes.length);
 
   // Step 1: Assign tempIds to all NEW nodes
   let tempCounter = 0;
   for (const node of nodes) {
-    if (node.id === 'NEW') {
-      node.tempId = `temp_${tempCounter++}`;
+    if (node.id.startsWith('NEW')) {
+      node.tempId = node.id; // Preserve "NEW_5" or "NEW_6"
     }
   }
 
-  // Step 2: Fix up parentId references
+  // Step 2: Build level-indexed groups
+  const levelGroups = {};
   for (const node of nodes) {
-    if (node.parentId === 'NEW') {
-      // Find the most recent NEW node at level - 1
-      const potentialParent = nodes.find(
-        n =>
-          n.id === 'NEW' &&
-          n.level === node.level - 1
-      );
-
-      if (potentialParent && potentialParent.tempId) {
-        node.parentId = potentialParent.tempId;
-      } else {
-        console.warn(`Unable to resolve parentId for node "${node.display_name}"`);
-      }
-    }
+    if (!levelGroups[node.level]) levelGroups[node.level] = [];
+    levelGroups[node.level].push(node);
   }
 
-  // Step 3: Sort nodes by level so parents are created before children
-  const sortedNodes = [...nodes].sort((a, b) => a.level - b.level);
+  // Step 3: Process levels in order
+  const levels = Object.keys(levelGroups).map(Number).sort((a, b) => a - b);
 
-  // Step 4: Create nodes in order
-  for (const node of sortedNodes) {
-    const resolvedParentId = idMap[node.parentId] || node.parentId;
+  for (const level of levels) {
+    for (const node of levelGroups[level]) {
+      const payload = {
+        displayName: node.display_name,
+        level: node.level
+      };
 
-    const created = await addNodeToTaxonomy(namespace, taxonomyId, {
-      ...node,
-      parentId: resolvedParentId,
-    });
+      if (node.level > 1) {
+        const parentRef = node.parent_id;  
+        const resolvedParentId = parentRef?.startsWith('NEW_') ? idMap[parentRef] : parentRef;
+      
+        if (!resolvedParentId) {
+          console.warn(`Skipping ${node.display_name}, unresolved parent_id: ${parentRef}`);
+          continue;
+        }
+      
+        payload.parentId = resolvedParentId;
+      }
+      
 
-    if (node.tempId) {
-      idMap[node.tempId] = created.id;
+      try {
+        const created = await addNodeToTaxonomy(namespace, taxonomyId, payload);
+        incrementNodesCreated();
+        if (node.tempId) {
+          idMap[node.tempId] = created.id;
+        }
+        console.log("Created:", created.display_name, "→", created.id);
+      } catch (err) {
+        console.error("Failed to create node:", payload, err);
+      }
     }
-
-    incrementNodesCreated();
   }
 }
 
 
-function buildTree(data, columns) {
-  const root = [];
-  const pointers = new Array(columns.length).fill(null);
 
-  data.forEach(row => {
-    for (let i = 0; i < columns.length; i++) {
-      const key = columns[i];
-      const value = row[key];
+function buildTree(rows, columns, level = 0) {
+  if (level >= columns.length) return [];
 
-      if (value) {
-        const node = { [key]: value, id: "NEW" };
-        if (i < columns.length - 1) node.children = [];
+  const currentColumn = columns[level];
+  const grouped = {};
 
-        if (i === 0) {
-          root.push(node);
-        } else {
-          const parent = pointers[i - 1];
-          if (parent && parent.children) {
-            parent.children.push(node);
-          }
-        }
+  for (const row of rows) {
+    const key = row[currentColumn];
+    if (!key) continue; // ✅ skip null/empty rows
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(row);
+  }
 
-        pointers[i] = node;
-        for (let j = i + 1; j < columns.length; j++) {
-          pointers[j] = null;
-        }
-        break;
-      }
+  return Object.entries(grouped).map(([value, groupRows]) => {
+    const node = {
+      id: `new_${Date.now()}_${Math.random()}`,
+      [currentColumn]: value
+    };
+
+    const children = buildTree(groupRows, columns, level + 1);
+    if (children.length > 0) {
+      node[columns[level + 1]] = children;
     }
+
+    return node;
   });
-
-  return root;
 }
+
+
 function buildSchema(columns, level = 0) {
   if (level >= columns.length) return {};
 
@@ -591,16 +604,17 @@ async function createNewTaxonomyTree(tree, levels, namespace, taxonomyKey) {
   taxonomyId = tree.key;
   const taxonomyDefinition = {
     key: tree.key,
-    display_name: tree.display_name,
+    displayName: tree.displayName,
     namespace: namespace
   };
   let newTaxonomy =  await createTaxonomy(taxonomyDefinition);
-  for (const lvl of taxonomyLevels) {
-    await addLevelToTaxonomy(namespace, taxonomyDefinition.key, {
-      display_name: lvl.display_name,
-      description:lvl.display_name
-    });
-  }    const flat = [];
+  const levelData = taxonomyLevels.map(lvl => ({
+    display_name: lvl.displayName,
+    description: lvl.displayName
+  }));
+  
+  await addLevelToTaxonomy(namespace, taxonomyKey, levelData);
+      const flat = [];
   const tempIdMap = new Map(); // Map from internal NEW index to real ID
   let tempIdCounter = 1;
 
