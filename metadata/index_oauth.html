@@ -9,6 +9,11 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script>
+    var params = new URLSearchParams(window.location.search);
+    var agentId = params.get('agentId');
+    if(agentId != null) {
+        sessionStorage.setItem("agentId", agentId);
+    }
         $(document).ready(function () {
             window.location='https://account.box.com/api/oauth2/authorize?client_id=nsjffk9hhb01flji3cg21qucbe65efoj&response_type=code&id=124092627842'
         });

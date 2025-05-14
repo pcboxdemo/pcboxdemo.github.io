@@ -55,6 +55,7 @@
         let taxonomyId;
         var nodesToCreate=0;
         var nodesCreated=0;
+        var metadataTaxonomies;
 
         $(document).ready(async function() {
            $("#import").click(function() {
@@ -91,6 +92,8 @@
                 const jsTreeNodes = convertNestedToJsTree(nestedTree, columns);
             
                 const name = file.name.replace(/\.[^/.]+$/, "");
+                originalEntries = [];
+                taxonomyId = null; 
                 $('#taxonomyKey').val(name.toLowerCase().replace(/\s+/g, '_'));
                 $('#taxonomyDisplayName').val(name);
             
@@ -224,7 +227,7 @@
                 console.error(e);
             }
           
-            let metadataTaxonomies = await getTaxonomiesByNamespace(namespace);
+            metadataTaxonomies = await getTaxonomiesByNamespace(namespace);
             metadataTaxonomies.entries.forEach(function(temp) {
                 
             $('#allTemplates').append($('<option>', {
@@ -234,7 +237,7 @@
                 
             })
                 
-            $('#saveButton').on('click', function () {
+            $('#saveButton').on('click', async function () {
               $("#loader").show();
               $(".action").prop("disabled", true);
             
@@ -243,27 +246,32 @@
             
               function flatten(nodes, level = 1, parentId = null) {
                 for (const node of nodes) {
+                  if (!node || typeof node !== 'object') continue;
+              
                   if (node.id === 'taxonomy_root') {
                     flatten(node.children || [], level, null);
                     continue;
                   }
               
+                  const levelName = taxonomyLevels[level - 1]?.displayName;
+                  const display_name = node.display_name || node[levelName] || node.text || "Unnamed";
+              
                   const entry = {
                     id: node.id,
-                    display_name: node.text,
-                    level: level,
+                    display_name,
+                    level,
                     parent_id: parentId
                   };
               
                   flattened.push(entry);
-              
-                  console.log(`📦 Flattened node:`, entry);
+                  console.log("📦 Flattened:", entry);
               
                   if (node.children?.length) {
                     flatten(node.children, level + 1, node.id);
                   }
                 }
               }
+              
               
               flatten(treeData);
             
@@ -274,16 +282,22 @@
               const currentEntries = flattened;
             
               if (originalEntries.length === 0) {
-                // new taxonomy
+                const rootNode = treeData.find(n => n.id === 'taxonomy_root');
+                const nodes = rootNode ? rootNode.children || [] : treeData;
+              
                 const newTree = {
                   key: taxonomyKey,
                   displayName,
-                  nodes: currentEntries
+                  nodes // ✅ pass actual nested tree
                 };
-                createNewTaxonomyTree(newTree, taxonomyLevels, namespace, taxonomyId);
+              
+                await createNewTaxonomyTree(newTree, taxonomyLevels, namespace, taxonomyId);
+                await refreshTaxonomyTree(namespace, taxonomyKey);
+              
                 $("#loader").hide();
                 $(".action").prop("disabled", false);
                 return;
+              
               }
             
               // update existing
@@ -308,6 +322,7 @@
             
               console.group("🔄 Taxonomy Change Detection");
               console.log("🆕 To Create", toCreate);
+              $("#nodesToCreate").html(toCreate.length);
               console.log("🗑️ To Delete", toDelete);
               console.log("✏️ To Update", toUpdate);
               console.groupEnd();
@@ -315,7 +330,8 @@
               createNodes(toCreate);
               deleteNodes(toDelete);
               updateNodes(toUpdate);
-            
+              await refreshTaxonomyTree(namespace, taxonomyId);
+
               $("#loader").hide();
               $(".action").prop("disabled", false);
             });
@@ -424,9 +440,26 @@
                   });
                                     
                   
-              
+                  async function refreshTaxonomyTree(namespace, taxonomyId) {
+                    console.log("Refreshing taxonomy tree...",taxonomyId );
+                    const taxonomy = metadataTaxonomies.entries.find(t => t.key === taxonomyId);
+                    const taxonomyJSON = await getTaxonomyByKey(namespace, taxonomyId);
+                    const nodesJson = await getNodes(namespace, taxonomyId);
+                  
+                    taxonomyLevels = taxonomyJSON.levels;
+                    originalEntries = nodesJson.entries.sort((a, b) => a.display_name.localeCompare(b.display_name));
+                    const tree = buildTreeWithLevels(taxonomyLevels, originalEntries);
+                    const jsTreeNodes = convertNestedToJsTree(tree, taxonomyLevels.map(l => l.display_name));
+                  
+                    //$('#taxonomyKey').val(taxonomy.taxonomyKey);
+                    //$('#taxonomyDisplayName').val(taxonomy.display_name);
+                    console.log(taxonomy);
+                    renderTaxonomyTree(taxonomy.display_name, jsTreeNodes, taxonomyLevels);
+                    setNodesToCreate();
+                  }
 
         })
+        
         
         function setNodesToCreate() {
             nodesToCreate = 0;

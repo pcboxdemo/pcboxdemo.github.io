@@ -8,6 +8,7 @@
     <!-- Bootstrap CSS -->
 <!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" >
 
 <!-- Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,7 +17,7 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
 <!-- jQuery CDN -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"/>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -26,6 +27,16 @@
 <!-- jQuery is already included -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script src="./lib/bundle.js"></script>
+
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.css"/>
+<script src="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.js"></script>
+<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css"/>
+<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
+<script src="metadata.js"></script>
+<link rel="stylesheet" href="import.css"/>
+
 
 <script src="lib/bundle.js"></script>
 <style>
@@ -76,6 +87,9 @@
           #sharedAgentsTable tfoot {
             display: table-header-group;
           }
+           td  {
+            text-align: left;
+          }
 </style>
 <script>
     const isDebug = new URLSearchParams(window.location.search).has("debug");
@@ -89,12 +103,45 @@ const host = isDebug
     var eid;
     var agents = [];
     let currentUserName;
+    let currentUserEmail;
     let currentUserId;
     let selectedId;
   
   
 $(document).ready(async function () {
-    loadSharedAgents();
+    $('#agentToShare').on('change', function () {
+        const selectedText = $("#agentToShare option:selected").text();
+        $('#selectedAgentName').val(selectedText);
+        $('.agentCreateList').show();
+        $('#agentToShare').prop('disabled', false).closest('.mb-3').show();
+    
+      });
+    $("#addNew").on("click", function () {
+        loadUserAgents();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('agentAddModal')).show();
+        $("#createAgentName").val(currentUserName);
+        
+    });
+
+    $('#expandAll').on('click', function () {
+        $('#agentTree .collapse').each(function () {
+        const $el = $(this);
+        if (!$el.hasClass('show')) {
+            $el.collapse('show');
+        }
+        });
+    });
+    
+    $('#collapseAll').on('click', function () {
+        $('#agentTree .collapse').each(function () {
+        const $el = $(this);
+        if ($el.hasClass('show')) {
+            $el.collapse('hide');
+        }
+        });
+    });
+
+
     try {
         const userInfo = await $.ajax({
           url: "https://api.box.com/2.0/users/me",
@@ -104,40 +151,13 @@ $(document).ready(async function () {
         });
         currentUserId = userInfo.id;
         currentUserName = userInfo.name;// + ' (' + userInfo.login + ')';
+        currentUserEmail = userInfo.login;
       } catch (e) {
         return alert("Failed to retrieve user info");
       }
-   function loadDetails(agentId) {
-        const selectedId = agentId;
-        $("#linkdiv").show();
-        const agent = agents.find(a => a.agentId?.S === selectedId);
-        console.log("agent", agent);
-        if (!agent) return;
-        $("#agentDetails").show();
-        $('#agentName').text(agent.name?.S || '');
-        $('#agentDescription').text(agent.description?.S || '');
-        $('#agentCategory').text(agent.category?.S || '');
-        $('#agentOwner').text(agent.owner?.S || '');
-        
-        if(agent.url.S) {
-            $('#agentLink').attr('href', agent.url?.S || '#');
-        }
-        else {
-            $("#linkdiv").hide();
-        }
-      
-        // Try to parse and render agentData tree
-        try {
-          const data = JSON.parse(agent.agentData?.S || '{}');
-          const iconUrl = data.icon_reference;
+      loadSharedAgents();
 
-        $("#agentIcon").attr("src", iconUrl || "").toggle(!!iconUrl);
-          $('#agentTree').html(renderTree(data));
-        } catch (err) {
-          $('#agentTree').html('<div class="text-danger">Failed to parse agentData</div>');
-        }
-        $("#copy").prop("disabled", false);
-      };
+   
       
 
       $("#copy").on("click", async function () {
@@ -154,14 +174,7 @@ $(document).ready(async function () {
         } catch (e) {
           return alert("Invalid agent data.");
         }
-      
-        // Step 1: Get current user ID
-       
-        
-       
-      
-        // Step 2: Conditionally update allowed_entities
-        if (Array.isArray(agentData.allowed_entities) && agentData.allowed_entities.length > 0) {
+       if (Array.isArray(agentData.allowed_entities) && agentData.allowed_entities.length > 0) {
           agentData.allowed_entities = [
             {
               type: "user",
@@ -172,33 +185,33 @@ $(document).ready(async function () {
       
         // Step 3: Submit new agent
         $.ajax({
-          url: "https://api.box.com/2.0/ai_agents",
-          type: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          data: JSON.stringify(agentData),
-          success: function () {
-            $("#agentMessage")
-            .removeClass("text-danger")
-            .addClass("text-success")
-            .text("Agent copied to your demo environment")
-            .stop(true, true)
-            .fadeIn(200)
-            .delay(5000)
-            .fadeOut(400);
-            $("#loader").hide();
-            $("#copy").prop("disabled", false);
-
-          },
-          error: function (xhr) {
-            let errorMsg = xhr.responseText || "Something went wrong.";
-
-            try {
-                
+            url: `${host}/copy_agent`, // your backend endpoint
+            type: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            data: JSON.stringify({
+              access_token: token,
+              agent_data: agentData,
+              agent_id: agentData.agent_id // so you know which agent to increment
+            }),
+            success: function () {
+              $("#agentMessage")
+                .removeClass("text-danger")
+                .addClass("text-success")
+                .text("Agent copied to your demo environment")
+                .stop(true, true)
+                .fadeIn(200)
+                .delay(5000)
+                .fadeOut(400);
+              $("#loader").hide();
+              $("#copy").prop("disabled", false);
+            },
+            error: function (xhr) {
+              let errorMsg = xhr.responseText || "Something went wrong.";
+          
+              try {
                 const err = JSON.parse(xhr.responseText);
-                console.log("err", err.message);
                 if (err.message) {
                   errorMsg = err.message;
                 }
@@ -206,9 +219,9 @@ $(document).ready(async function () {
                   errorMsg += `: ${err.context_info.message}`;
                 }
               } catch (e) {
-               console.log(e);
+                console.log(e);
               }
-            
+          
               $("#agentMessage")
                 .removeClass("text-success")
                 .addClass("text-danger")
@@ -217,18 +230,109 @@ $(document).ready(async function () {
                 .fadeIn(200)
                 .delay(5000)
                 .fadeOut(400);
-            $("#loader").hide();
-            $("#copy").prop("disabled", false);
-          }
+              $("#loader").hide();
+              $("#copy").prop("disabled", false);
+            }
+          });
         });
+          
+      
+      let agentIdToDelete = null;
+
+      $('#sharedAgentsTable').on('click', '.delete-btn', function () {
+        agentIdToDelete = $(this).data('id');
+        $('#confirmDeleteModal').modal('show');
       });
       
+      $('#confirmDeleteBtn').on('click', async function () {
+        if (!agentIdToDelete) return;
+      
+        try {
+            await fetch(`${host}/delete_agent`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  access_token: sessionStorage.getItem('token'), // or however you store it
+                  agent_id: agentIdToDelete
+                })
+              });
+              
+          $('#confirmDeleteModal').modal('hide');
+          const table = $('#sharedAgentsTable').DataTable();
 
-    $("#addNew").on("click", function () {
-        loadUserAgents();
-        $("#agentAddModal").modal("show");
-        $("#createAgentName").val(currentUserName);
+          const rowIndex = table.rows().eq(0).filter(function(idx) {
+            return table.cell(idx, 6).data() === agentIdToDelete; 
+          });
+          
+          table.row(rowIndex).remove().draw();
+          window.location.reload();
+        } catch (err) {
+          console.error("Failed to delete agent:", err);
+        }
+      });
+      $("#agentShareForm").on("submit", function (e) {
+        console.log("submit");  
+        e.preventDefault();
+      
+        const mode = $("#agentFormMode").val(); // "create" or "edit"
+        let agentId;
+        const iconReference = $("#iconDropdown").data("selected-icon");
+        const selectedAgentId = $("#agentId").val(); // set this for edit
         
+        if (!agentId && mode === "create") {
+            agentId= $("#agentToShare").val();
+          //return;
+        }
+      
+        const payload = {
+          access_token: accessToken,
+          industry: $("#createAgentIndustry").val(),
+          line_of_business: $("#createAgentLOB").val(),
+          name: $("#createAgentName").val(),
+          description: $("#createAgentDescription").val(),
+          url: $("#createAgentURL").val(),
+          icon_reference: iconReference,
+          agent_name: $("#selectedAgentName").val()
+        };
+      
+        if (mode === "create") {
+          payload.agent_id = agentId;
+        } else if (mode === "edit") {
+          payload.agentId = selectedAgentId; 
+        }
+      
+        const url = mode === "edit" ? `${host}/edit_agent` : `${host}/share_agent`;
+      
+        $.post(url, payload)
+          .done(function () {
+            $("#agentAddModal").modal("hide");
+      
+            $("#agentMessage")
+              .removeClass("text-danger")
+              .addClass("text-success")
+              .text(`Agent ${mode === "edit" ? "updated" : "shared"} successfully!`)
+              .stop(true, true)
+              .fadeIn(200)
+              .delay(3000)
+              .fadeOut(400, function () {
+                location.reload();
+              });
+          })
+          .fail(function (xhr) {
+            const errorMsg = xhr.responseText || "Something went wrong.";
+      
+            $("#agentMessage")
+              .removeClass("text-success")
+              .addClass("text-danger")
+              .text(`Failed to ${mode === "edit" ? "update" : "share"} agent: ${errorMsg}`)
+              .stop(true, true)
+              .fadeIn(200)
+              .delay(5000)
+              .fadeOut(400);
+          });
+      });
     });
     const boxAiIcons = [
     "logo_boxAi.png",
@@ -245,130 +349,199 @@ $(document).ready(async function () {
   const dropDownMenu = $("#iconDropdownMenu");
   
   boxAiIcons.forEach(file => {
-    const label = file.replace("logo_", "").replace(".png", "");
-    const display = label.charAt(0).toUpperCase() + label.slice(1);
-  
-    dropDownMenu.append(`
-      <li>
-        <a class="dropdown-item d-flex align-items-center icon-option" href="#" data-url="${iconBaseUrl + file}" data-label="${display}">
-          <img src="${iconBaseUrl + file}" width="20" class="me-2" />
-          ${display}
-        </a>
-      </li>
-    `);
-  });
-  
+        const label = file.replace("logo_", "").replace(".png", "");
+        const display = label.charAt(0).toUpperCase() + label.slice(1);
+    
+        dropDownMenu.append(`
+        <li>
+            <a class="dropdown-item d-flex align-items-center icon-option" href="#" data-url="${iconBaseUrl + file}" data-label="${display}">
+            <img src="${iconBaseUrl + file}" width="20" class="me-2" />
+            ${display}
+            </a>
+        </li>
+        `);
+    });
+ 
   // Update selected icon when clicked
-  dropDownMenu.on("click", ".icon-option", function (e) {
-    e.preventDefault();
-    const iconUrl = $(this).data("url");
-    const label = $(this).data("label");
+    dropDownMenu.on("click", ".icon-option", function (e) {
+        e.preventDefault();
+        const iconUrl = $(this).data("url");
+        const label = $(this).data("label");
   
-    $("#selectedIcon").attr("src", iconUrl);
-    $("#iconDropdown").contents().filter(function () {
-      return this.nodeType === 3;
-    }).remove(); // remove any old text nodes
-    $("#iconDropdown").append(` ${label}`);
+            $("#selectedIcon").attr("src", iconUrl);
+            $("#iconDropdown").contents().filter(function () {
+            return this.nodeType === 3;
+            }).remove(); // remove any old text nodes
+            $("#iconDropdown").append(` ${label}`);
+        
+            // Store for use in POST
+            $("#iconDropdown").data("selected-icon", iconUrl);
+        });
+       
   
-    // Store for use in POST
-    $("#iconDropdown").data("selected-icon", iconUrl);
-  });
-  $('#expandAll').on('click', function () {
-    $('#agentTree .collapse').each(function () {
-      const $el = $(this);
-      if (!$el.hasClass('show')) {
-        $el.collapse('show');
-      }
-    });
-  });
-  
-  $('#collapseAll').on('click', function () {
-    $('#agentTree .collapse').each(function () {
-      const $el = $(this);
-      if ($el.hasClass('show')) {
-        $el.collapse('hide');
-      }
-    });
-  });
-  
-    //$("#submitAgentShare").on("click", function () {
-        $("#agentShareForm").on("submit", function (e) {
-            e.preventDefault(); // Prevent default form submission
+       
           
-            const agentId = $("#agentToShare").val();
-            if (!agentId) {
-                //alert("Please select an agent to share.");
-                return;
-            }
-            const iconReference = $("#iconDropdown").data("selected-icon");
-
-            const payload = {
-                agent_id: agentId,
-                access_token: accessToken,
-                category: $("#createAgentCategory").val(),
-                name: $("#createAgentName").val(),
-                description: $("#createAgentDescription").val(),
-                url: $("#createAgentURL").val(),
-                icon_reference:iconReference
-
-            };
-
-        $.post(host + "/share_agent", payload, function () {
-            $("#agentAddModal").modal("hide");
-          
-            $("#agentMessage")
-              .removeClass("text-danger")
-              .addClass("text-success")
-              .text("Agent shared successfully!")
-              .stop(true, true)
-              .fadeIn(200)
-              .delay(3000)
-              .fadeOut(400);
-          }).fail(function (xhr) {
-            const errorMsg = xhr.responseText || "Something went wrong.";
-          
-            $("#agentMessage")
-              .removeClass("text-success")
-              .addClass("text-danger")
-              .text("Failed to share agent: " + errorMsg)
-              .stop(true, true)
-              .fadeIn(200)
-              .delay(5000)
-              .fadeOut(400);
-          });
-          
-    });
     function loadSharedAgentsTable(agentList) {
         const $table = $('#sharedAgentsTable').DataTable({
           data: agentList.map(agent => {
             return [
               agent.name?.S || 'Unnamed',
               agent.owner?.S || 'Unknown',
-              agent.category?.S || 'Uncategorized',
-              agent.agentId?.S || 'Unknown'
+              agent.industry?.S || '',
+              agent.lob?.S || '',
+              '',
+              agent.description?.S || '',
+              agent.agentId?.S || 'Unknown',
+              agent.userId?.S || '' // hidden column, used for permission check
+
+              
             ];
           }),
           destroy: true, // reinitialize safely
-          pageLength: 8,
+          pageLength: 10,
           columns: [
             { title: "Name" },
             { title: "Owner" },
-            { title: "Category" },
-            { title: 'agentId', visible: false }
+            { title: "Industry" },
+            { title: "LOB" },
+            { title: "Actions", orderable: false, searchable: false }, // buttons go here
+            { title: "Description",visible:false,searchable: true  },
+            { title: 'agentId', visible: false },
+            { title: 'userId', visible: false },
+
 
           ],
-          dom: 'lrtip' // ← removes the main search box ("f")
-
+          columnDefs: [
+          
+          { targets: [5, 6,7], visible: false }, // hide Description & Agent ID
+          {
+            targets: 4, // Actions column
+            className: 'text-end',
+            render: function (data, type, row) {
+              const agentId = row[6]; // agentId
+              const rowUserId = row[7]; // userId
+          
+              const editBtn = `
+               <button class="btn btn-xs btn-link p-0 me-1 text-primary edit-btn" title="Edit" data-id="${agentId}">
+                <i class="fas fa-edit"></i>
+                </button>
+              `;
+              const deleteBtn = `
+               <button class="btn btn-xs btn-link p-0 text-danger delete-btn" title="Delete" data-id="${agentId}">
+                <i class="fas fa-trash-alt"></i>
+                </button>
+              `;
+              const linkBtn = `
+                <button class="btn btn-xs btn-link p-0 text-secondary permalink-btn" title="Copy Link" data-id="${agentId}">
+                    <i class="fas fa-link"></i>
+                    </button>
+              `;
+          
+              if (rowUserId === currentUserEmail) {
+                return editBtn + deleteBtn + linkBtn;
+              } else {
+                return linkBtn;
+              }
+            }
+          }
+          
+            ],
+          
+        
+          dom: 'lfrtip', // ← removes the main search box ("f")
+          initComplete: function () {
+            const presetAgentId = sessionStorage.getItem("agentId");
+            if (!presetAgentId) return;
+            sessionStorage.removeItem("agentId");
+            const table = this.api();
+            const rowIndex = table.rows().eq(0).filter(function (idx) {
+              return table.cell(idx, 6).data() === presetAgentId;
+            });
+        
+            if (rowIndex.length) {
+              const rowNode = table.row(rowIndex).node();
+              $(rowNode).addClass('selected');
+        
+              // Jump to page
+              const rowPosition = table.row(rowIndex).index();
+              const pageIndex = Math.floor(rowPosition / table.page.len());
+              table.page(pageIndex).draw(false);
+        
+              // Show details
+              loadDetails(presetAgentId);
+            }
+          }
         });
-      
+       
+          
+        $('#sharedAgentsTable').on('click', '.permalink-btn', function (e) {
+            e.preventDefault();
+            const agentId = $(this).data('id');
+            const permalink = `${window.location.origin}${window.location.pathname}?agent=${agentId}`;
+          
+            navigator.clipboard.writeText(permalink).then(() => {
+              $("#agentMessage")
+                .removeClass("text-danger")
+                .addClass("text-success")
+                .text("Link copied to clipboard")
+                .stop(true, true)
+                .fadeIn(200)
+                .delay(3000)
+                .fadeOut(400);
+            }).catch(err => {
+              console.error("Failed to copy link:", err);
+              alert("Could not copy the link.");
+            });
+          });
+          
+        $('#createAgentModal').on('hidden.bs.modal', function () {
+            $('#agentFormMode').val('create');
+            $('#agentId').val('');
+            $('#agentForm')[0].reset();
+            $('#agentModalTitle').text('Create Agent');
+            $('#saveAgentBtn').text('Save');
+          });
+          
+        $('#sharedAgentsTable').on('click', '.edit-btn', function () {
+            const table = $('#sharedAgentsTable').DataTable();
+            const rowData = table.row($(this).closest('tr')).data();
+          
+            // Extract values from columns (adjust index if needed)
+            const [name, owner, industry, lob, action,description, agentId] = rowData;
+            console.log(rowData);
+            // Set mode and ID
+            $('#agentFormMode').val('edit');
+            $('#agentId').val(agentId);
+            $('#agentToShare').prop('disabled', true).closest('.mb-3').hide();
+
+            $(".agentCreateList").hide();
+
+
+            $("#agentAddModalLabel").text("Edit Agent");
+          
+            // Fill form fields
+            $('#createAgentName').val(owner);
+            //$('#agentOwner').val(owner);
+            $('#createAgentIndustry').val(industry);
+            $('#createAgentLOB').val(lob);
+            $('#createAgentDescription').val(description);
+          
+            // Update UI
+            $('#agentModalTitle').text('Edit Agent');
+            $('#submitAgentShare').text('Update');
+          
+            // Show the modal
+            $('#agentAddModal').modal('show');
+          });
+          
         // Optional: handle row click
         $('#sharedAgentsTable tbody').on('click', 'tr', function () {
           $table.$('tr.selected').removeClass('selected');
           $(this).addClass('selected');
       
           const rowData = $table.row(this).data();
-          selectedId = rowData[3]; // agentId is in the 4th column
-          loadDetails(rowData[3]); // agentId is in the 4th column
+          selectedId = rowData[6]; // agentId is in the 4th column
+          loadDetails(rowData[6]); // agentId is in the 4th column
         });
         populateAgentFilters(agents);
         $('#nameFilter').on('keyup', function () {
@@ -379,9 +552,14 @@ $(document).ready(async function () {
             $('#sharedAgentsTable').DataTable().column(1).search(this.value).draw();
           });
           
-          $('#categoryFilter').on('change', function () {
+          $('#industryFilter').on('change', function () { // ✅ fixed spelling
             $('#sharedAgentsTable').DataTable().column(2).search(this.value).draw();
           });
+          
+          $('#lobFilter').on('change', function () {
+            $('#sharedAgentsTable').DataTable().column(3).search(this.value).draw();
+          });
+          
       }
       
 
@@ -395,7 +573,7 @@ $(document).ready(async function () {
     }
    
       
-});
+
 
 
 
@@ -431,7 +609,8 @@ $(document).ready(async function () {
         } else {
         html += `
             <div class="ms-${level}">
-            <strong>${snakeToLabel(key)}:</strong> <code>${String(value)}</code>
+            <strong>${snakeToLabel(key)}:</strong> <code>${String(value).replace(/\n/g, '<br>')}</code>
+
             </div>
         `;
         }
@@ -473,13 +652,48 @@ $(document).ready(async function () {
             }
         });
     }
+    function loadDetails(agentId) {
+        const selectedId = agentId;
+        $("#linkdiv").show();
+        const agent = agents.find(a => a.agentId?.S === selectedId);
+        console.log("agent", agent);
+        if (!agent) return;
+        $("#agentDetails").show();
+        $('#agentName').text(agent.name?.S || '');
+        $('#agentDescription').text(agent.description?.S || '');
+        $('#agentIndustry').text(agent.industry?.S || '');
+        $('#agentIndustry').text(agent.lob?.S || '');
+        $('#agentOwner').text(agent.owner?.S || '');
+        $('#agentCopyCount').text(agent.copyCount?.N || 0);
+        
+        if(agent.url.S) {
+            $('#agentLink').attr('href', agent.url?.S || '#');
+        }
+        else {
+            $("#linkdiv").hide();
+        }
+      
+        // Try to parse and render agentData tree
+        try {
+          const data = JSON.parse(agent.agentData?.S || '{}');
+          const iconUrl = data.icon_reference;
+
+        $("#agentIcon").attr("src", iconUrl || "").toggle(!!iconUrl);
+          $('#agentTree').html(renderTree(data));
+        } catch (err) {
+          $('#agentTree').html('<div class="text-danger">Failed to parse agentData</div>');
+        }
+        $("#copy").prop("disabled", false);
+      };
     function populateAgentFilters(agents) {
         const owners = new Set();
-        const categories = new Set();
+        const industries = new Set();
+        const lobs = new Set();
       
         agents.forEach(agent => {
           if (agent.owner?.S) owners.add(agent.owner.S);
-          if (agent.category?.S) categories.add(agent.category.S);
+          if (agent.industry?.S) industries.add(agent.industry.S);
+          if (agent.lob?.S) lobs.add(agent.lob.S);
         });
       
         const $owner = $('#ownerFilter').empty().append(`<option value="">All Owners</option>`);
@@ -487,9 +701,13 @@ $(document).ready(async function () {
           $owner.append(`<option value="${owner}">${owner}</option>`);
         });
       
-        const $category = $('#categoryFilter').empty().append(`<option value="">All Categories</option>`);
-        [...categories].sort().forEach(category => {
-          $category.append(`<option value="${category}">${category}</option>`);
+        const $industry = $('#industryFilter').empty().append(`<option value="">All Industries</option>`);
+        [...industries].sort().forEach(industry => {
+          $industry.append(`<option value="${industry}">${industry}</option>`);
+        });
+        const $lob = $('#lobFilter').empty().append(`<option value="">All LOBs</option>`);
+        [...lobs].sort().forEach(lob => {
+          $lob.append(`<option value="${lob}">${lob}</option>`);
         });
       }
       
@@ -502,17 +720,9 @@ $(document).ready(async function () {
     }
     
 
-</script>
+
 
 </script>
-<script src="./lib/bundle.js"></script>
-
-    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.css"/>
-<script src="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.js"></script>
-<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css"/>
-<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
-<script src="metadata.js"></script>
-<link rel="stylesheet" href="import.css"/>
 
 
 </head>
@@ -580,7 +790,9 @@ $(document).ready(async function () {
                                   <tr>
                                     <th>Name</th>
                                     <th>Owner</th>
-                                    <th>Category</th>
+                                    <th>Industry</th>
+                                    <th>LOB</th>
+                                    <th>Actions</th>
                                   </tr>
                                 </thead>
                                 <tfoot>
@@ -588,16 +800,22 @@ $(document).ready(async function () {
                                       <th><input type="text" id="nameFilter" class="form-control form-control-sm" placeholder="Search name" /></th>
                                       <th>
                                         <select id="ownerFilter" class="form-select form-select-sm w-auto">
-                                            html
-                                            Copy
-                                            Edit
+
                                                                                       <option value="">All Owners</option>
                                         </select>
                                       </th>
                                       <th>
-                                        <select id="categoryFilter" class="form-select form-select-sm w-auto">
-                                            <option value="">All Categories</option>
+                                        <select id="industryFilter" class="form-select form-select-sm w-auto">
+                                            <option value="">All Industries</option>
                                         </select>
+                                      </th>
+                                      <th>
+                                        <select id="lobFilter" class="form-select form-select-sm w-auto">
+                                            <option value="">All LOBs</option>
+                                        </select>
+                                      </th>
+                                      <th>
+                                      
                                       </th>
                                     </tr>
                                   </tfoot>
@@ -611,15 +829,18 @@ $(document).ready(async function () {
                     <div id="agentDetails" class="mt-3" style="display:none;">
                         <!-- Row 1: Name, Category, Link -->
                         <div class="row g-2 text-start mb-1">
-                            <div class="col-md-3"><strong>Name:</strong> <br/><span id="agentName"></span></div>
-                            <div class="col-md-2"><strong>Category:</strong> <br/><span id="agentCategory"></span></div>
-                            <div class="col-md-2" id="linkdiv"><strong>Info:</strong> <br/><a id="agentLink" href="#" target="_blank">Open</a> (needs corp credentials)</div>
-                            <div class="col-md-3"><strong>Owner:</strong> <br/><span id="agentOwner"></span></div>
+                            <div class="col-md-2"><strong>Name:</strong> <br/><span id="agentName"></span></div>
+                            <div class="col-md-2"><strong>Industry:</strong> <br/><span id="agentIndustry"></span></div>
+                            <div class="col-md-2"><strong>LOB:</strong> <br/><span id="agentLOB"></span></div>
+                            <div class="col-md-2" id="linkdiv"><strong>Info:</strong> <br/><a id="agentLink" href="#" target="_blank">Open</a></div>
+                            <div class="col-md-2"><strong>Owner:</strong> <br/><span id="agentOwner"></span></div>
                             <div class="col-md-2">
                                 <strong>Icon:</strong><br/>
                                 <img id="agentIcon" src="" alt="Icon" class="rounded border" title="Agent icon" style="height: 32px;" />
 
                               </div>
+                              <div class="col-md-2"><strong>Copy Count:</strong> <br/><span id="agentCopyCount" class="text-end">0</span></div>
+
                         </div>
                         
                         <!-- Row 2: Description (full width) -->
@@ -650,7 +871,7 @@ $(document).ready(async function () {
 
                 <div class="section  gap-2 mb-2">
                     <div class="button-section d-grid gap-2">
-                        <button class="btn btn-primary action" id="copy" disabled>Copy</button>
+                        <button class="btn btn-primary action" id="copy" disabled>Copy Selected</button>
                         <img src="ajax-loader.gif" id="loader" style="display:none;" width="32" height="32"/>
                         <button class="btn btn-primary action" id="addNew">Add new Agent</button>
                       </div>
@@ -667,78 +888,117 @@ $(document).ready(async function () {
        
        
     </div>
-
-    <!-- Bootstrap JS and dependencies -->
-
-
-<div class="modal fade" id="agentAddModal" tabindex="-1" role="dialog" aria-labelledby="agentAddModalLabel" aria-hidden="true" style="display: none;">
-    <div class="modal-dialog modal-lg-wider" role="document">
-        <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Share Your Agent</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        
-        <form id="agentShareForm">
-          <div class="mb-3">
-            <label for="agentToShare" class="form-label">Select Your Agent to Share *</label>
-            <select id="agentToShare" class="form-select" size="3" required>
-                
-
-
-
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="createAgentCategory" class="form-label">Category *</label>
-            <select class="form-select" id="createAgentCategory" size="3" required>
-                <option value="Legal">Legal</option>
-                <option value="Finsrv">Finsrv</option>
-                <option value="Public">Public Sector</option>
-                <option value="Manufacturing">Manufacturing</option>  
-                <option value="ME">Media and Entertainment</option>  
-                
-            </select>
-          </div>
-          <div class="mb-3">
-            <strong>Icon</strong>
-            <div class="dropdown">
-              <button
-                class="btn btn-outline-secondary dropdown-toggle"
-                type="button"
-                id="iconDropdown"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <img id="selectedIcon" src="https://cdn01.boxcdn.net/app-assets/aistudio/avatars/logo_boxAi.png" width="20" class="me-2" />
-                BoxAi
-              </button>
-              <ul class="dropdown-menu" id="iconDropdownMenu" aria-labelledby="iconDropdown"></ul>
+    <div class="modal fade" id="agentAddModal" tabindex="-1" aria-labelledby="agentAddModalLabel" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg-wider"> <!-- Adjust width if needed -->
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="agentAddModalLabel"><i class="bi bi-plus-circle"></i> Share Your Agent</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+      
+            <form id="agentShareForm">
+              <div class="modal-body">
+                <input type="hidden" id="agentFormMode" value="create">
+                <input type="hidden" id="agentId">
+      
+                <div class="mb-3 agentCreateList">
+                  <label for="agentToShare" class="form-label">Select Your Agent to Share *</label>
+                  <select id="agentToShare" class="form-select" size="3" required></select>
+                </div>
+      
+                <div class="mb-3 agentCreateList" id="agentNameContainer" style="display: none;">
+                  <label for="selectedAgentName" class="form-label">Selected Agent Name</label>
+                  <input type="text" id="selectedAgentName" class="form-control" />
+                </div>
+      
+                <!-- Row: Industry + LOB -->
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="createAgentIndustry" class="form-label">Industry</label>
+                    <select class="form-select" id="createAgentIndustry" size="3">
+                      <option value="Financial Services">Financial Services</option>
+                      <option value="Higher Education">Higher Education</option>
+                      <option value="Legal">Legal</option>
+                      <option value="Life Sciences">Life Sciences</option>
+                      <option value="Manufacturing">Manufacturing</option>
+                      <option value="Media & Entertainment">Media & Entertainment</option>
+                      <option value="Non-profit">Non-profit</option>
+                      <option value="Other Industry">Other Industry</option>
+                      <option value="Professional Services">Professional Services</option>
+                      <option value="Public Sector">Public Sector</option>
+                      <option value="Retail & CPG">Retail & CPG</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="createAgentLOB" class="form-label">Line of Business</label>
+                    <select class="form-select" id="createAgentLOB" size="3">
+                      <option value="Corporate legal">Corporate legal</option>
+                      <option value="Finance">Finance</option>
+                      <option value="HR">HR</option>
+                      <option value="Marketing">Marketing</option>
+                      <option value="Operations">Operations</option>
+                      <option value="Other LOB">Other LOB</option>
+                      <option value="R&D and Engineering">R&D and Engineering</option>
+                      <option value="Sales">Sales</option>
+                    </select>
+                  </div>
+                </div>
+      
+                <!-- Row: Icon + Name + URL -->
+                <div class="row mb-3 align-items-end">
+                  <div class="col-md-4">
+                    <label class="form-label">Icon</label>
+                    <div class="dropdown">
+                      <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="iconDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img id="selectedIcon" src="https://cdn01.boxcdn.net/app-assets/aistudio/avatars/logo_boxAi.png" width="20" class="me-2" />
+                        BoxAi
+                      </button>
+                      <ul class="dropdown-menu" id="iconDropdownMenu" aria-labelledby="iconDropdown"></ul>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="createAgentName" class="form-label">Your Name *</label>
+                    <input type="text" class="form-control" id="createAgentName" required />
+                  </div>
+                  <div class="col-md-4">
+                    <label for="createAgentURL" class="form-label">Box Note URL (optional)</label>
+                    <input type="url" class="form-control" id="createAgentURL" />
+                  </div>
+                </div>
+      
+                <!-- Full-width Description -->
+                <div class="mb-3">
+                  <label for="createAgentDescription" class="form-label">Short Description *</label>
+                  <textarea class="form-control" id="createAgentDescription" rows="2" required></textarea>
+                </div>
+              </div>
+      
+              <div class="modal-footer">
+                <button id="submitAgentShare" type="submit" class="btn btn-primary">Share Agent</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </form>
           </div>
-          <div class="mb-3">
-            <label for="createAgentName" class="form-label">Your name *</label>
-            <input type="text" class="form-control" id="createAgentName" required/>
-          </div>
-          <div class="mb-2">
-            <label for="createAgentURL" class="form-label">Box note with more info</label>
-            <input type="url" class="form-control form-control-sm" id="createAgentURL"/>
-          </div>
-          <div class="mb-3">
-            <label for="createAgentDescription" class="form-label">Short Description *</label>
-            <textarea class="form-control" id="createAgentDescription" rows="2" required></textarea>
-          </div>
-        
+        </div>
       </div>
-      <div class="modal-footer">
-        <button id="submitAgentShare" class="btn btn-primary">Share Agent</button>
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      
+
+
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="agentDeleteModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Confirm Delete</h5></div>
+        <div class="modal-body">
+          Are you sure you want to delete this agent?
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+        </div>
       </div>
     </div>
-</form>
   </div>
-</div>
+  
 
 </body>
 </html>

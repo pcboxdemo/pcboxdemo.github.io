@@ -51,6 +51,9 @@
             var params = new URLSearchParams(window.location.search);
             var token = params.get('token');
             var code = params.get('code');
+            if(sessionStorage.getItem("agentId")!=null) {
+                window.location.href = "/metadata/agents.html";
+               }
             if(code!=null) {
              sessionStorage.setItem("host","https://box-tokenegenrator-v2.herokuapp.com")
             
@@ -68,6 +71,7 @@
                sessionStorage.setItem("refreshToken",response.refreshToken);
                $("#loader").hide();
                $(".container").show();
+               
                
               },
               error: function(err) {

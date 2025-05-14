@@ -279,9 +279,78 @@ async function getTemplateInstanceMetadata(fileId, scope, templateKey) {
   return await response.json();
 }
 
+function buildTreeFromFlatList(levels, entries) {
+  const levelNames = levels.map(l => l.display_name);
+  const nodeMap = {};
+  const root = [];
 
+  // First pass: map all nodes by ID
+  entries.forEach(entry => {
+    nodeMap[entry.id] = {
+      [levelNames[entry.level - 1]]: entry.display_name,
+      children: []
+    };
+  });
 
+  // Second pass: link children to parents
+  entries.forEach(entry => {
+    const node = nodeMap[entry.id];
+    if (entry.parentId) {
+      const parent = nodeMap[entry.parentId];
+      if (parent) parent.children.push(node);
+    } else {
+      root.push(node);
+    }
+  });
 
+  return root;
+}
+
+function buildSchemaFromLevels(levels, index = 0) {
+  if (index >= levels.length) return {};
+
+  const currentKey = levels[index].display_name;
+  const nextLevel = levels[index + 1]?.display_name;
+
+  const schema = {
+    type: "object",
+    title: "", // hides "item 1"
+    object_layout: "grid",
+    properties: {
+      id: {
+        type: "string",
+        default: "NEW",
+        options: { hidden: true },
+        //readOnly: true
+      },
+      [currentKey]: {
+        type: "string",
+        title: currentKey
+      }
+    },
+    required: [currentKey]
+  };
+
+  if (nextLevel) {
+    const isLastLevel = index + 1 === levels.length - 1;
+
+    schema.properties[nextLevel] = {
+      type: "array",
+      title: nextLevel, // enables "Add City"
+      format: isLastLevel ? "table" : undefined,
+      items: {
+        ...buildSchemaFromLevels(levels, index + 1),
+        title: nextLevel // ✅ keep this for button labels
+      }
+    };
+
+    if (isLastLevel) {
+      schema.properties[nextLevel].items.properties[nextLevel].title = "";
+    }
+  }
+
+  return schema;
+}
 
 
 
@@ -347,18 +416,50 @@ function buildTreeFromFlatList(levels, entries) {
 
   return root;
 }
+function flattenTreeToEntries(tree, levels, level = 0, parentId = null, entries = []) {
+  if (level >= levels.length) return entries;
 
+  const levelKey = levels[level].display_name;
+
+  tree.forEach(node => {
+    if (!node || typeof node !== 'object') return;
+
+    if (!node.id || node.id === 'NEW') {
+      node.id = `NEW_${entries.length}`;
+    }
+
+    const id = node.id;
+    const name = node[levelKey] || node.display_name || "Unnamed";
+
+    entries.push({
+      id: id,
+      display_name: name,
+      level: level + 1,
+      parentId: parentId
+    });
+
+    const childKey = levels[level + 1]?.display_name;
+    const children = node[childKey];
+
+    if (Array.isArray(children)) {
+      flattenTreeToEntries(children, levels, level + 1, id, entries);
+    }
+  });
+
+  return entries;
+}
 
 
 
 function areNodesDifferent(original, current) {
-  return (
-    original.display_name !== current.display_name ||
-    original.parentId !== current.parentId ||
-    original.level !== current.level
-  );
-}
+  const origName = (original.display_name || "").trim();
+  const currName = (current.display_name || "").trim();
 
+  const origParent = original.parentId ?? null;
+  const currParent = current.parentId ?? null;
+
+  return origName !== currName || origParent !== currParent;
+}
 
 
 async function deleteNodes(nodes) {
@@ -407,17 +508,13 @@ async function createNodes(nodes) {
       };
 
       if (node.level > 1) {
-        const parentRef = node.parent_id;  
-        const resolvedParentId = parentRef?.startsWith('NEW_') ? idMap[parentRef] : parentRef;
-      
-        if (!resolvedParentId) {
-          console.warn(`Skipping ${node.display_name}, unresolved parent_id: ${parentRef}`);
-          continue;
+        const resolvedParentId = idMap[node.parentId] || node.parentId;
+        if (!resolvedParentId || resolvedParentId.startsWith('NEW')) {
+          console.warn(`Skipping ${node.display_name}, unresolved parentId: ${node.parentId}`);
+          continue; // Skip now, reattempt later if needed
         }
-      
         payload.parentId = resolvedParentId;
       }
-      
 
       try {
         const created = await addNodeToTaxonomy(namespace, taxonomyId, payload);
@@ -435,78 +532,126 @@ async function createNodes(nodes) {
 
 
 
-function buildTree(rows, columns, level = 0) {
-  if (level >= columns.length) return [];
+function buildTree(data, columns) {
+  const root = [];
+  const pointers = new Array(columns.length).fill(null);
 
-  const currentColumn = columns[level];
-  const grouped = {};
+  data.forEach(row => {
+    for (let i = 0; i < columns.length; i++) {
+      const key = columns[i];
+      const value = row[key];
 
-  for (const row of rows) {
-    const key = row[currentColumn];
-    if (!key) continue; // ✅ skip null/empty rows
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(row);
+      if (value) {
+        const node = { [key]: value, id: "NEW" };
+        if (i < columns.length - 1) node.children = [];
+
+        if (i === 0) {
+          root.push(node);
+        } else {
+          const parent = pointers[i - 1];
+          if (parent && parent.children) {
+            parent.children.push(node);
+          }
+        }
+
+        pointers[i] = node;
+        for (let j = i + 1; j < columns.length; j++) {
+          pointers[j] = null;
+        }
+        break;
+      }
+    }
+  });
+
+  return root;
+}
+function buildSchema(columns, level = 0) {
+  if (level >= columns.length) return {};
+
+  const key = columns[level];
+
+  const schema = {
+    type: "object",
+    object_layout: "grid",
+    title: key,
+    properties: {
+      id: {
+        type: "string",
+        default: "NEW",
+        readOnly: true,
+        options: { hidden: true }
+      },
+      [key]: { type: "string", title: key }
+    }
+  };
+
+  if (level < columns.length - 1) {
+    schema.properties.children = {
+      type: "array",
+      title: columns[level + 1],
+      format: level + 1 === columns.length - 1 ? 'table' : undefined,
+      items: buildSchema(columns, level + 1)
+    };
   }
 
-  return Object.entries(grouped).map(([value, groupRows]) => {
-    const node = {
-      id: `new_${Date.now()}_${Math.random()}`,
-      [currentColumn]: value
-    };
-
-    const children = buildTree(groupRows, columns, level + 1);
-    if (children.length > 0) {
-      node[columns[level + 1]] = children;
-    }
-
-    return node;
-  });
+  return schema;
 }
-
-
-
 
   
 
 
 
 async function createNewTaxonomyTree(tree, levels, namespace, taxonomyKey) {
-  const displayName = $('#taxonomyDisplayName').val().trim() || tree.displayName || "New Taxonomy";
-  const key = $('#taxonomyKey').val().trim() || taxonomyKey || "new_taxonomy";
-  taxonomyId = key;
-
-  // 1. Create the taxonomy
+  taxonomyId = tree.key;
   const taxonomyDefinition = {
-    key,
-    displayName,
-    namespace
+    key: tree.key,
+    displayName: tree.displayName,
+    namespace: namespace
   };
-  const newTaxonomy = await createTaxonomy(taxonomyDefinition);
-
-  // 2. Add all levels
-  const levelData = levels.map(lvl => ({
-    displayName: lvl.displayName,
+  let newTaxonomy =  await createTaxonomy(taxonomyDefinition);
+  const levelData = taxonomyLevels.map(lvl => ({
+    display_name: lvl.displayName,
     description: lvl.displayName
   }));
-  await addLevelToTaxonomy(namespace, taxonomyId, levelData);
+  
+  await addLevelToTaxonomy(namespace, taxonomyKey, levelData);
+      const flat = [];
+  const tempIdMap = new Map(); // Map from internal NEW index to real ID
+  let tempIdCounter = 1;
 
-  // 3. Flatten the tree using tempId/parentTempId
-  const flat = flattenForCreate(tree.nodes, levels);
+  // First, flatten with internal IDs to track hierarchy
+  function flatten(nodeList, level = 0, parentTempId = null) {
+    const key = levels[level].display_name;
+    nodeList.forEach(node => {
+      const tempId = `temp-${tempIdCounter++}`;
+      const display_name = node[key];
+
+      flat.push({
+        tempId,
+        display_name,
+        level: level + 1,
+        parentTempId
+      });
+
+      if (Array.isArray(node.children)) {
+        flatten(node.children, level + 1, tempId);
+      }
+    });
+  }
+
+  flatten(tree.nodes);
   setNodesToCreate(flat.length);
-
-  const tempIdMap = new Map();
-
-  // 4. Create nodes in order
+  // Then create nodes in order and map tempId → real id
   for (const entry of flat) {
     const nodePayload = {
-      displayName: entry.display_name,
+      display_name: entry.display_name,
       level: entry.level
     };
 
     if (entry.parentTempId) {
       const parentRealId = tempIdMap.get(entry.parentTempId);
       if (!parentRealId) {
-        console.error("Missing parent ID for:", entry);
+        console.error("Missing parent ID for", entry);
         continue;
       }
       nodePayload.parentId = parentRealId;
@@ -516,44 +661,11 @@ async function createNewTaxonomyTree(tree, levels, namespace, taxonomyKey) {
       const realNode = await addNodeToTaxonomy(namespace, taxonomyId, nodePayload);
       incrementNodesCreated();
       tempIdMap.set(entry.tempId, realNode.id);
-      console.log("Created:", realNode.display_name, "→", realNode.id);
+      console.log("✅ Created:", realNode);
     } catch (err) {
-      console.error("Failed to create node:", nodePayload, err);
+      console.error(" Failed to create node:", nodePayload, err);
     }
   }
 
-  console.log("✅ All nodes created for new taxonomy!");
-}
-
-
-function flattenForCreate(tree, levels) {
-  const flat = [];
-  let tempIdCounter = 1;
-
-  function walk(nodes, level = 0, parentTempId = null) {
-    const levelName = levels[level]?.displayName;
-
-    for (const node of nodes) {
-      const tempId = `temp-${tempIdCounter++}`;
-      const display_name = node[levelName] || node.display_name || node.text || "Unnamed";
-
-      flat.push({
-        tempId,
-        display_name,
-        level: level + 1,       // ✅ correct level assignment
-        parentTempId: parentTempId || null  // ✅ maintain hierarchy
-      });
-
-      const childKey = levels[level + 1]?.displayName;
-      const children = node[childKey] || node.children;
-
-      if (Array.isArray(children)) {
-        walk(children, level + 1, tempId);
-      }
-
-    }
-  }
-
-  walk(tree);
-  return flat;
+  console.log("All nodes created!");
 }
