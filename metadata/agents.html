@@ -512,6 +512,7 @@ $(document).ready(async function () {
             const [name, owner, industry, lob, action,description, agentId] = rowData;
             console.log(rowData);
             // Set mode and ID
+            $("#selectedAgentName").val(name);
             $('#agentFormMode').val('edit');
             $('#agentId').val(agentId);
             $('#agentToShare').prop('disabled', true).closest('.mb-3').hide();
@@ -908,7 +909,7 @@ $(document).ready(async function () {
                   <select id="agentToShare" class="form-select" size="3" required></select>
                 </div>
       
-                <div class="mb-3 agentCreateList" id="agentNameContainer" style="display: none;">
+                <div class="mb-3" id="agentNameContainer" >
                   <label for="selectedAgentName" class="form-label">Selected Agent Name</label>
                   <input type="text" id="selectedAgentName" class="form-control" />
                 </div>
