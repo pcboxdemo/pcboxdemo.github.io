@@ -333,52 +333,54 @@ $(document).ready(async function () {
               .fadeOut(400);
           });
       });
-    });
-    const boxAiIcons = [
-    "logo_boxAi.png",
-    "logo_stamp.png",
-    "logo_legal.png",
-    "logo_finance.png",
-    "logo_config.png",
-    "logo_handshake.png",
-    "logo_analytics.png",
-    "logo_classification.png"
-  ];
-  
-  const iconBaseUrl = "https://cdn01.boxcdn.net/app-assets/aistudio/avatars/";
-  const dropDownMenu = $("#iconDropdownMenu");
-  
-  boxAiIcons.forEach(file => {
-        const label = file.replace("logo_", "").replace(".png", "");
-        const display = label.charAt(0).toUpperCase() + label.slice(1);
+
+      const boxAiIcons = [
+      "logo_boxAi.png",
+      "logo_stamp.png",
+      "logo_legal.png",
+      "logo_finance.png",
+      "logo_config.png",
+      "logo_handshake.png",
+      "logo_analytics.png",
+      "logo_classification.png"
+    ];
     
-        dropDownMenu.append(`
-        <li>
-            <a class="dropdown-item d-flex align-items-center icon-option" href="#" data-url="${iconBaseUrl + file}" data-label="${display}">
-            <img src="${iconBaseUrl + file}" width="20" class="me-2" />
-            ${display}
-            </a>
-        </li>
-        `);
+    const iconBaseUrl = "https://cdn01.boxcdn.net/app-assets/aistudio/avatars/";
+    const dropDownMenu = $("#iconDropdownMenu");
+    
+    boxAiIcons.forEach(file => {
+          const label = file.replace("logo_", "").replace(".png", "");
+          const display = label.charAt(0).toUpperCase() + label.slice(1);
+      
+          dropDownMenu.append(`
+          <li>
+              <a class="dropdown-item d-flex align-items-center icon-option" href="#" data-url="${iconBaseUrl + file}" data-label="${display}">
+              <img src="${iconBaseUrl + file}" width="20" class="me-2" />
+              ${display}
+              </a>
+          </li>
+          `);
+      });
+   
+    // Update selected icon when clicked
+      dropDownMenu.on("click", ".icon-option", function (e) {
+          e.preventDefault();
+          const iconUrl = $(this).data("url");
+          const label = $(this).data("label");
+    
+              $("#selectedIcon").attr("src", iconUrl);
+              $("#iconDropdown").contents().filter(function () {
+              return this.nodeType === 3;
+              }).remove(); // remove any old text nodes
+              $("#iconDropdown").append(` ${label}`);
+          
+              // Store for use in POST
+              $("#iconDropdown").data("selected-icon", iconUrl);
+          });
+         
+    
     });
- 
-  // Update selected icon when clicked
-    dropDownMenu.on("click", ".icon-option", function (e) {
-        e.preventDefault();
-        const iconUrl = $(this).data("url");
-        const label = $(this).data("label");
-  
-            $("#selectedIcon").attr("src", iconUrl);
-            $("#iconDropdown").contents().filter(function () {
-            return this.nodeType === 3;
-            }).remove(); // remove any old text nodes
-            $("#iconDropdown").append(` ${label}`);
-        
-            // Store for use in POST
-            $("#iconDropdown").data("selected-icon", iconUrl);
-        });
-       
-  
+   
        
           
     function loadSharedAgentsTable(agentList) {
