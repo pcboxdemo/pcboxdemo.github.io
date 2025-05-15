@@ -90,6 +90,28 @@
            td  {
             text-align: left;
           }
+          
+            .tooltip .tooltip-inner {
+              background-color: #0d6efd !important; /* Bootstrap primary */
+              color: white !important;
+              font-size: 0.875rem;
+              border-radius: 0.25rem;
+            }
+            
+            .tooltip.bs-tooltip-top .tooltip-arrow::before {
+              border-top-color: #0d6efd !important;
+            }
+            .tooltip.bs-tooltip-bottom .tooltip-arrow::before {
+              border-bottom-color: #0d6efd !important;
+            }
+            .tooltip.bs-tooltip-start .tooltip-arrow::before {
+              border-left-color: #0d6efd !important;
+            }
+            .tooltip.bs-tooltip-end .tooltip-arrow::before {
+              border-right-color: #0d6efd !important;
+            }
+            
+            
 </style>
 <script>
     const isDebug = new URLSearchParams(window.location.search).has("debug");
@@ -445,13 +467,31 @@ $(document).ready(async function () {
                 return linkBtn;
               }
             }
+          },
+          {
+            targets: 0, // Name column
+            render: function (data, type, row) {
+              const description = row[5] || ''; // Assuming description is column index 5 (hidden)
+              const safeDescription = $('<div>').text(description).html(); // Escape HTML safely
+              return `
+                ${data}
+                <i class="fas fa-circle-info  ms-2 text-primary"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="top"
+                   title="${safeDescription}">
+                </i>
+              `;
+            }
           }
+          
           
             ],
           
         
           dom: 'lfrtip', // ← removes the main search box ("f")
           initComplete: function () {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
             const presetAgentId = localStorage.getItem("agentId");
             if (!presetAgentId) return;
             localStorage.removeItem("agentId");
@@ -474,6 +514,11 @@ $(document).ready(async function () {
             }
           }
         });
+        $('#sharedAgentsTable').on('draw.dt', function () {
+            console.log("draw");
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+          });
        
           
         $('#sharedAgentsTable').on('click', '.permalink-btn', function (e) {
