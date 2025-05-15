@@ -153,7 +153,7 @@ $(document).ready(async function () {
         currentUserName = userInfo.name;// + ' (' + userInfo.login + ')';
         currentUserEmail = userInfo.login;
       } catch (e) {
-        return alert("Failed to retrieve user info");
+        return alert("Login problem. Please re-login.");    
       }
       loadSharedAgents();
 
@@ -477,7 +477,7 @@ $(document).ready(async function () {
         $('#sharedAgentsTable').on('click', '.permalink-btn', function (e) {
             e.preventDefault();
             const agentId = $(this).data('id');
-            const permalink = `https://pcboxdemo.github.io/metadata/index_oauth.html?agent=${agentId}`;
+            const permalink = `https://pcboxdemo.github.io/metadata/index_oauth.html?agentId=${agentId}`;
           
             navigator.clipboard.writeText(permalink).then(() => {
               $("#agentMessage")
