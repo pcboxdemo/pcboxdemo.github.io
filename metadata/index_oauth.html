@@ -11,8 +11,9 @@
   <script>
     var params = new URLSearchParams(window.location.search);
     var agentId = params.get('agentId');
+    let state='';
     if(agentId != null) {
-        sessionStorage.setItem("agentId", agentId);
+        localStorage.setItem("agentId", agentId);
     }
         $(document).ready(function () {
             window.location='https://account.box.com/api/oauth2/authorize?client_id=nsjffk9hhb01flji3cg21qucbe65efoj&response_type=code&id=124092627842'

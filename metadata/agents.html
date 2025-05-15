@@ -450,9 +450,9 @@ $(document).ready(async function () {
         
           dom: 'lfrtip', // ← removes the main search box ("f")
           initComplete: function () {
-            const presetAgentId = sessionStorage.getItem("agentId");
+            const presetAgentId = localStorage.getItem("agentId");
             if (!presetAgentId) return;
-            sessionStorage.removeItem("agentId");
+            localStorage.removeItem("agentId");
             const table = this.api();
             const rowIndex = table.rows().eq(0).filter(function (idx) {
               return table.cell(idx, 6).data() === presetAgentId;
@@ -477,7 +477,7 @@ $(document).ready(async function () {
         $('#sharedAgentsTable').on('click', '.permalink-btn', function (e) {
             e.preventDefault();
             const agentId = $(this).data('id');
-            const permalink = `${window.location.origin}${window.location.pathname}?agent=${agentId}`;
+            const permalink = `https://pcboxdemo.github.io/metadata/index_oauth.html?agent=${agentId}`;
           
             navigator.clipboard.writeText(permalink).then(() => {
               $("#agentMessage")
