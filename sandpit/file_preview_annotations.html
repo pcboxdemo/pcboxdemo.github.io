@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<!-- polyfill.io only loads the polyfills your browser needs -->
+	
+	<!-- Alternatively, use polyfills hosted on the Box CDN
+     <script src="https://cdn01.boxcdn.net/polyfills/bluebird/3.5.1/bluebird.min.js"></script>
+     -->
+
+	<!-- Latest version of Box Content Preview for en-US locale -->
+	<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/preview.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/preview.css" />
+	
+	
+	<!--script src="https://cdn01.boxcdn.net/platform/preview/2.106.0/en-US/preview.js"></script>
+	<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/2.106.0/en-US/preview.css" />-->
+		<script type="module" src="annotations.js"></script>
+	 <link rel="stylesheet" href="annotations.css" />
+	<style>
+		
+	</style>
+	<script>
+		var accessToken;
+	
+
+		$(document).ready(function() {
+			
+				accessToken = '';//response.userToken;
+				var contentSidebarProps = {
+					hasActivityFeed: true,
+					hasMetadata: true,
+					features: {
+					  activityFeed: {
+						annotations: {
+						  enabled: true
+						}
+					  }
+					},
+					detailsSidebarProps: {
+						hasProperties:true,
+						hasAccessStats:true,
+						hasVersions:true,
+						hasNotices:true
+					}
+				  };
+				  var annotations = new BoxAnnotations();		  
+				  var options = {
+					container: ".pcontainer",
+					header:'dark',
+					contentSidebarProps: contentSidebarProps,
+					enableAnnotationsDiscoverability: true,
+					enableAnnotationsImageDiscoverability: true,
+					showAnnotations: true,
+					showAnnotationsControls: true,
+					showAnnotationsDrawingCreate: true,
+					showDownload:true
+
+					
+				  };
+				  
+				 
+				  /* Box Preview */
+				  var contentPreviewer = new Box.ContentPreview();
+
+				  /* Set annotation into previewer */
+				  options["boxAnnotations"] = annotations;
+
+				  contentPreviewer.show('1609530990718', accessToken, options);
+
+				  console.log(contentPreviewer);
+				  console.log(annotations);
+		});
+		
+	</script>
+</head>
+
+<body>
+	
+	
+	<div class="tab-pane show active mts" role="tabpanel" id="explorer">
+
+		<div style="height:800px;width:90vw;display:block" class="pcontainer"></div>
+	</div>
+	<a id="rep" href="" download></a>
+</body>
+
+</html>
