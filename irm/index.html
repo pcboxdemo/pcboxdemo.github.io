@@ -1,0 +1,422 @@
+<html>
+
+<head>
+  <script>
+    console.log('JavaScript is running');
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<style>
+ .banner {
+    background-color: #0061d5;
+    color: white;
+    padding: 15px 0;
+    margin-bottom: 20px;
+ }
+ .banner h4 {
+    margin: 0;
+ }
+ .uf {
+    list-style-image: url('Folder-32.png');
+    list-style-type: none;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 5px;
+ }
+ .pf {
+    list-style-image: none;
+    margin-left: -10px;
+    list-style-type: none;
+    margin-bottom: 3px;
+ }
+ .file {
+    list-style-image: none;
+    list-style-type: none;
+ }
+ .panel-body {
+    height: auto !important;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+ }
+ .remove {
+    cursor:pointer;
+ }
+ .collapsed > ul {
+    display: none;
+ }
+ .folder-icon {
+    display: inline-block;
+    width: 16px;
+    text-align: center;
+    margin-right: 5px;
+    font-family: monospace;
+ }
+ .folder-icon:before {
+    content: "\25BC";  /* Unicode down triangle */
+ }
+ .collapsed .folder-icon:before {
+    content: "\25B6";  /* Unicode right triangle */
+ }
+ .folder-container {
+    margin-left: 20px;
+    padding-left: 0;
+ }
+ .files-container {
+    margin-left: 20px;
+    padding-left: 0;
+    margin-top: 2px;
+ }
+ #loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+ }
+ #loader .spinner-border {
+    display: block;
+    margin: 0 auto 10px auto;
+ }
+ </style>
+ <script>
+console.log('Before jQuery ready check');
+if (typeof jQuery === 'undefined') {
+    console.error('jQuery is not loaded!');
+} else {
+    console.log('jQuery is loaded, version:', jQuery.fn.jquery);
+}
+
+var token;
+var hasIRM = false;
+var totalFolders = 0;
+var totalFiles = 0;
+var processedFiles = 0;
+
+// Add queue processing function
+async function processQueue(items, concurrency = 4) {
+  const results = [];
+  const inProgress = new Set();
+  const queue = [...items];
+  
+  while (queue.length > 0 || inProgress.size > 0) {
+    while (inProgress.size < concurrency && queue.length > 0) {
+      const item = queue.shift();
+      const promise = processFile(item.file, item.action).then(result => {
+        inProgress.delete(promise);
+        processedFiles++;
+        updateProcessingStatus();
+        return result;
+      });
+      inProgress.add(promise);
+      results.push(promise);
+    }
+    await Promise.race(inProgress);
+  }
+  
+  return Promise.all(results);
+}
+
+async function processFile(file, action) {
+  const nameParts = file.name.split('.');
+  const ext = nameParts.pop();
+  const baseName = nameParts.join('.');
+  
+  let newName;
+  if(action === 'apply') {
+    // Only add _IRM if it's not already there
+    newName = baseName.endsWith('_IRM') ? `${baseName}.${ext}` : `${baseName}_IRM.${ext}`;
+  } else {
+    // Remove _IRM if present
+    newName = `${baseName.replace('_IRM', '')}.${ext}`;
+  }
+
+  // Only rename if the name would actually change
+  if(newName !== file.name) {
+    try {
+      await $.ajax({
+        url: `https://api.box.com/2.0/files/${file.id}`,
+        type: 'put',
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/json"
+        },
+        data: JSON.stringify({
+          name: newName
+        })
+      });
+      console.log(`Renamed ${file.name} to ${newName}`);
+      return true;
+    } catch(error) {
+      console.error(`Failed to rename ${file.name}:`, error);
+      throw error;
+    }
+  }
+  return false;
+}
+
+function updateProcessingStatus() {
+  const percent = Math.round((processedFiles / totalFiles) * 100);
+  $("#status").html(`Processing: ${processedFiles}/${totalFiles} files (${percent}%)`);
+}
+
+function updateTotalCounts() {
+  $("#counts").html(`
+    <span class="mr-4">
+      <i class="bi bi-folder"></i> ${totalFolders} folders
+    </span>
+    <span>
+      <i class="bi bi-file-earmark"></i> ${totalFiles} files
+    </span>
+  `);
+}
+
+async function getItems(folderId, parentId, countOnly = false) {
+  console.log('Getting items for folder:', folderId);
+  try {
+    const response = await $.ajax({
+      url: 'https://api.box.com/2.0/folders/' + folderId + '/items?fields=id,name,type',
+      type: 'get',
+      headers: {
+        "Authorization":"Bearer " + token,
+        "Content-Type":"application/json"
+      },
+      dataType: 'json'
+    });
+    
+    if (!response.entries || !response.entries.length) {
+      return;
+    }
+
+    const folders = response.entries.filter(item => item.type === 'folder');
+    const files = response.entries.filter(item => item.type === 'file');
+    
+    totalFolders += folders.length;
+    totalFiles += files.length;
+    
+    if (!countOnly) {
+      // Process folders
+      for (const folder of folders) {
+        const folderHtml = `
+          <ul id="${folder.id}" class="folder-container">
+            <li class="uf">
+              <span class="folder-icon"></span>${folder.name}
+            </li>
+          </ul>
+        `;
+        $("#" + folderId).append(folderHtml);
+        await getItems(folder.id, folderId);
+      }
+
+      // Process files
+      if (files.length > 0) {
+        const filesList = $("<ul class='files-container'></ul>");
+        for (const file of files) {
+          const fileHtml = `
+            <li class="pf">
+              <img height=16 width=16 src="iconsbox/${file.name.split('.').pop().toLowerCase()}.svg"/>
+              ${file.name}
+            </li>
+          `;
+          filesList.append(fileHtml);
+        }
+        $("#" + folderId).append(filesList);
+      }
+    } else {
+      // Recursively count items in subfolders
+      for (const folder of folders) {
+        await getItems(folder.id, folderId, true);
+      }
+    }
+
+  } catch(error) {
+    console.error('Error getting items for folder:', folderId, error);
+    throw error;
+  }
+}
+
+async function processAllFiles(folderId, action) {
+  const filesToProcess = [];
+  
+  async function collectFiles(currentFolderId) {
+    const response = await $.ajax({
+      url: 'https://api.box.com/2.0/folders/' + currentFolderId + '/items?fields=id,name,type',
+      type: 'get',
+      headers: {
+        "Authorization":"Bearer " + token
+      }
+    });
+
+    for(const item of response.entries) {
+      if(item.type === 'folder') {
+        await collectFiles(item.id);
+      } else if(item.type === 'file') {
+        filesToProcess.push({ file: item, action });
+      }
+    }
+  }
+
+  await collectFiles(folderId);
+  processedFiles = 0;
+  await processQueue(filesToProcess, 4); // Process 4 files concurrently
+}
+
+$(document).ready(async function () {
+    console.log('Document ready');
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get('id');
+    token = params.get('access_token');
+    
+    if (!token) {
+      console.error('No access token provided');
+      $("#status").text("Error: No access token provided");
+      return;
+    }
+    
+    if (!id) {
+      console.error('No folder ID provided in URL');
+      $("#status").text("Error: No folder ID provided");
+      return;
+    }
+
+    // Clear and initialize the top level
+    $("#TopLevel")
+      .empty()
+      .attr("id", id)
+      .append('<li class="uf"><span class="folder-icon"></span>Top Level</li>');
+    
+    try {
+      // First pass to count total items
+      await getItems(id, id, true);
+      updateTotalCounts();
+      
+      // Second pass to build tree
+      totalFolders = 0;
+      totalFiles = 0;
+      await getItems(id, id);
+      updateTotalCounts();
+      
+      // Check metadata template
+      const metadata = await $.ajax({
+        url: `https://api.box.com/2.0/folders/${id}/metadata/enterprise/salesforceMapping`,
+        type: 'get',
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      });
+      
+      hasIRM = metadata.irm === "Yes";
+      $("#irmButton")
+        .text(hasIRM ? "Remove IRM" : "Apply IRM")
+        .show();
+        
+    } catch(error) {
+      console.error('Error:', error);
+      if(error.status === 404) {
+        $("#status").text("Error: salesforceMapping metadata template not found on folder");
+      } else {
+        $("#status").text("Error: " + error.statusText);
+      }
+      $("#irmButton").hide();
+    }
+    
+    $("#irmButton").click(async function() {
+      const action = hasIRM ? "remove" : "apply";
+      if(!confirm(`Are you sure you want to ${action} IRM to all files?`)) return;
+      
+      $(this).prop('disabled', true);
+      $("#status").text(`Preparing to ${action} IRM...`);
+      
+      try {
+        await processAllFiles(id, action);
+        
+        // Update the metadata template
+        await $.ajax({
+          url: `https://api.box.com/2.0/folders/${id}/metadata/enterprise/salesforceMapping`,
+          type: 'put',
+          headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json-patch+json"
+          },
+          data: JSON.stringify([
+            { op: "replace", path: "/irm", value: action === 'apply' ? "Yes" : "No" }
+          ])
+        });
+        
+        hasIRM = !hasIRM;
+        $("#irmButton")
+          .text(hasIRM ? "Remove IRM" : "Apply IRM")
+          .prop('disabled', false);
+        $("#status").text(`IRM ${action} complete!`);
+        
+        // Refresh the tree
+        $("#" + id).empty()
+          .append('<li class="uf"><span class="folder-icon"></span>Top Level</li>');
+        totalFolders = 0;
+        totalFiles = 0;
+        
+        // First pass to count total items
+        await getItems(id, id, true);
+        updateTotalCounts();
+        
+        // Second pass to build tree
+        totalFolders = 0;
+        totalFiles = 0;
+        await getItems(id, id);
+        updateTotalCounts();
+        
+      } catch(error) {
+        console.error(`Error ${action}ing IRM:`, error);
+        $("#status").text(`Error ${action}ing IRM. Check console for details.`);
+        $(this).prop('disabled', false);
+      }
+    });
+});
+ </script>
+</head>
+
+<body>
+  <div id="loader" style="display:none;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+    <div>Loading...</div>
+  </div>
+
+  <div class="banner">
+    <div class="container">
+      <h4><i class="bi bi-shield-lock"></i> Box IRM Manager</h4>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div id="buttons" class="mb-4">
+        <button id="irmButton" class="btn btn-primary" style="display:none;">
+          <i class="bi bi-shield-lock"></i>
+          <span class="button-text">Apply IRM</span>
+        </button>
+        <span id="counts" class="ml-3"></span>
+        <span id="status" class="ml-3"></span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="panel-body" id="index">
+        <ul class="init uf" id="TopLevel">Top Level</ul>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
