@@ -12,7 +12,7 @@
         $(document).ready(function () {
             var params = new URLSearchParams(window.location.search);
             sessionStorage.setItem("id",params.get("id"));
-            window.location='https://account.box.com/api/oauth2/authorize?client_id=qm978w2d7f8yghbf3s2cq4np88slbjl1&response_type=code&id=' + params.get("id")
+            window.location='https://account.box.com/api/oauth2/authorize?client_id=qm978w2d7f8yghbf3s2cq4np88slbjl1&response_type=code&state=' + params.get("id")
         });
     </script>
 
