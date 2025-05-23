@@ -275,28 +275,53 @@ async function processAllFiles(folderId, action) {
 $(document).ready(async function () {
     console.log('Document ready');
     var params = new URLSearchParams(window.location.search);
+    var auth = params.get('auth');
     var id = params.get('id');
-    token = params.get('access_token');
+    var clientId = params.get('clientId');
     
-    if (!token) {
-      console.error('No access token provided');
-      $("#status").text("Error: No access token provided");
-      return;
-    }
-    
-    if (!id) {
-      console.error('No folder ID provided in URL');
-      $("#status").text("Error: No folder ID provided");
+    if (!auth || !id || !clientId) {
+      console.error('Missing required parameters');
+      $("#status").text("Error: Missing required parameters (auth, id, or clientId)");
       return;
     }
 
-    // Clear and initialize the top level
-    $("#TopLevel")
-      .empty()
-      .attr("id", id)
-      .append('<li class="uf"><span class="folder-icon"></span>Top Level</li>');
-    
     try {
+      // Get token from AWS endpoint
+      await $.ajax({
+        method: 'get',
+        url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+        data: { 
+          authCode: auth, 
+          id: id, 
+          clientId: clientId 
+        },
+        crossDomain: true,
+        cache: false,
+        beforeSend: function () {
+          $('#loader').show();
+          $(".container").hide();
+        },
+        complete: function () {
+          $('#loader').hide();
+          $(".container").show();
+        },
+        success: function (response) {
+          token = response.token;
+        }
+      });
+
+      if (!token) {
+        console.error('No token received from endpoint');
+        $("#status").text("Error: Failed to get access token");
+        return;
+      }
+
+      // Clear and initialize the top level
+      $("#TopLevel")
+        .empty()
+        .attr("id", id)
+        .append('<li class="uf"><span class="folder-icon"></span>Top Level</li>');
+      
       // First pass to count total items
       await getItems(id, id, true);
       updateTotalCounts();
@@ -326,7 +351,7 @@ $(document).ready(async function () {
       if(error.status === 404) {
         $("#status").text("Error: salesforceMapping metadata template not found on folder");
       } else {
-        $("#status").text("Error: " + error.statusText);
+        $("#status").text("Error: " + (error.responseJSON?.message || error.statusText || "Unknown error"));
       }
       $("#irmButton").hide();
     }
