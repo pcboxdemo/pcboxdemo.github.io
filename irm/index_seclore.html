@@ -1,0 +1,148 @@
+<html>
+
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+ .banner {
+    background-color: #0061d5;
+    color: white;
+    padding: 15px 0;
+    margin-bottom: 20px;
+ }
+ .banner h4 {
+    margin: 0;
+ }
+ #loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+ }
+ #loader .spinner-border {
+    display: block;
+    margin: 0 auto 10px auto;
+ }
+ .download-container {
+    text-align: center;
+    margin-top: 50px;
+ }
+ #downloadButton {
+    font-size: 1.2em;
+    padding: 15px 30px;
+ }
+ #status {
+    margin-top: 20px;
+    font-weight: bold;
+ }
+ </style>
+ <script>
+$(document).ready(async function () {
+    console.log('Document ready');
+    var params = new URLSearchParams(window.location.search);
+    var auth = params.get('code');
+    var id = params.get('state');
+    var clientId = params.get('clientId');
+    
+    if (!auth || !id || !clientId) {
+      console.error('Missing required parameters');
+      $("#status").text("Error: Missing required parameters (auth, id, or clientId)");
+      return;
+    }
+
+    try {
+      // Get token from AWS endpoint
+      await $.ajax({
+        method: 'get',
+        url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+        data: { 
+          authCode: auth, 
+          id: id, 
+          clientId: clientId 
+        },
+        crossDomain: true,
+        cache: false,
+        beforeSend: function () {
+          $('#loader').show();
+          $(".container").hide();
+        },
+        complete: function () {
+          $('#loader').hide();
+          $(".container").show();
+        },
+        success: function (response) {
+          window.token = response.token;
+          $("#downloadButton").prop('disabled', false);
+        }
+      });
+
+      if (!window.token) {
+        console.error('No token received from endpoint');
+        $("#status").text("Error: Failed to get access token");
+        return;
+      }
+        
+    } catch(error) {
+      console.error('Error:', error);
+      $("#status").text("Error: " + (error.responseJSON?.message || error.statusText || "Unknown error"));
+      $("#downloadButton").prop('disabled', true);
+    }
+    
+    $("#downloadButton").click(async function() {
+      if(!window.token) {
+        $("#status").text("Error: No authentication token available");
+        return;
+      }
+      
+      $(this).prop('disabled', true);
+      $("#status").text("Downloading protected file...");
+      
+      try {
+        // Here you would implement the actual file download logic using the Box API
+        // This is a placeholder - implement the actual download logic as needed
+        $("#status").text("Download functionality to be implemented");
+      } catch(error) {
+        console.error('Error downloading file:', error);
+        $("#status").text("Error downloading file. Please try again.");
+      } finally {
+        $(this).prop('disabled', false);
+      }
+    });
+});
+ </script>
+</head>
+
+<body>
+  <div id="loader" style="display:none;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+    <div>Loading...</div>
+  </div>
+
+  <div class="banner">
+    <div class="container">
+      <h4><i class="bi bi-shield-lock"></i> Protected File Download</h4>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="download-container">
+      <button id="downloadButton" class="btn btn-primary" disabled>
+        <i class="bi bi-download"></i>
+        Download Protected File
+      </button>
+      <div id="status" class="text-center"></div>
+    </div>
+  </div>
+</body>
+
+</html>
