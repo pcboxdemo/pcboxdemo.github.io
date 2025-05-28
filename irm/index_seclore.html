@@ -49,7 +49,7 @@ $(document).ready(async function () {
     console.log('Document ready');
     var params = new URLSearchParams(window.location.search);
     var auth = params.get('code');
-    var id = params.get('state');
+    var id = params.get('id');
     var clientId = params.get('clientId');
     
     if (!auth || !id || !clientId) {
