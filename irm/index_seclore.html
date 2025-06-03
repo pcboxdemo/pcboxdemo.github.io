@@ -33,7 +33,7 @@
  }
  .download-container {
     text-align: center;
-    margin-top: 50px;
+    margin-top: 20px;
  }
  #downloadButton {
     font-size: 1.2em;
@@ -43,6 +43,53 @@
     margin-top: 20px;
     font-weight: bold;
  }
+ .folder-tree {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+ }
+ .tree-item {
+    margin: 5px 0;
+    padding: 3px 0;
+ }
+ .tree-folder {
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+ }
+ .tree-folder .bi-chevron-down,
+ .tree-folder .bi-chevron-right {
+    transition: transform 0.2s;
+    margin-right: 5px;
+ }
+ .tree-folder:hover {
+    background-color: #f0f0f0;
+ }
+ .tree-file {
+    margin-left: 20px;
+ }
+ .folder-content {
+    margin-left: 20px;
+ }
+ .folder-icon {
+    margin-right: 5px;
+ }
+ .checkbox-wrapper {
+    margin-right: 8px;
+ }
+ .collapsed .folder-content {
+    display: none;
+ }
+ .selected-count {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #666;
+ }
+ .folder-controls {
+    margin-bottom: 10px;
+ }
  </style>
  <script>
 $(document).ready(async function () {
@@ -51,6 +98,7 @@ $(document).ready(async function () {
     var auth = params.get('code');
     var id = params.get('id');
     var clientId = params.get('clientId');
+    var ext = params.get('ext');
     
     if (!auth || !id || !clientId) {
       console.error('Missing required parameters');
@@ -62,7 +110,8 @@ $(document).ready(async function () {
       // Get token from AWS endpoint
       await $.ajax({
         method: 'get',
-        url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+        //url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+        url: "https://box-tokengenerator-v2.herokuapp.com/ping",
         data: { 
           authCode: auth, 
           id: id, 
@@ -79,24 +128,157 @@ $(document).ready(async function () {
           $(".container").show();
         },
         success: function (response) {
-          window.token = response.token;
-          $("#downloadButton").prop('disabled', false);
+          console.log('Token received successfully');
+          //window.token = response.token;
+          window.token = '1!xI6zIQypdiaHuEEbrRDilzAl17gA8SnB5S573vj9eULOKhdyD_-JpgM2zxmMB6BCnoKemFxhD5fiZRSJzBptOtuAzUWFC4A8F7a7uVCIxbA3L1O9tEqCpa2cq4fLW0Qd3z9sDOdoM1iXC-lcOCbBoC2leabjKG_IL4EqqTahYtdm6aS6nZB8SkxrPjCWmCYGfFU8yvBF6lPQUSabLkligLyqpPllZi4jg8Ft5oENvlu7FfhBTEc45Xb12ii1q85GqRGdAT8yQTR-QhZ2c59aqJoyI07hShqnpz7ndwp82qks5PUH4Ta1On6WVQuV7cu-n9Qfos8qGjMNb58FvlS7tCaeoeqz4jH4hDKlosEYvuaHYTQlzJs8Qc3HvO26RKLnmaqzOPkKgpauBP1h2Iob01dQsdEaKMG_qtJyoJPU4T1ZbPDYgMLpIklHEDjXfCHSO8uP-OCQPSG2rtYTwPo2Av9KvCuXXWpp8WtsLRVfKZFv7J-QPIeI-RKwh50Jy2rsdAySmEUsOFn81u6hoH7nmotEMG5wKW_bouaH6R8nlSlsOvRrgbNwui1CFpQHbOBgk1XOhX3c8D1XDqj11ms7mal3PlFhwq9acqtKvRFvvjGvCEMjgnYn7aKwA0j2YSd7XcHs9N_yo_4cb2lDXqLkmPsuV0WvzPSfZ6viJ2gaqsYiopphIkSTBW47019etxToltuoHdgmgu1v818gxOfh7pujzdNNagnAS34gPYrgB0PZFZE-0H1DGhjOFwCc4FN3ta0V0gqNlz0GRSPGnRz20ikXg5NwsY9D3JMoVaZVBek47rAd3yfLGEnXddKcJG-woX8SdO69ZGNkcWUf1cog4diY6g3L80PBbqgRRoAm4igTU4NyI40FOZYLMVXxFHnMWm1sJx6NBMAzQ6eO';
+          $("#singleFileDownload").prop('disabled', false);
+        },
+        error: function(xhr, status, error) {
+          console.warn('Auth failed, using debug token');
+          console.error('Auth Error Details:', {
+            status: xhr.status,
+            statusText: xhr.statusText,
+            responseText: xhr.responseText,
+            error: error
+          });
+          // Debug token fallback
+          
+          $("#singleFileDownload").prop('disabled', false);
+          $("#status").text(`Auth Error: ${xhr.responseJSON?.message || xhr.statusText || 'Unknown error'} (Using debug token)`);
         }
       });
 
       if (!window.token) {
-        console.error('No token received from endpoint');
-        $("#status").text("Error: Failed to get access token");
-        return;
+        throw new Error('No token available after authentication attempt');
+      }
+
+      // Show appropriate view based on ext parameter
+      if (ext) {
+        console.log('Showing single file view');
+        $("#folderView").hide();
+        $("#fileView").show();
+      } else {
+        console.log('Showing folder view, loading contents for folder:', id);
+        $("#fileView").hide();
+        $("#folderView").show();
+        
+        // Add expand/collapse all controls
+        const controls = $('<div>').addClass('folder-controls').html(`
+          <button class="btn btn-sm btn-outline-secondary mr-2" id="expandAll">
+            <i class="bi bi-chevron-down"></i> Expand All
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" id="collapseAll">
+            <i class="bi bi-chevron-right"></i> Collapse All
+          </button>
+        `);
+        $("#folderTree").before(controls);
+        
+        // Add click handlers for expand/collapse all
+        $("#expandAll").click(function() {
+          $('.tree-item').removeClass('collapsed');
+          $('.tree-folder .bi-chevron-right')
+            .removeClass('bi-chevron-right')
+            .addClass('bi-chevron-down');
+        });
+        
+        $("#collapseAll").click(function() {
+          $('.tree-item').addClass('collapsed');
+          $('.tree-folder .bi-chevron-down')
+            .removeClass('bi-chevron-down')
+            .addClass('bi-chevron-right');
+        });
+        
+        await loadFolderContents(id);
       }
         
     } catch(error) {
       console.error('Error:', error);
       $("#status").text("Error: " + (error.responseJSON?.message || error.statusText || "Unknown error"));
-      $("#downloadButton").prop('disabled', true);
+      $("#singleFileDownload").prop('disabled', true);
     }
-    
-    $("#downloadButton").click(async function() {
+
+    // Function to load folder contents recursively
+    async function loadFolderContents(folderId, parentElement = $("#folderTree")) {
+      try {
+        const response = await $.ajax({
+          url: `https://api.box.com/2.0/folders/${folderId}/items`,
+          headers: {
+            "Authorization": "Bearer " + window.token
+          }
+        });
+
+        for (const item of response.entries) {
+          const itemId = item.id;
+          const itemElement = $('<div>').addClass('tree-item');
+          const checkbox = $('<input>').attr({
+            type: 'checkbox',
+            'data-id': itemId,
+            'data-type': item.type
+          }).addClass('item-checkbox');
+          const checkboxWrapper = $('<span>').addClass('checkbox-wrapper').append(checkbox);
+
+          if (item.type === 'folder') {
+            const folderDiv = $('<div>').addClass('tree-folder');
+            const icon = $('<i>').addClass('bi bi-folder folder-icon');
+            const chevron = $('<i>').addClass('bi bi-chevron-down');
+            const folderContent = $('<div>').addClass('folder-content');
+            
+            folderDiv.append(checkboxWrapper, chevron, icon, item.name);
+            itemElement.append(folderDiv, folderContent);
+            
+            // Add click handler for folder collapse/expand
+            folderDiv.click(function(e) {
+              if (e.target.type !== 'checkbox') {
+                const $this = $(this);
+                const chevronIcon = $this.find('.bi-chevron-down, .bi-chevron-right');
+                
+                if ($this.parent().hasClass('collapsed')) {
+                  chevronIcon.removeClass('bi-chevron-right').addClass('bi-chevron-down');
+                } else {
+                  chevronIcon.removeClass('bi-chevron-down').addClass('bi-chevron-right');
+                }
+                
+                $this.parent().toggleClass('collapsed');
+              }
+            });
+
+            // Add change handler for checkbox
+            checkbox.change(function() {
+              const isChecked = $(this).prop('checked');
+              $(this).closest('.tree-item').find('.item-checkbox').prop('checked', isChecked);
+              updateSelectedCount();
+            });
+
+            // Load subfolder contents
+            await loadFolderContents(itemId, folderContent);
+          } else {
+            const fileDiv = $('<div>').addClass('tree-file');
+            const icon = $('<i>').addClass('bi bi-file-earmark file-icon');
+            fileDiv.append(checkboxWrapper, icon, item.name);
+            itemElement.append(fileDiv);
+
+            // Add change handler for checkbox
+            checkbox.change(function() {
+              updateSelectedCount();
+            });
+          }
+
+          parentElement.append(itemElement);
+        }
+      } catch (error) {
+        console.error('Error loading folder contents:', error);
+        $("#status").text("Error loading folder contents");
+      }
+    }
+
+    function updateSelectedCount() {
+      const selectedFiles = $('.item-checkbox[data-type="file"]:checked').length;
+      const selectedFolders = $('.item-checkbox[data-type="folder"]:checked').length;
+      $('.selected-count').text(`Selected: ${selectedFiles} files, ${selectedFolders} folders`);
+    }
+
+    // Single file download handler
+    $("#singleFileDownload").click(async function() {
       if(!window.token) {
         $("#status").text("Error: No authentication token available");
         return;
@@ -106,12 +288,65 @@ $(document).ready(async function () {
       $("#status").text("Downloading protected file...");
       
       try {
-        // Here you would implement the actual file download logic using the Box API
-        // This is a placeholder - implement the actual download logic as needed
-        $("#status").text("Download functionality to be implemented");
+        const downloadUrl = `http://localhost:8080/api/processBoxFile?fileId=${id}&token=${window.token}`;
+        
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.target = '_blank';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        $("#status").text("Download started!");
+        
       } catch(error) {
         console.error('Error downloading file:', error);
         $("#status").text("Error downloading file. Please try again.");
+      } finally {
+        $(this).prop('disabled', false);
+      }
+    });
+
+    // Folder download handler
+    $("#folderDownload").click(async function() {
+      if(!window.token) {
+        $("#status").text("Error: No authentication token available");
+        return;
+      }
+      
+      $(this).prop('disabled', true);
+      $("#status").text("Processing selected items...");
+      
+      try {
+        const selectedItems = $('.item-checkbox:checked').map(function() {
+          return {
+            id: $(this).data('id'),
+            type: $(this).data('type')
+          };
+        }).get();
+
+        if (selectedItems.length === 0) {
+          $("#status").text("Please select at least one item to download");
+          return;
+        }
+
+        const downloadUrl = `http://localhost:8080/api/processBoxFile?folderId=${id}&token=${window.token}`;
+        
+        // Send selected items to backend
+        await $.ajax({
+          url: downloadUrl,
+          method: 'POST',
+          data: JSON.stringify({ selectedItems }),
+          contentType: 'application/json',
+          success: function(response) {
+            $("#status").text("Download request processed successfully!");
+          }
+        });
+        
+      } catch(error) {
+        console.error('Error processing folder download:', error);
+        $("#status").text("Error processing download request. Please try again.");
       } finally {
         $(this).prop('disabled', false);
       }
@@ -135,13 +370,31 @@ $(document).ready(async function () {
   </div>
 
   <div class="container">
-    <div class="download-container">
-      <button id="downloadButton" class="btn btn-primary" disabled>
-        <i class="bi bi-download"></i>
-        Download Protected File
-      </button>
-      <div id="status" class="text-center"></div>
+    <!-- Single File View -->
+    <div id="fileView" style="display:none;">
+      <div class="download-container">
+        <button id="singleFileDownload" class="btn btn-primary" disabled>
+          <i class="bi bi-download"></i>
+          Download Protected File
+        </button>
+      </div>
     </div>
+
+    <!-- Folder View -->
+    <div id="folderView" style="display:none;">
+      <div class="folder-tree">
+        <div id="folderTree"></div>
+        <div class="selected-count">Selected: 0 files, 0 folders</div>
+      </div>
+      <div class="download-container">
+        <button id="folderDownload" class="btn btn-primary" disabled>
+          <i class="bi bi-download"></i>
+          Download Selected Items
+        </button>
+      </div>
+    </div>
+
+    <div id="status" class="text-center"></div>
   </div>
 </body>
 
