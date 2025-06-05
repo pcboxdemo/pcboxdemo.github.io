@@ -110,8 +110,8 @@ $(document).ready(async function () {
       // Get token from AWS endpoint
       await $.ajax({
         method: 'get',
-        //url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
-        url: "https://box-tokengenerator-v2.herokuapp.com/ping",
+        url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+        //url: "https://box-tokengenerator-v2.herokuapp.com/ping",
         data: { 
           authCode: auth, 
           id: id, 
