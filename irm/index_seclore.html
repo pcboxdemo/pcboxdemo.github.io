@@ -130,8 +130,9 @@ $(document).ready(async function () {
         success: function (response) {
           console.log('Token received successfully');
           //window.token = response.token;
-          window.token = '1!xI6zIQypdiaHuEEbrRDilzAl17gA8SnB5S573vj9eULOKhdyD_-JpgM2zxmMB6BCnoKemFxhD5fiZRSJzBptOtuAzUWFC4A8F7a7uVCIxbA3L1O9tEqCpa2cq4fLW0Qd3z9sDOdoM1iXC-lcOCbBoC2leabjKG_IL4EqqTahYtdm6aS6nZB8SkxrPjCWmCYGfFU8yvBF6lPQUSabLkligLyqpPllZi4jg8Ft5oENvlu7FfhBTEc45Xb12ii1q85GqRGdAT8yQTR-QhZ2c59aqJoyI07hShqnpz7ndwp82qks5PUH4Ta1On6WVQuV7cu-n9Qfos8qGjMNb58FvlS7tCaeoeqz4jH4hDKlosEYvuaHYTQlzJs8Qc3HvO26RKLnmaqzOPkKgpauBP1h2Iob01dQsdEaKMG_qtJyoJPU4T1ZbPDYgMLpIklHEDjXfCHSO8uP-OCQPSG2rtYTwPo2Av9KvCuXXWpp8WtsLRVfKZFv7J-QPIeI-RKwh50Jy2rsdAySmEUsOFn81u6hoH7nmotEMG5wKW_bouaH6R8nlSlsOvRrgbNwui1CFpQHbOBgk1XOhX3c8D1XDqj11ms7mal3PlFhwq9acqtKvRFvvjGvCEMjgnYn7aKwA0j2YSd7XcHs9N_yo_4cb2lDXqLkmPsuV0WvzPSfZ6viJ2gaqsYiopphIkSTBW47019etxToltuoHdgmgu1v818gxOfh7pujzdNNagnAS34gPYrgB0PZFZE-0H1DGhjOFwCc4FN3ta0V0gqNlz0GRSPGnRz20ikXg5NwsY9D3JMoVaZVBek47rAd3yfLGEnXddKcJG-woX8SdO69ZGNkcWUf1cog4diY6g3L80PBbqgRRoAm4igTU4NyI40FOZYLMVXxFHnMWm1sJx6NBMAzQ6eO';
+            window.token = '1!SLQXyWTbaol2lM8Hmzw7DYMjo67oo9veHQiRbfQX8-_IDm5-9lV-7L_TyHsXGXQLJ9jBwaAJWLlIQcoo0_rLpnRHKwJ2rUD8gWEFLg_aUpVCX-wJ4o4ebXufj15rgt24oNQAvOb3amnYvPomqAv0DCEZIr2JHmMD__Yp8Pw9qUtOUsteWkYEBq3WauUYPaoFR_WCIUOOeA3OVziS4j0U3gG_S1nrifMMkkU3XZMVWayepqhvla6ZERmuvTp_gHzxEDmNpac7EZkmMkUgkTXjYaY35C0r0rZvZ6WvqnUkcxNU65GKYDknpDxJUAWqxql58Nx0VyLQUSbtTD7OfDuNMCtQSNCz3ZtAetRoywHTLM8LYna9QVf1guj1qnEj3zznYhFf3MB6EcNWkc14d8si9Z5XoViT_EBcNIRui5K545Ubc5A1FKAQ9g6Qjlj3cRiCOaki4BTS4vBSVsRnQ4NC1NSLRrh3DWNObtStYKiMPBrEgt5xqpC_JmOtsiUoXpv_qPFbN-ouha_Q1mhKKYEDBHi_pQyDULDJqiO8c4QG0dVLbgzub59aGvZqZzKfx0RfLhpucTNhR_2gWUN4LUXCwitdMuuQcX4JjRVNs_W0JAZW0eBxOCYt4GgvZzYYNgPwcnLOz0enuACNqcWzR9m6L24Y-a_VEp2SZa_E-t5Yozjc3iFudn7SHgsTA28ANaTuK60_PhJfGpgNmpy0F_dCYqDHMgky69GkssdcN6aVf1nmiW53df_jKozTF2G8USR7TZH3PsIZ0s1jpjY-kJGdEk0IZampR3Pi_dUnBFTCeNRrQj_90p838ZCRVeRBS1VrGOiba1W14i64Q-6MbyG3ngeq9H4_fKdDI1mTGqipQ8Hzw4AB3QqeA_e6KQa-P8URG9s4dNdlbJKdZpsG';
           $("#singleFileDownload").prop('disabled', false);
+          $("#folderDownload").prop('disabled', false);
         },
         error: function(xhr, status, error) {
           console.warn('Auth failed, using debug token');
@@ -144,6 +145,7 @@ $(document).ready(async function () {
           // Debug token fallback
           
           $("#singleFileDownload").prop('disabled', false);
+          $("#folderDownload").prop('disabled', false);
           $("#status").text(`Auth Error: ${xhr.responseJSON?.message || xhr.statusText || 'Unknown error'} (Using debug token)`);
         }
       });
@@ -157,18 +159,33 @@ $(document).ready(async function () {
         console.log('Showing single file view');
         $("#folderView").hide();
         $("#fileView").show();
+        // Update title for file view
+        $(".banner h4").html('<i class="bi bi-shield-lock"></i> Protected File Download');
       } else {
         console.log('Showing folder view, loading contents for folder:', id);
         $("#fileView").hide();
         $("#folderView").show();
         
-        // Add expand/collapse all controls
+        // Get folder name and store it globally
+        await getFolderName(id);
+        
+        // Update title with folder name
+        const folderName = window.currentFolderName || "Unknown Folder";
+        $(".banner h4").html(`<i class="bi bi-shield-lock"></i> Protected download from ${folderName}`);
+        
+        // Add expand/collapse all controls and select all controls
         const controls = $('<div>').addClass('folder-controls').html(`
           <button class="btn btn-sm btn-outline-secondary mr-2" id="expandAll">
             <i class="bi bi-chevron-down"></i> Expand All
           </button>
-          <button class="btn btn-sm btn-outline-secondary" id="collapseAll">
+          <button class="btn btn-sm btn-outline-secondary mr-2" id="collapseAll">
             <i class="bi bi-chevron-right"></i> Collapse All
+          </button>
+          <button class="btn btn-sm btn-outline-primary mr-2" id="selectAllFiles">
+            <i class="bi bi-check-square"></i> Select All Files
+          </button>
+          <button class="btn btn-sm btn-outline-warning" id="deselectAll">
+            <i class="bi bi-square"></i> Deselect All
           </button>
         `);
         $("#folderTree").before(controls);
@@ -188,6 +205,17 @@ $(document).ready(async function () {
             .addClass('bi-chevron-right');
         });
         
+        // Add click handlers for select/deselect all
+        $("#selectAllFiles").click(function() {
+          $('.item-checkbox[data-type="file"]').prop('checked', true);
+          updateSelectedCount();
+        });
+        
+        $("#deselectAll").click(function() {
+          $('.item-checkbox').prop('checked', false);
+          updateSelectedCount();
+        });
+        
         await loadFolderContents(id);
       }
         
@@ -195,6 +223,23 @@ $(document).ready(async function () {
       console.error('Error:', error);
       $("#status").text("Error: " + (error.responseJSON?.message || error.statusText || "Unknown error"));
       $("#singleFileDownload").prop('disabled', true);
+    }
+
+    // Function to get folder name
+    async function getFolderName(folderId) {
+      try {
+        const response = await $.ajax({
+          url: `https://api.box.com/2.0/folders/${folderId}`,
+          headers: {
+            "Authorization": "Bearer " + window.token
+          }
+        });
+        window.currentFolderName = response.name;
+        console.log('Current folder name:', window.currentFolderName);
+      } catch (error) {
+        console.error('Error getting folder name:', error);
+        window.currentFolderName = "Unknown Folder";
+      }
     }
 
     // Function to load folder contents recursively
@@ -223,12 +268,22 @@ $(document).ready(async function () {
             const chevron = $('<i>').addClass('bi bi-chevron-down');
             const folderContent = $('<div>').addClass('folder-content');
             
-            folderDiv.append(checkboxWrapper, chevron, icon, item.name);
+            // Add select/deselect files buttons for this folder
+            const folderControls = $('<span>').addClass('folder-file-controls ml-2').html(`
+              <button class="btn btn-xs btn-outline-primary mr-1 select-folder-files" style="font-size: 0.7em; padding: 1px 4px;" title="Select all files in this folder">
+                <i class="bi bi-check-square" style="font-size: 0.8em;"></i>
+              </button>
+              <button class="btn btn-xs btn-outline-secondary deselect-folder-files" style="font-size: 0.7em; padding: 1px 4px;" title="Deselect all files in this folder">
+                <i class="bi bi-square" style="font-size: 0.8em;"></i>
+              </button>
+            `);
+            
+            folderDiv.append(checkboxWrapper, chevron, icon, item.name, folderControls);
             itemElement.append(folderDiv, folderContent);
             
             // Add click handler for folder collapse/expand
             folderDiv.click(function(e) {
-              if (e.target.type !== 'checkbox') {
+              if (e.target.type !== 'checkbox' && !$(e.target).closest('.folder-file-controls').length) {
                 const $this = $(this);
                 const chevronIcon = $this.find('.bi-chevron-down, .bi-chevron-right');
                 
@@ -240,6 +295,19 @@ $(document).ready(async function () {
                 
                 $this.parent().toggleClass('collapsed');
               }
+            });
+
+            // Add click handlers for folder file selection buttons
+            folderDiv.find('.select-folder-files').click(function(e) {
+              e.stopPropagation();
+              $(this).closest('.tree-item').find('.folder-content .item-checkbox[data-type="file"]').prop('checked', true);
+              updateSelectedCount();
+            });
+
+            folderDiv.find('.deselect-folder-files').click(function(e) {
+              e.stopPropagation();
+              $(this).closest('.tree-item').find('.folder-content .item-checkbox[data-type="file"]').prop('checked', false);
+              updateSelectedCount();
             });
 
             // Add change handler for checkbox
@@ -315,40 +383,91 @@ $(document).ready(async function () {
         return;
       }
       
+      // Store original button content and start timer
+      const originalContent = $(this).html();
+      const startTime = performance.now();
+      console.log('Download process started at:', new Date().toISOString());
+      
       $(this).prop('disabled', true);
+      $(this).html('<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>Processing...');
       $("#status").text("Processing selected items...");
       
       try {
-        const selectedItems = $('.item-checkbox:checked').map(function() {
-          return {
-            id: $(this).data('id'),
-            type: $(this).data('type')
-          };
+        // Get selected file IDs only (not folders)
+        const selectedFileIds = $('.item-checkbox[data-type="file"]:checked').map(function() {
+          return $(this).data('id');
         }).get();
 
-        if (selectedItems.length === 0) {
-          $("#status").text("Please select at least one item to download");
+        if (selectedFileIds.length === 0) {
+          $("#status").text("Please select at least one file to download");
           return;
         }
 
-        const downloadUrl = `http://localhost:8080/api/processBoxFile?folderId=${id}&token=${window.token}`;
+        // Use the actual folder name from the current folder
+        const baseFolderName = window.currentFolderName || "Unknown Folder";
+
+        const payload = {
+          token: window.token,
+          folderStartName: baseFolderName,
+          fileIds: selectedFileIds
+        };
+
+        console.log('Sending payload to processMultipleFiles:', payload);
         
-        // Send selected items to backend
-        await $.ajax({
-          url: downloadUrl,
+        // Send to the processMultipleFiles endpoint and handle file download
+        const response = await fetch('http://localhost:8080/api/processMultipleFiles', {
           method: 'POST',
-          data: JSON.stringify({ selectedItems }),
-          contentType: 'application/json',
-          success: function(response) {
-            $("#status").text("Download request processed successfully!");
-          }
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
         });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Get the filename from the response headers if available
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'processed_files.zip'; // default filename
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (filenameMatch) {
+            filename = filenameMatch[1].replace(/['"]/g, '');
+          }
+        }
+
+        // Convert response to blob and create download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up the object URL
+        window.URL.revokeObjectURL(url);
+        
+        const endTime = performance.now();
+        const executionTime = endTime - startTime;
+        console.log('Download process completed at:', new Date().toISOString());
+        console.log(`Total execution time: ${executionTime.toFixed(2)} milliseconds (${(executionTime/1000).toFixed(2)} seconds)`);
+        console.log('Files processed and download started');
+        $("#status").text(`Successfully processed ${selectedFileIds.length} files! Download started.`);
         
       } catch(error) {
-        console.error('Error processing folder download:', error);
-        $("#status").text("Error processing download request. Please try again.");
+        const endTime = performance.now();
+        const executionTime = endTime - startTime;
+        console.log('Download process failed at:', new Date().toISOString());
+        console.log(`Execution time before error: ${executionTime.toFixed(2)} milliseconds (${(executionTime/1000).toFixed(2)} seconds)`);
+        console.error('Error processing selected files:', error);
+        $("#status").text("Error processing files. Please try again.");
       } finally {
         $(this).prop('disabled', false);
+        $(this).html(originalContent);
       }
     });
 });
