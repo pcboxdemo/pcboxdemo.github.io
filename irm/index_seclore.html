@@ -175,8 +175,11 @@ $(document).ready(async function () {
         // Update title for file view
         $(".banner h4").html('<i class="bi bi-shield-lock"></i> Protected File Download');
         
-        // Get file info and folder metadata for single file
+        // Get file info and folder metadata for single file, then auto-download
         await getFileParentFolderMetadata(id);
+        
+        // Auto-start download once metadata is ready
+        await startSingleFileDownload(id);
       } else {
         console.log('Showing folder view, loading contents for folder:', id);
         $("#fileView").hide();
@@ -419,20 +422,19 @@ $(document).ready(async function () {
       $('.selected-count').text(`Selected: ${selectedFiles} files, ${selectedFolders} folders`);
     }
 
-    // Single file download handler
-    $("#singleFileDownload").click(async function() {
+    // Function to start single file download
+    async function startSingleFileDownload(fileId) {
       if(!window.token) {
         $("#status").text("Error: No authentication token available");
         return;
       }
       
-      $(this).prop('disabled', true);
-      $("#status").text("Downloading protected file...");
+      $("#status").text("Starting automatic download...");
       
       try {
         // Include folder metadata in the single file download URL
         const folderMetadata = window.currentFolderMetadata || "Unknown Folder";
-        const downloadUrl = `http://localhost:8080/api/processBoxFile?fileId=${id}&token=${window.token}&folderStartName=${encodeURIComponent(folderMetadata)}`;
+        const downloadUrl = `http://localhost:8080/api/processBoxFile?fileId=${fileId}&token=${window.token}&folderStartName=${encodeURIComponent(folderMetadata)}`;
         
         console.log('Single file download with folder metadata:', folderMetadata);
         
@@ -444,14 +446,19 @@ $(document).ready(async function () {
         link.click();
         document.body.removeChild(link);
         
-        $("#status").text("Download started!");
+        $("#status").text("Download started automatically!");
+        $("#singleFileDownload").prop('disabled', false);
         
       } catch(error) {
         console.error('Error downloading file:', error);
         $("#status").text("Error downloading file. Please try again.");
-      } finally {
-        $(this).prop('disabled', false);
+        $("#singleFileDownload").prop('disabled', false);
       }
+    }
+
+    // Single file download button handler (now just calls the function)
+    $("#singleFileDownload").click(async function() {
+      await startSingleFileDownload(id);
     });
 
     // Folder download handler
@@ -585,10 +592,14 @@ $(document).ready(async function () {
     <!-- Single File View -->
     <div id="fileView" style="display:none;">
       <div class="download-container">
-        <button id="singleFileDownload" class="btn btn-primary" disabled>
+        <button id="singleFileDownload" class="btn btn-secondary" disabled>
           <i class="bi bi-download"></i>
-          Download Protected File
+          Download Again
         </button>
+        <p class="mt-2 text-muted">
+          <i class="bi bi-info-circle"></i>
+          Your download will start automatically once the file is processed.
+        </p>
       </div>
     </div>
 
