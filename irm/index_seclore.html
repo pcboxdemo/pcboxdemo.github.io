@@ -175,10 +175,7 @@ $(document).ready(async function () {
         // Update title for file view
         $(".banner h4").html('<i class="bi bi-shield-lock"></i> Protected File Download');
         
-        // Get file info and folder metadata for single file, then auto-download
-        await getFileParentFolderMetadata(id);
-        
-        // Auto-start download once metadata is ready
+        // Auto-start download
         await startSingleFileDownload(id);
       } else {
         console.log('Showing folder view, loading contents for folder:', id);
@@ -281,28 +278,7 @@ $(document).ready(async function () {
       }
     }
 
-    // Function to get file's parent folder metadata for single file downloads
-    async function getFileParentFolderMetadata(fileId) {
-      try {
-        // First get the file info to find its parent folder
-        const fileResponse = await $.ajax({
-          url: `https://api.box.com/2.0/files/${fileId}?fields=id,name,parent`,
-          headers: {
-            "Authorization": "Bearer " + window.token
-          }
-        });
-        console.log(fileResponse);
-        const parentFolderId = fileResponse.parent.id;
-        console.log('File parent folder ID:', parentFolderId);
-        
-        // Now get the parent folder's metadata
-        await getFolderMetadata(parentFolderId);
-        
-      } catch (error) {
-        console.error('Error getting file parent folder metadata:', error);
-        window.currentFolderMetadata = "Unknown Folder";
-      }
-    }
+
 
     // Function to load folder contents recursively
     async function loadFolderContents(folderId, parentElement = $("#folderTree")) {
@@ -432,11 +408,10 @@ $(document).ready(async function () {
       $("#status").text("Starting automatic download...");
       
       try {
-        // Include folder metadata in the single file download URL
-        const folderMetadata = window.currentFolderMetadata || "Unknown Folder";
-        const downloadUrl = `http://localhost:8080/api/processBoxFile?fileId=${fileId}&token=${window.token}&folderStartName=${encodeURIComponent(folderMetadata)}`;
+        // Single file download URL (backend will handle folder metadata)
+        const downloadUrl = `http://localhost:8080/api/processBoxFile?fileId=${fileId}&token=${window.token}`;
         
-        console.log('Single file download with folder metadata:', folderMetadata);
+        console.log('Starting single file download for fileId:', fileId);
         
         const link = document.createElement('a');
         link.href = downloadUrl;
