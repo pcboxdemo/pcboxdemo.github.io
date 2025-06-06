@@ -90,6 +90,23 @@
  .folder-controls {
     margin-bottom: 10px;
  }
+ 
+ /* File format icon colors */
+ .bi-file-earmark-pdf {
+    color: #dc3545; /* Red for PDF */
+ }
+ .bi-file-earmark-word {
+    color: #2b579a; /* Blue for Word */
+ }
+ .bi-file-earmark-ppt {
+    color: #d24726; /* Orange for PowerPoint */
+ }
+ .bi-file-earmark-excel {
+    color: #217346; /* Green for Excel */
+ }
+ .bi-file-earmark {
+    color: #6c757d; /* Gray for generic files */
+ }
  </style>
  <script>
 $(document).ready(async function () {
@@ -99,7 +116,8 @@ $(document).ready(async function () {
     var id = params.get('id');
     var clientId = params.get('clientId');
     var ext = params.get('ext');
-    
+    var devToken = params.get('devToken');
+
     if (!auth || !id || !clientId) {
       console.error('Missing required parameters');
       $("#status").text("Error: Missing required parameters (auth, id, or clientId)");
@@ -110,8 +128,7 @@ $(document).ready(async function () {
       // Get token from AWS endpoint
       await $.ajax({
         method: 'get',
-        url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
-        //url: "https://box-tokengenerator-v2.herokuapp.com/ping",
+        url: devToken==null?"https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator":"https://box-tokengenerator-v2.herokuapp.com/ping",
         data: { 
           authCode: auth, 
           id: id, 
@@ -129,24 +146,20 @@ $(document).ready(async function () {
         },
         success: function (response) {
           console.log('Token received successfully');
-          window.token = response.token;
+          window.token = response.token || devToken;
+          
           //  window.token = '1!SLQXyWTbaol2lM8Hmzw7DYMjo67oo9veHQiRbfQX8-_IDm5-9lV-7L_TyHsXGXQLJ9jBwaAJWLlIQcoo0_rLpnRHKwJ2rUD8gWEFLg_aUpVCX-wJ4o4ebXufj15rgt24oNQAvOb3amnYvPomqAv0DCEZIr2JHmMD__Yp8Pw9qUtOUsteWkYEBq3WauUYPaoFR_WCIUOOeA3OVziS4j0U3gG_S1nrifMMkkU3XZMVWayepqhvla6ZERmuvTp_gHzxEDmNpac7EZkmMkUgkTXjYaY35C0r0rZvZ6WvqnUkcxNU65GKYDknpDxJUAWqxql58Nx0VyLQUSbtTD7OfDuNMCtQSNCz3ZtAetRoywHTLM8LYna9QVf1guj1qnEj3zznYhFf3MB6EcNWkc14d8si9Z5XoViT_EBcNIRui5K545Ubc5A1FKAQ9g6Qjlj3cRiCOaki4BTS4vBSVsRnQ4NC1NSLRrh3DWNObtStYKiMPBrEgt5xqpC_JmOtsiUoXpv_qPFbN-ouha_Q1mhKKYEDBHi_pQyDULDJqiO8c4QG0dVLbgzub59aGvZqZzKfx0RfLhpucTNhR_2gWUN4LUXCwitdMuuQcX4JjRVNs_W0JAZW0eBxOCYt4GgvZzYYNgPwcnLOz0enuACNqcWzR9m6L24Y-a_VEp2SZa_E-t5Yozjc3iFudn7SHgsTA28ANaTuK60_PhJfGpgNmpy0F_dCYqDHMgky69GkssdcN6aVf1nmiW53df_jKozTF2G8USR7TZH3PsIZ0s1jpjY-kJGdEk0IZampR3Pi_dUnBFTCeNRrQj_90p838ZCRVeRBS1VrGOiba1W14i64Q-6MbyG3ngeq9H4_fKdDI1mTGqipQ8Hzw4AB3QqeA_e6KQa-P8URG9s4dNdlbJKdZpsG';
           $("#singleFileDownload").prop('disabled', false);
           $("#folderDownload").prop('disabled', false);
         },
         error: function(xhr, status, error) {
+          window.token = devToken;
           console.warn('Auth failed, using debug token');
-          console.error('Auth Error Details:', {
-            status: xhr.status,
-            statusText: xhr.statusText,
-            responseText: xhr.responseText,
-            error: error
-          });
           // Debug token fallback
           
-          $("#singleFileDownload").prop('disabled', false);
-          $("#folderDownload").prop('disabled', false);
-          $("#status").text(`Auth Error: ${xhr.responseJSON?.message || xhr.statusText || 'Unknown error'} (Using debug token)`);
+          //$("#singleFileDownload").prop('disabled', false);
+          //$("#folderDownload").prop('disabled', false);
+          //$("#status").text(`Auth Error: ${xhr.responseJSON?.message || xhr.statusText || 'Unknown error'} (Using debug token)`);
         }
       });
 
@@ -161,13 +174,17 @@ $(document).ready(async function () {
         $("#fileView").show();
         // Update title for file view
         $(".banner h4").html('<i class="bi bi-shield-lock"></i> Protected File Download');
+        
+        // Get file info and folder metadata for single file
+        await getFileParentFolderMetadata(id);
       } else {
         console.log('Showing folder view, loading contents for folder:', id);
         $("#fileView").hide();
         $("#folderView").show();
         
-        // Get folder name and store it globally
+        // Get folder name and metadata for backend
         await getFolderName(id);
+        await getFolderMetadata(id);
         
         // Update title with folder name
         const folderName = window.currentFolderName || "Unknown Folder";
@@ -225,7 +242,7 @@ $(document).ready(async function () {
       $("#singleFileDownload").prop('disabled', true);
     }
 
-    // Function to get folder name
+    // Function to get folder name for title
     async function getFolderName(folderId) {
       try {
         const response = await $.ajax({
@@ -239,6 +256,48 @@ $(document).ready(async function () {
       } catch (error) {
         console.error('Error getting folder name:', error);
         window.currentFolderName = "Unknown Folder";
+      }
+    }
+
+    // Function to get folder metadata for backend submissions
+    async function getFolderMetadata(folderId) {
+      try {
+        const response = await $.ajax({
+          url: `https://api.box.com/2.0/folders/${folderId}/metadata/enterprise_47757585/salesforceMapping`,
+          headers: {
+            "Authorization": "Bearer " + window.token
+          }
+        });
+        window.currentFolderMetadata = response.irmhotfolder || "Unknown Folder";
+        console.log('Current folder metadata (irmhotfolder):', window.currentFolderMetadata);
+      } catch (error) {
+        console.error('Error getting folder metadata:', error);
+        // Fallback to actual folder name if metadata is not available
+        window.currentFolderMetadata = window.currentFolderName || "Unknown Folder";
+        console.log('Using folder name as metadata fallback:', window.currentFolderMetadata);
+      }
+    }
+
+    // Function to get file's parent folder metadata for single file downloads
+    async function getFileParentFolderMetadata(fileId) {
+      try {
+        // First get the file info to find its parent folder
+        const fileResponse = await $.ajax({
+          url: `https://api.box.com/2.0/files/${fileId}`,
+          headers: {
+            "Authorization": "Bearer " + window.token
+          }
+        });
+        
+        const parentFolderId = fileResponse.parent.id;
+        console.log('File parent folder ID:', parentFolderId);
+        
+        // Now get the parent folder's metadata
+        await getFolderMetadata(parentFolderId);
+        
+      } catch (error) {
+        console.error('Error getting file parent folder metadata:', error);
+        window.currentFolderMetadata = "Unknown Folder";
       }
     }
 
@@ -321,7 +380,22 @@ $(document).ready(async function () {
             await loadFolderContents(itemId, folderContent);
           } else {
             const fileDiv = $('<div>').addClass('tree-file');
-            const icon = $('<i>').addClass('bi bi-file-earmark file-icon');
+            
+            // Get file extension and set appropriate icon
+            const fileName = item.name.toLowerCase();
+            let iconClass = 'bi bi-file-earmark file-icon'; // default
+            
+            if (fileName.endsWith('.pdf')) {
+              iconClass = 'bi bi-file-earmark-pdf file-icon';
+            } else if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
+              iconClass = 'bi bi-file-earmark-word file-icon';
+            } else if (fileName.endsWith('.pptx') || fileName.endsWith('.ppt')) {
+              iconClass = 'bi bi-file-earmark-ppt file-icon';
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+              iconClass = 'bi bi-file-earmark-excel file-icon';
+            }
+            
+            const icon = $('<i>').addClass(iconClass);
             fileDiv.append(checkboxWrapper, icon, item.name);
             itemElement.append(fileDiv);
 
@@ -356,7 +430,11 @@ $(document).ready(async function () {
       $("#status").text("Downloading protected file...");
       
       try {
-        const downloadUrl = `http://localhost:8080/api/processBoxFile?fileId=${id}&token=${window.token}`;
+        // Include folder metadata in the single file download URL
+        const folderMetadata = window.currentFolderMetadata || "Unknown Folder";
+        const downloadUrl = `http://localhost:8080/api/processBoxFile?fileId=${id}&token=${window.token}&folderStartName=${encodeURIComponent(folderMetadata)}`;
+        
+        console.log('Single file download with folder metadata:', folderMetadata);
         
         const link = document.createElement('a');
         link.href = downloadUrl;
@@ -403,8 +481,8 @@ $(document).ready(async function () {
           return;
         }
 
-        // Use the actual folder name from the current folder
-        const baseFolderName = window.currentFolderName || "Unknown Folder";
+        // Use the metadata value for backend submission
+        const baseFolderName = window.currentFolderMetadata || "Unknown Folder";
 
         const payload = {
           token: window.token,
@@ -427,15 +505,30 @@ $(document).ready(async function () {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // Get the filename from the response headers if available
-        const contentDisposition = response.headers.get('Content-Disposition');
+        // Get the filename from multiple sources
         let filename = 'processed_files.zip'; // default filename
+        
+        // First, try to get filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
         if (contentDisposition) {
-          const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-          if (filenameMatch) {
-            filename = filenameMatch[1].replace(/['"]/g, '');
+          console.log('Content-Disposition header:', contentDisposition);
+          
+          // Handle both standard attachment and form-data formats
+          // Standard: Content-Disposition: attachment; filename="file.zip"
+          // Form-data: Content-Disposition: form-data; name="attachment"; filename="file.zip"
+          const filenameMatch = contentDisposition.match(/filename[^;=\n]*=\s*"?([^";\n]+)"?/i);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1].trim();
           }
         }
+        
+        // Also try to get filename from other response headers
+        const responseFilename = response.headers.get('X-Filename') || response.headers.get('Filename');
+        if (responseFilename) {
+          filename = responseFilename;
+        }
+        
+        console.log('Using filename:', filename);
 
         // Convert response to blob and create download
         const blob = await response.blob();
