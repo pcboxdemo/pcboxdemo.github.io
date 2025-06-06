@@ -291,7 +291,7 @@ $(document).ready(async function () {
             "Authorization": "Bearer " + window.token
           }
         });
-        console.log('File response:', fileResponse);
+        console.log(fileResponse);
         const parentFolderId = fileResponse.parent.id;
         console.log('File parent folder ID:', parentFolderId);
         
