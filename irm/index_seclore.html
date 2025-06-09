@@ -495,8 +495,8 @@ $(document).ready(async function () {
         // Get the filename from multiple sources
         let filename = 'processed_files.zip'; // default filename
         
-        // First, try to get filename from Content-Disposition header
-        const contentDisposition = response.headers.get('Content-Disposition');
+        // First, try to get filename from Content-Disposition header (case-insensitive)
+        const contentDisposition = response.headers.get('content-disposition');
         if (contentDisposition) {
           console.log('Content-Disposition header:', contentDisposition);
           
@@ -527,7 +527,7 @@ $(document).ready(async function () {
         }
         
         // Also try to get filename from other response headers
-        const responseFilename = response.headers.get('X-Filename') || response.headers.get('Filename');
+        const responseFilename = response.headers.get('x-filename') || response.headers.get('filename');
         if (responseFilename) {
           filename = responseFilename;
         }
