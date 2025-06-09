@@ -496,6 +496,7 @@ $(document).ready(async function () {
         let filename = 'processed_files.zip'; // default filename
         
         // First, try to get filename from Content-Disposition header (case-insensitive)
+        console.log('Response headers:', response.headers);
         const contentDisposition = response.headers.get('Content-Disposition');
         if (contentDisposition) {
           console.log('Content-Disposition header:', contentDisposition);
