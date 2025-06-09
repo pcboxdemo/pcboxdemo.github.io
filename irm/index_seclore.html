@@ -470,10 +470,12 @@ $(document).ready(async function () {
 
         // Use the metadata value for backend submission
         const baseFolderName = window.currentFolderMetadata || "Unknown Folder";
+        const actualFolderName = window.currentFolderName || "Unknown Folder";
 
         const payload = {
           token: window.token,
           folderStartName: baseFolderName,
+          boxFolderName: actualFolderName,
           fileIds: selectedFileIds
         };
 
