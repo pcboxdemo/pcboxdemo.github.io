@@ -496,14 +496,14 @@ $(document).ready(async function () {
         let filename = 'processed_files.zip'; // default filename
         
         // First, try to get filename from Content-Disposition header (case-insensitive)
-        const contentDisposition = response.headers.get('content-disposition');
+        const contentDisposition = response.headers.get('Content-Disposition');
         if (contentDisposition) {
           console.log('Content-Disposition header:', contentDisposition);
           
           // Try multiple regex patterns to handle different formats
           let filenameMatch = null;
-          
-          // Pattern 1: Standard attachment format: attachment; filename="file.zip"
+           
+          // Pattern 1: Standard attachment format: attachment; filename=" file.zip"
           filenameMatch = contentDisposition.match(/attachment;\s*filename\s*=\s*"?([^";]+)"?/i);
           
           // Pattern 2: Form-data format: form-data; name="attachment"; filename="file.zip"
