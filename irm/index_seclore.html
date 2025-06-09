@@ -500,20 +500,23 @@ $(document).ready(async function () {
         if (contentDisposition) {
           console.log('Content-Disposition header:', contentDisposition);
           
-          // Try multiple regex patterns to handle different formats
+                    // Try multiple regex patterns to handle different formats
           let filenameMatch = null;
-           
-          // Pattern 1: Standard attachment format: attachment; filename=" file.zip"
+          
+          // Pattern 1: Standard attachment format: attachment; filename="file.zip"
           filenameMatch = contentDisposition.match(/attachment;\s*filename\s*=\s*"?([^";]+)"?/i);
+          console.log('Pattern 1 result:', filenameMatch);
           
           // Pattern 2: Form-data format: form-data; name="attachment"; filename="file.zip"
           if (!filenameMatch) {
             filenameMatch = contentDisposition.match(/filename\s*=\s*"([^"]+)"/i);
+            console.log('Pattern 2 result:', filenameMatch);
           }
           
           // Pattern 3: Fallback - any filename= pattern
           if (!filenameMatch) {
             filenameMatch = contentDisposition.match(/filename[^=]*=\s*"?([^";\s]+)"?/i);
+            console.log('Pattern 3 result:', filenameMatch);
           }
           
           if (filenameMatch && filenameMatch[1]) {
@@ -521,6 +524,7 @@ $(document).ready(async function () {
             console.log('Extracted filename:', filename);
           } else {
             console.log('Could not extract filename from Content-Disposition header');
+            console.log('All patterns failed for header:', contentDisposition);
           }
         } else {
           console.log('No Content-Disposition header found');
