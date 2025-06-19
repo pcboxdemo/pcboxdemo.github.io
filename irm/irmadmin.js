@@ -114,7 +114,7 @@ $(document).ready(async function () {
           !["owner", "co-owner", "editor"].includes(c.role.toLowerCase())
         ) {
           // OPTION 1: Check email domain for external users
-           UNCOMMENT AND MODIFY DOMAIN AS NEEDED
+           //UNCOMMENT AND MODIFY DOMAIN AS NEEDED
           const INTERNAL_DOMAIN = "boxdemo.com";
           const email = c.accessible_by.login || "";
           const isExternal = !email.toLowerCase().endsWith("@" + INTERNAL_DOMAIN);
