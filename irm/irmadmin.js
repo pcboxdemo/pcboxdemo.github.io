@@ -186,17 +186,39 @@ $(document).ready(async function () {
     let cascadePolicyId = null;
     try {
       if (enable) {
-        const resp = await $.ajax({
-          url: `https://api.box.com/2.0/metadata_cascade_policies`,
-          method: "POST",
-          headers: { "Authorization": "Bearer " + window.token, "Content-Type": "application/json" },
-          data: JSON.stringify({
-            folder_id: folderId,
-            scope: "enterprise",
-            templateKey: "securityClassification-6VMVochwUWo"
-          })
-        });
-        cascadePolicyId = resp.id;
+        try {
+          // Try to create new cascade policy
+          const resp = await $.ajax({
+            url: `https://api.box.com/2.0/metadata_cascade_policies`,
+            method: "POST",
+            headers: { "Authorization": "Bearer " + window.token, "Content-Type": "application/json" },
+            data: JSON.stringify({
+              folder_id: folderId,
+              scope: "enterprise",
+              templateKey: "securityClassification-6VMVochwUWo"
+            })
+          });
+          cascadePolicyId = resp.id;
+        } catch (err) {
+          if (err.status === 409) {
+            // If policy already exists, find it
+            const resp = await $.ajax({
+              url: `https://api.box.com/2.0/metadata_cascade_policies?folder_id=${folderId}`,
+              headers: { "Authorization": "Bearer " + window.token }
+            });
+            for (const p of resp.entries) {
+              if (p.templateKey === "securityClassification-6VMVochwUWo") {
+                cascadePolicyId = p.id;
+                break;
+              }
+            }
+            if (!cascadePolicyId) {
+              throw new Error("Could not find existing cascade policy");
+            }
+          } else {
+            throw err;
+          }
+        }
       } else {
         // Find and delete existing cascade policy
         // This is not needed as t he cascade policy is deleted when the metadata instance is deleted
