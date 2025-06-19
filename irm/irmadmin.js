@@ -47,20 +47,6 @@ $(document).ready(async function () {
   } catch (e) {}
   $("#folderName").text(folderName);
 
-  // --- Get current user's enterprise ID ---
-  let myEnterpriseId = null;
-  try {
-    const me = await $.ajax({
-      url: `https://api.box.com/2.0/users/me?fields=id,enterprise`,
-      headers: { "Authorization": "Bearer " + window.token }
-    });
-    myEnterpriseId = me.enterprise && me.enterprise.id;
-  } catch (e) {
-    console.error('Failed to fetch current user:', e);
-    $("#status").text("Error fetching current user");
-    return;
-  }
-
   // --- Check IRM status ---
   let irmEnabled = false;
   async function checkIRMStatus() {
@@ -127,19 +113,12 @@ $(document).ready(async function () {
           c.accessible_by.type === "user" &&
           !["owner", "co-owner", "editor"].includes(c.role.toLowerCase())
         ) {
-          // Fetch user object to check their enterprise
-          let userEnterpriseId = null;
-          try {
-            const userObj = await $.ajax({
-              url: `https://api.box.com/2.0/users/${c.accessible_by.id}?fields=id,enterprise`,
-              headers: { "Authorization": "Bearer " + window.token }
-            });
-            userEnterpriseId = userObj.enterprise && userObj.enterprise.id;
-          } catch (e) {
-            console.error('Failed to fetch user:', c.accessible_by.id, e);
-            continue;
-          }
-          const isExternal = userEnterpriseId !== myEnterpriseId;
+          // Check if the current role indicates an external user
+          const currentRole = c.role.toLowerCase();
+          const isExternal = enable ? 
+            currentRole === "viewer uploader" :  // When enabling, treat viewer uploaders as external
+            currentRole === "previewer uploader"; // When disabling, treat previewer uploaders as external
+            
           if (isExternal) {
             await $.ajax({
               url: `https://api.box.com/2.0/collaborations/${c.id}`,
@@ -220,7 +199,7 @@ $(document).ready(async function () {
         cascadePolicyId = resp.id;
       } else {
         // Find and delete existing cascade policy
-        // This is not needed as the cascade policy is deleted when the metadata instance is deleted
+        // This is not needed as t he cascade policy is deleted when the metadata instance is deleted
         /*const resp = await $.ajax({
           url: `https://api.box.com/2.0/metadata_cascade_policies?folder_id=${folderId}`,
           headers: { "Authorization": "Bearer " + window.token }
