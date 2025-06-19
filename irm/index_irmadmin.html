@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>IRM Admin</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <!-- Include your auth and header JS from index_seclore.html -->
+  <style>
+    .banner { background-color: #0061d5; color: white; padding: 15px 0; margin-bottom: 20px; }
+    .banner h4 { margin: 0; }
+    .step-icon { font-size: 1.5em; margin-right: 10px; }
+    .step-pending { color: #aaa; }
+    .step-inprogress { color: #007bff; }
+    .step-complete { color: #28a745; }
+    .step-error { color: #dc3545; }
+    .spinner-border-sm { width: 1.2em; height: 1.2em; }
+    .step-circle {
+      display: inline-block;
+      width: 1.8em;
+      height: 1.8em;
+      line-height: 1.8em;
+      border-radius: 50%;
+      text-align: center;
+      font-weight: bold;
+      color: #fff;
+      font-size: 1.1em;
+      margin-right: 10px;
+    }
+    .step-pending-circle {
+      background: #6c757d; /* Bootstrap gray */
+    }
+    .step-complete-circle {
+      background: #28a745; /* Bootstrap green */
+    }
+  </style>
+</head>
+<body>
+  <!-- Header (copied from index_seclore.html) -->
+  <div id="header"></div>
+  <div class="container mt-4">
+    <h2 id="folderName"></h2>
+    <button id="irmToggleBtn" class="btn btn-primary"></button>
+    <ul class="list-group mt-4" id="irmProgressList">
+      <!-- Steps will be injected here -->
+    </ul>
+  </div>
+  <script src="irmadmin.js"></script>
+</body>
+</html>
