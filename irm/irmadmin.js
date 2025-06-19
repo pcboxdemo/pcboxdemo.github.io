@@ -291,9 +291,11 @@ $(document).ready(async function () {
           headers: { "Authorization": "Bearer " + window.token }
         });
       }
-      $("#status").text(enable ? "IRM enabled successfully!" : "IRM disabled successfully!");
+      const successMsg = enable ? "IRM enabled successfully!" : "IRM disabled successfully!";
+      showSuccess(successMsg);
       irmEnabled = enable;
       updateIRMButton();
+      updateDescription();
     } catch (e) { statusArr[4] = "error"; renderProgress(statusArr); $("#status").text("Error setting folder description"); return; }
 
     $("#irmToggleBtn").prop("disabled", false);
@@ -304,6 +306,24 @@ $(document).ready(async function () {
     irmWorkflow(!irmEnabled);
   });
 
+  // --- Update description ---
+  function updateDescription() {
+    const desc = irmEnabled ?
+      "This folder currently has IRM enabled. Clicking the button below will disable IRM protection and revert external collaborators to standard permissions." :
+      "This folder currently has standard permissions. Clicking the button below will enable IRM protection and update external collaborators to IRM-compatible permissions.";
+    $("#irmDescription").text(desc);
+  }
+
   // --- Initial load ---
   await checkIRMStatus();
+  updateDescription();
+
+  // Function to fade out progress and show success
+  function showSuccess(message) {
+    $("#status").text(message).addClass("text-success");
+    $("#irmProgressList").fadeOut(1000);
+    setTimeout(() => {
+      $("#successMessage").text("You can now close this page").fadeIn(500);
+    }, 1000);
+  }
 }); 

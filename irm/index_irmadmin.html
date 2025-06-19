@@ -34,17 +34,41 @@
     .step-complete-circle {
       background: #28a745; /* Bootstrap green */
     }
+    #irmDescription {
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+      border-left: 4px solid #0061d5;
+    }
+    #successMessage {
+      display: none;
+      margin-top: 20px;
+      text-align: center;
+      color: #28a745;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
   <!-- Header (copied from index_seclore.html) -->
   <div id="header"></div>
+
+  <div class="banner">
+    <div class="container">
+      <h4><i class="fas fa-shield-alt"></i> IRM Protection Management</h4>
+    </div>
+  </div>
+
   <div class="container mt-4">
     <h2 id="folderName"></h2>
+    <div id="irmDescription" class="text-muted"></div>
     <button id="irmToggleBtn" class="btn btn-primary"></button>
+    <div id="status" class="mt-3"></div>
     <ul class="list-group mt-4" id="irmProgressList">
       <!-- Steps will be injected here -->
     </ul>
+    <div id="successMessage"></div>
   </div>
   <script src="irmadmin.js"></script>
 </body>
