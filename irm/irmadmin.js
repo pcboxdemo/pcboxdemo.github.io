@@ -113,11 +113,18 @@ $(document).ready(async function () {
           c.accessible_by.type === "user" &&
           !["owner", "co-owner", "editor"].includes(c.role.toLowerCase())
         ) {
-          // Check if the current role indicates an external user
-          const currentRole = c.role.toLowerCase();
-          const isExternal = enable ? 
-            currentRole === "viewer uploader" :  // When enabling, treat viewer uploaders as external
-            currentRole === "previewer uploader"; // When disabling, treat previewer uploaders as external
+          // OPTION 1: Check email domain for external users
+           UNCOMMENT AND MODIFY DOMAIN AS NEEDED
+          const INTERNAL_DOMAIN = "boxdemo.com";
+          const email = c.accessible_by.login || "";
+          const isExternal = !email.toLowerCase().endsWith("@" + INTERNAL_DOMAIN);
+          
+
+          // OPTION 2: Check if the current role indicates an external user (current approach)
+          //const currentRole = c.role.toLowerCase();
+          //const isExternal = enable ? 
+          //  currentRole === "viewer uploader" :  // When enabling, treat viewer uploaders as external
+         //   currentRole === "previewer uploader"; // When disabling, treat previewer uploaders as external
             
           if (isExternal) {
             await $.ajax({
