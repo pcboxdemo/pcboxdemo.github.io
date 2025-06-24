@@ -89,7 +89,8 @@
                 sheet = sheet.filter(row => row[columns[columns.length - 1]]);
             
                 const nestedTree = buildTree(sheet, columns);
-                const jsTreeNodes = convertNestedToJsTree(nestedTree, columns);
+                const maxLevel = Math.max(...originalEntries.map(n => n.level));
+                const jsTreeNodes = convertNestedToJsTree(nestedTree, maxLevel);
             
                 const name = file.name.replace(/\.[^/.]+$/, "");
                 originalEntries = [];
@@ -104,26 +105,7 @@
             });
             
             
-            function convertNestedToJsTree(nodes, columns, level = 0) {
-              const currentKey = columns[level];
-              const nextKey = columns[level + 1];
-              const isLastLevel = level === columns.length - 1;
             
-              return nodes.map(node => {
-                const item = {
-                  id: node.id || `NEW_${Date.now() + Math.random()}`,
-                  text: node[currentKey],
-                  icon: isLastLevel ? 'jstree-file' : 'jstree-folder',
-                  children: []
-                };
-            
-                if (!isLastLevel && Array.isArray(node[nextKey])) {
-                  item.children = convertNestedToJsTree(node[nextKey], columns, level + 1);
-                }
-            
-                return item;
-              });
-            }
             
             
             
@@ -139,15 +121,16 @@
                 const nodesJson = await getNodes(namespace, taxonomyKey);
               
                 taxonomyLevels = taxonomyJSON.levels;
-                originalEntries = nodesJson.entries.sort((a, b) => a.display_name.localeCompare(b.display_name));
+                originalEntries = nodesJson.entries.sort((a, b) => a.displayName.localeCompare(b.displayName));
               
-                const nestedTree = buildTreeWithLevels(taxonomyLevels, originalEntries);
-                const jsTreeNodes = convertNestedToJsTree(nestedTree, taxonomyLevels.map(l => l.display_name));
+                const nestedTree = buildTreeFromFlatList(originalEntries);
+                const maxLevel = Math.max(...originalEntries.map(n => n.level));
+                const jsTreeNodes = convertNestedToJsTree(nestedTree, maxLevel);
               
                 $('#taxonomyKey').val(taxonomy.key);
-                $('#taxonomyDisplayName').val(taxonomy.display_name);
+                $('#taxonomyDisplayName').val(taxonomy.displayName);
               
-                renderTaxonomyTree(taxonomy.display_name, jsTreeNodes, taxonomyLevels);
+                renderTaxonomyTree(taxonomy.displayName, jsTreeNodes, taxonomyLevels);
               });
               
               function renderTaxonomyTree(displayName, jsTreeNodes, taxonomyLevels) {
@@ -176,12 +159,12 @@
                       return {
                         ...(canAddChild && {
                           addChild: {
-                            label: `Add ${taxonomyLevels[depth - 1]?.display_name || 'Item'}`,
+                            label: `Add ${taxonomyLevels[depth - 1]?.displayName || 'Item'}`,
                             action: function () {
                               const newId = `NEW_${Date.now()}`;
                               tree.create_node(node, {
                                 id: newId,
-                                text: `New ${taxonomyLevels[depth - 1]?.display_name}`,
+                                text: `New ${taxonomyLevels[depth - 1]?.displayName}`,
                                 icon: depth === taxonomyLevels.length ? 'jstree-file' : 'jstree-folder'
                               }, 'last');
                             }
@@ -232,7 +215,7 @@
                 
             $('#allTemplates').append($('<option>', {
                 value: temp.key,
-                text: temp.display_name + ' (' + temp.key + ')',
+                text: temp.displayName + ' (' + temp.key + ')',
             }));
                 
             })
@@ -254,11 +237,11 @@
                   }
               
                   const levelName = taxonomyLevels[level - 1]?.displayName;
-                  const display_name = node.display_name || node[levelName] || node.text || "Unnamed";
+                  const displayName = node.displayName || node[levelName] || node.text || "Unnamed";
               
                   const entry = {
                     id: node.id,
-                    display_name,
+                    displayName,
                     level,
                     parent_id: parentId
                   };
@@ -387,7 +370,7 @@
                   
                       const schema = {
                         type: "object",
-                        title: level.display_name,
+                        title: level.displayName,
                         properties: {}
                       };
                   
@@ -447,14 +430,15 @@
                     const nodesJson = await getNodes(namespace, taxonomyId);
                   
                     taxonomyLevels = taxonomyJSON.levels;
-                    originalEntries = nodesJson.entries.sort((a, b) => a.display_name.localeCompare(b.display_name));
-                    const tree = buildTreeWithLevels(taxonomyLevels, originalEntries);
-                    const jsTreeNodes = convertNestedToJsTree(tree, taxonomyLevels.map(l => l.display_name));
+                    originalEntries = nodesJson.entries.sort((a, b) => a.displayName.localeCompare(b.displayName));
+                    const tree = buildTreeFromFlatList(originalEntries);
+                    const maxLevel = Math.max(...originalEntries.map(n => n.level));
+                    const jsTreeNodes = convertNestedToJsTree(tree, maxLevel);
                   
                     //$('#taxonomyKey').val(taxonomy.taxonomyKey);
-                    //$('#taxonomyDisplayName').val(taxonomy.display_name);
+                    //$('#taxonomyDisplayName').val(taxonomy.displayName);
                     console.log(taxonomy);
-                    renderTaxonomyTree(taxonomy.display_name, jsTreeNodes, taxonomyLevels);
+                    renderTaxonomyTree(taxonomy.displayName, jsTreeNodes, taxonomyLevels);
                     setNodesToCreate();
                   }
 
@@ -505,7 +489,7 @@
        
     function removeLastLevelHeaderRow(levels) {
       console.log(levels);
-      const lastLevelName = levels[levels.length - 1].display_name;
+      const lastLevelName = levels[levels.length - 1].displayName;
       document.querySelectorAll('table thead').forEach(thead => {
         const tr = thead.querySelector('tr');
         if (!tr) return;

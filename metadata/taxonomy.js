@@ -279,22 +279,14 @@ async function getTemplateInstanceMetadata(fileId, scope, templateKey) {
   return await response.json();
 }
 
-
-
-
-
-
-
-
-
 function buildTreeWithLevels(levels, nodes) {
   const nodeMap = new Map();
   const roots = [];
-  const levelMap = Object.fromEntries(levels.map(l => [l.level, l.display_name]));
+  const levelMap = Object.fromEntries(levels.map(l => [l.level, l.displayName]));
 
   for (const node of nodes) {
     const levelName = levelMap[node.level];
-    node[levelName] = node.display_name;
+    node[levelName] = node.displayName;
 
     const nextLevelName = levelMap[node.level + 1];
     if (nextLevelName) {
@@ -319,47 +311,45 @@ function buildTreeWithLevels(levels, nodes) {
   return roots;
 }
 
-
-function buildTreeFromFlatList(levels, entries) {
-  const levelNames = levels.map(l => l.display_name);
+function buildTreeFromFlatList(entries) {
   const nodeMap = {};
-  const root = [];
-  console.log(entries);
+  const roots = [];
 
-  // First pass: map all nodes by ID
   entries.forEach(entry => {
-    nodeMap[entry.id] = {
-      id: entry.id,
-      [levelNames[entry.level - 1]]: entry.display_name,
-      children: []
-    };
+    nodeMap[entry.id] = { ...entry };
   });
-  // Second pass: link children to parents
+
   entries.forEach(entry => {
-    const node = nodeMap[entry.id];
     if (entry.parentId) {
       const parent = nodeMap[entry.parentId];
-      if (parent) parent.children.push(node);
+      if (parent) {
+        if (!parent.children) parent.children = [];
+        parent.children.push(nodeMap[entry.id]);
+      }
     } else {
-      root.push(node);
+      roots.push(nodeMap[entry.id]);
     }
   });
 
-  return root;
+  // Optionally prune empty children arrays for leaves
+  function pruneChildren(node) {
+    if (node.children) {
+      node.children.forEach(pruneChildren);
+      if (node.children.length === 0) delete node.children;
+    }
+  }
+  roots.forEach(pruneChildren);
+
+  return roots;
 }
-
-
-
 
 function areNodesDifferent(original, current) {
   return (
-    original.display_name !== current.display_name ||
+    original.displayName !== current.displayName ||
     original.parentId !== current.parentId ||
     original.level !== current.level
   );
 }
-
-
 
 async function deleteNodes(nodes) {
   console.log('deleting (deprecating)');
@@ -372,7 +362,7 @@ async function updateNodes(nodes) {
   for (const node of nodes) {
     console.log(node);
     await updateNodeInTaxonomy(namespace, taxonomyId, node.id, {
-      displayName: node.display_name
+      displayName: node.displayName
     });
   }
 }
@@ -402,7 +392,7 @@ async function createNodes(nodes) {
   for (const level of levels) {
     for (const node of levelGroups[level]) {
       const payload = {
-        displayName: node.display_name,
+        displayName: node.displayName,
         level: node.level
       };
 
@@ -411,7 +401,7 @@ async function createNodes(nodes) {
         const resolvedParentId = parentRef?.startsWith('NEW_') ? idMap[parentRef] : parentRef;
       
         if (!resolvedParentId) {
-          console.warn(`Skipping ${node.display_name}, unresolved parent_id: ${parentRef}`);
+          console.warn(`Skipping ${node.displayName}, unresolved parent_id: ${parentRef}`);
           continue;
         }
       
@@ -425,15 +415,13 @@ async function createNodes(nodes) {
         if (node.tempId) {
           idMap[node.tempId] = created.id;
         }
-        console.log("Created:", created.display_name, "→", created.id);
+        console.log("Created:", created.displayName, "→", created.id);
       } catch (err) {
         console.error("Failed to create node:", payload, err);
       }
     }
   }
 }
-
-
 
 function buildTree(rows, columns, level = 0) {
   if (level >= columns.length) return [];
@@ -462,13 +450,6 @@ function buildTree(rows, columns, level = 0) {
     return node;
   });
 }
-
-
-
-
-  
-
-
 
 async function createNewTaxonomyTree(tree, levels, namespace, taxonomyKey) {
   const displayName = $('#taxonomyDisplayName').val().trim() || tree.displayName || "New Taxonomy";
@@ -499,7 +480,7 @@ async function createNewTaxonomyTree(tree, levels, namespace, taxonomyKey) {
   // 4. Create nodes in order
   for (const entry of flat) {
     const nodePayload = {
-      displayName: entry.display_name,
+      displayName: entry.displayName,
       level: entry.level
     };
 
@@ -516,7 +497,7 @@ async function createNewTaxonomyTree(tree, levels, namespace, taxonomyKey) {
       const realNode = await addNodeToTaxonomy(namespace, taxonomyId, nodePayload);
       incrementNodesCreated();
       tempIdMap.set(entry.tempId, realNode.id);
-      console.log("Created:", realNode.display_name, "→", realNode.id);
+      console.log("Created:", realNode.displayName, "→", realNode.id);
     } catch (err) {
       console.error("Failed to create node:", nodePayload, err);
     }
@@ -524,7 +505,6 @@ async function createNewTaxonomyTree(tree, levels, namespace, taxonomyKey) {
 
   console.log("✅ All nodes created for new taxonomy!");
 }
-
 
 function flattenForCreate(tree, levels) {
   const flat = [];
@@ -535,11 +515,11 @@ function flattenForCreate(tree, levels) {
 
     for (const node of nodes) {
       const tempId = `temp-${tempIdCounter++}`;
-      const display_name = node[levelName] || node.display_name || node.text || "Unnamed";
+      const displayName = node[levelName] || node.displayName || node.text || "Unnamed";
 
       flat.push({
         tempId,
-        display_name,
+        displayName,
         level: level + 1,       // ✅ correct level assignment
         parentTempId: parentTempId || null  // ✅ maintain hierarchy
       });
@@ -556,4 +536,21 @@ function flattenForCreate(tree, levels) {
 
   walk(tree);
   return flat;
+}
+
+function convertNestedToJsTree(nodes, maxLevel) {
+  
+  return nodes.map(node => {
+    console.log(maxLevel + " " + node.level) ;
+    const isLastLevel = node.level === maxLevel;
+    const item = {
+      id: node.id,
+      text: node.displayName,
+      icon: isLastLevel ? 'jstree-file' : 'jstree-folder'
+    };
+    if (node.children && node.children.length > 0) {
+      item.children = convertNestedToJsTree(node.children, maxLevel);
+    }
+    return item;
+  });
 }
