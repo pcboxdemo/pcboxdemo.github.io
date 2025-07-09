@@ -48,7 +48,8 @@ async function updateTaxonomy(namespace, taxonomyKey, updateData) {
   const token = getAuthToken();
   const url = `https://api.box.com/2.0/metadata_taxonomies/${namespace}/${taxonomyKey}`;
   const response = await fetch(url, {
-    method: 'PATCH',
+    //method: 'PATCH',
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,

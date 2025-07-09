@@ -4,7 +4,7 @@
   <script defer src="https://cloud.umami.is/script.js" data-website-id="459f7581-de5e-40fb-a3c7-a330a23bfdaf"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Share AI Agents</title>
+    <title>Share AI Agents</title> 
     <!-- Bootstrap CSS -->
 <!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -474,12 +474,15 @@ $(document).ready(async function () {
               const description = row[5] || ''; // Assuming description is column index 5 (hidden)
               const safeDescription = $('<div>').text(description).html(); // Escape HTML safely
               return `
-                ${data}
-                <i class="fas fa-circle-info  ms-2 text-primary"
-                   data-bs-toggle="tooltip"
-                   data-bs-placement="top"
-                   title="${safeDescription}">
-                </i>
+                <div class="d-flex align-items-center">
+                  <span class="text-truncate me-1">${data}</span>
+                  <i class="fas fa-info-circle text-primary" 
+                     data-bs-toggle="tooltip"
+                     data-bs-placement="top"
+                     title="${safeDescription}"
+                     style="min-width: 16px;">
+                  </i>
+                </div>
               `;
             }
           }
@@ -793,9 +796,8 @@ $(document).ready(async function () {
         <a href="apply.html"><i class="bi bi-check-circle"></i> Apply</a>
         <a href="delete.html" class="text-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Delete Template</a>
         <a href="docgen.html" ><i class="bi bi-tools"></i> Generate documents</a>
-        <a href="taxonomy.html"><i class="bi bi-diagram-3"></i>Taxonomies</a>
+        <a href="taxonomies.html"><i class="bi bi-share"></i>Taxonomies</a>
         <a href="agents.html" class="active"><i class="bi bi-robot"></i>AI Agents</a>
-
     </div>
 
     <!-- Right side could have more links or branding if needed -->

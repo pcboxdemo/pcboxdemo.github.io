@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="459f7581-de5e-40fb-a3c7-a330a23bfdaf"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Taxonomies</title> 
+    <!-- Bootstrap CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" >
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
+    <link rel="stylesheet" href="import.css"/>
+    
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+    <script src="./lib/bundle.js"></script>
+    <script src="metadata.js"></script>
+    <script src="taxonomy.js"></script>
+    
+    <style>
+        .modal-lg-wider { max-width: 75% !important; width: 75% !important; }
+        .taxonomy-detail { font-size: 0.9rem; margin-bottom: 1rem; }
+        #taxonomyTree { height: 400px; overflow: auto; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 1rem; }
+        select.form-select { max-height: 80px; overflow-y: auto; }
+        .tooltip .tooltip-inner { background-color: #0d6efd !important; color: white !important; }
+        /* Make select boxes in DataTable filter row match input height */
+        #sharedTaxonomiesTable thead tr:nth-child(2) .form-select.form-select-sm {
+          height: 31px !important;
+          padding-top: 0.25rem;
+          padding-bottom: 0.25rem;
+          font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>   
+    <header class="header">
+        <div class="left">
+            <a href="index.html"><i class="bi bi-house-door"></i> Home</a>
+            <a href="index_oauth.html"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+        </div>
+        <div class="center">
+            <a href="export.html"><i class="bi bi-arrow-up-circle"></i> Export</a>
+            <a href="import.html"><i class="bi bi-arrow-down-circle"></i> Import</a>
+            <a href="apply.html"><i class="bi bi-check-circle"></i> Apply</a>
+            <a href="delete.html" class="text-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Delete Template</a>
+            <a href="docgen.html"><i class="bi bi-tools"></i> Generate documents</a>
+            <a href="taxonomies.html"><i class="bi bi-diagram-3"></i>Taxonomies</a>
+            <a href="agents.html"><i class="bi bi-robot"></i>AI Agents</a>
+        </div>
+        <div class="right"></div>
+    </header>
+    <div class="container mt-3 mb-2">
+        <a href="taxonomy.html" class="btn btn-link p-0 ps-1"><i class="bi bi-diagram-3"></i> My taxonomies</a>
+    </div>
+    
+    <div class="container mt-5">
+        <header class="text-center mb-2">
+            <h3>Taxonomy Sharing Hub</h3>
+        </header>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="section la">Instructions: 
+                    <ul>
+                        <li>This page allows you to share your Taxonomies and load taxonomies shared by other SEs</li>
+                        <li>Select a taxonomy from the list and view the hierarchical structure</li>
+                        <li>Click Copy to copy this taxonomy to your demo environment</li>
+                        <li>Click Add new taxonomy to add your taxonomy to the shared library</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content will be added here -->
+        <div class="row">
+            <div class="col-md-10">
+                <h4>Select Taxonomy</h4>
+                <div class="section d-flex flex-column h-100">
+                    <div class="d-flex gap-2 mb-2">
+                        <div class="card shadow-sm w-100">
+                            <div class="card-body p-2">
+                                <table id="sharedTaxonomiesTable" class="table table-sm table-striped table-hover table-bordered align-middle mb-0" style="width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Owner</th>
+                                            <th>Category</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                        <tr>
+                                            <th><input type="text" id="nameFilter" class="form-control form-control-sm" placeholder="Search name" /></th>
+                                            <th><select id="ownerFilter" class="form-select form-select-sm w-auto"><option value="">All Owners</option></select></th>
+                                            <th><select id="categoryFilter" class="form-select form-select-sm w-auto"><option value="">All Categories</option></select></th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="taxonomyDetails" class="mt-3" style="display:none;">
+                        <div class="row g-2 text-start mb-1">
+                            <div class="col-md-3"><strong>Name:</strong> <br/><span id="taxonomyName"></span></div>
+                            <div class="col-md-3"><strong>Category:</strong> <br/><span id="taxonomyCategory"></span></div>
+                            <div class="col-md-3" id="linkdiv"><strong>Info:</strong> <br/><a id="taxonomyLink" href="#" target="_blank">Open</a></div>
+                            <div class="col-md-3"><strong>Owner:</strong> <br/><span id="taxonomyOwner"></span></div>
+                        </div>
+                        <div class="row g-2 text-start mb-3">
+                            <div class="col-md-12"><strong>Description:</strong> <br/><span id="taxonomyDescription" class="text-muted"></span></div>
+                        </div>
+                        <div id="taxonomyTree" class="ms-1 text-start section"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <h4>Take action</h4>
+                <div class="section gap-2 mb-2">
+                    <div class="button-section d-grid gap-2">
+                        <button class="btn btn-primary action" id="copy" disabled>Copy Selected</button>
+                        <img src="ajax-loader.gif" id="loader" style="display:none;" width="32" height="32"/>
+                        <button class="btn btn-primary action" id="addNew">Add new Taxonomy</button>
+                    </div>
+                    <div id="taxonomyMessage" class="mt-2 text-success mt-2 fw-semibold" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div class="modal fade" id="taxonomyAddModal" tabindex="-1" aria-labelledby="taxonomyAddModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg-wider">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taxonomyAddModalLabel"><i class="bi bi-plus-circle"></i> Share Your Taxonomy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="taxonomyShareForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="taxonomyFormMode" value="create">
+                        <input type="hidden" id="taxonomyId">
+                        
+                        <div class="mb-3 taxonomyCreateList">
+                            <label for="taxonomyToShare" class="form-label">Select Your Taxonomy to Share *</label>
+                            <select id="taxonomyToShare" class="form-select" size="3" required></select>
+                        </div>
+                        
+                        <div class="mb-3" id="taxonomyNameContainer">
+                            <label for="selectedTaxonomyName" class="form-label">Selected Taxonomy Name</label>
+                            <input type="text" id="selectedTaxonomyName" class="form-control" />
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="createTaxonomyCategory" class="form-label">Category</label>
+                                <select class="form-select form-select-sm" id="createTaxonomyCategory" required>
+                                    <option value="General">General</option>
+                                    <option value="Financial Services">Financial Services</option>
+                                    <option value="Higher Education">Higher Education</option>
+                                    <option value="Legal">Legal</option>
+                                    <option value="Life Sciences">Life Sciences</option>
+                                    <option value="Manufacturing">Manufacturing</option>
+                                    <option value="Media & Entertainment">Media & Entertainment</option>
+                                    <option value="Non-profit">Non-profit</option>
+                                    <option value="Professional Services">Professional Services</option>
+                                    <option value="Public Sector">Public Sector</option>
+                                    <option value="Retail & CPG">Retail & CPG</option>
+                                    <option value="Corporate legal">Corporate legal</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="HR">HR</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Operations">Operations</option>
+                                    <option value="R&D and Engineering">R&D and Engineering</option>
+                                    <option value="Sales">Sales</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3 align-items-end">
+                            <div class="col-md-6">
+                                <label for="createTaxonomyName" class="form-label">Your Name *</label>
+                                <input type="text" class="form-control" id="createTaxonomyName" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="createTaxonomyURL" class="form-label">Box Note URL (optional)</label>
+                                <input type="url" class="form-control" id="createTaxonomyURL" />
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="createTaxonomyDescription" class="form-label">Short Description *</label>
+                            <textarea class="form-control" id="createTaxonomyDescription" rows="2" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="submitTaxonomyShare" type="submit" class="btn btn-primary">Share Taxonomy</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="taxonomyDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Confirm Delete</h5></div>
+                <div class="modal-body">Are you sure you want to delete this taxonomy?</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Retry Modal for 409 errors -->
+    <div class="modal fade" id="retryTaxonomyModal" tabindex="-1" aria-labelledby="retryTaxonomyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="retryTaxonomyModalLabel">Taxonomy Name Already Exists</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>A taxonomy with that name already exists. Please choose a different name:</p>
+                    <div class="mb-3">
+                        <label for="newTaxonomyName" class="form-label">New Taxonomy Name</label>
+                        <input type="text" class="form-control" id="newTaxonomyName" placeholder="Enter new name">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="retryTaxonomyCopy">Copy with New Name</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const isDebug = new URLSearchParams(window.location.search).has("debug");
+        const host = isDebug ? "http://localhost:3001" : "https://box-tokengenerator-v2.herokuapp.com";
+        
+        const { BoxClient, BoxDeveloperTokenAuth } = window['box-typescript-sdk-gen'];
+        var client;
+        var accessToken = sessionStorage.getItem("token");
+        var eid;
+        var taxonomies = [];
+        let currentUserName;
+        let currentUserEmail;
+        let currentUserId;
+        let selectedId;
+        let namespace;
+
+        $(document).ready(async function () {
+            // Event handlers
+            $('#taxonomyToShare').on('change', function () {
+                const selectedText = $("#taxonomyToShare option:selected").text();
+                $('#selectedTaxonomyName').val(selectedText);
+                $('.taxonomyCreateList').show();
+                $('#taxonomyToShare').prop('disabled', false).closest('.mb-3').show();
+            });
+
+            $("#addNew").on("click", function () {
+                loadUserTaxonomies();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('taxonomyAddModal')).show();
+                $("#createTaxonomyName").val(currentUserName);
+            });
+
+            // Initialize user info and load data
+            try {
+                const userInfo = await $.ajax({
+                    url: "https://api.box.com/2.0/users/me?fields=id,name,login,enterprise",
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+                currentUserId = userInfo.id;
+                currentUserName = userInfo.name;
+                currentUserEmail = userInfo.login;
+                eid = userInfo.enterprise.id;
+                namespace = "enterprise_" + eid;
+            } catch (e) {
+                return alert("Login problem. Please re-login.");    
+            }
+            
+            loadSharedTaxonomies();
+            
+            // Store the current copy data for retry
+            let currentCopyData = null;
+
+            function performCopyTaxonomy(taxonomyData, taxonomyId, newName = null) {
+                const payload = {
+                    access_token: sessionStorage.getItem("token"),
+                    taxonomy_data: taxonomyData,
+                    taxonomy_id: taxonomyId
+                };
+                
+                // If a new name is provided, update the taxonomy data
+                if (newName) {
+                    payload.taxonomy_data = { ...taxonomyData, displayName: newName, key: newName.toLowerCase().replace(/\s+/g, '_') };
+                }
+                
+                $.ajax({
+                    url: `${host}/copy_taxonomy`,
+                    type: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    data: JSON.stringify(payload),
+                    success: function () {
+                        $("#taxonomyMessage")
+                            .removeClass("text-danger")
+                            .addClass("text-success")
+                            .text("Taxonomy copied to your demo environment")
+                            .stop(true, true)
+                            .fadeIn(200)
+                            .delay(5000)
+                            .fadeOut(400);
+                        $("#loader").hide();
+                        $("#copy").prop("disabled", false);
+                        $("#retryTaxonomyModal").modal('hide');
+                    },
+                    error: function (xhr) {
+                        let errorMsg = xhr.responseText || "Something went wrong.";
+                        try {
+                            const err = JSON.parse(xhr.responseText);
+                            if (err.message) errorMsg = err.message;
+                            if (err.context_info?.message) errorMsg += `: ${err.context_info.message}`;
+                        } catch (e) { console.log(e); }
+                        
+                        // Check if it's a 409 error (name conflict)
+                        if (xhr.status === 409 || errorMsg.includes("already exists")) {
+                            // Store current data for retry
+                            currentCopyData = { taxonomyData, taxonomyId };
+                            $("#newTaxonomyName").val(taxonomyData.displayName + "_copy");
+                            $("#retryTaxonomyModal").modal('show');
+                            $("#loader").hide();
+                            $("#copy").prop("disabled", false);
+                        } else {
+                            // Show regular error message for other errors
+                            $("#taxonomyMessage")
+                                .removeClass("text-success")
+                                .addClass("text-danger")
+                                .text("" + errorMsg)
+                                .stop(true, true)
+                                .fadeIn(200)
+                                .delay(5000)
+                                .fadeOut(400);
+                            $("#loader").hide();
+                            $("#copy").prop("disabled", false);
+                        }
+                    }
+                });
+            }
+
+            // Retry button handler
+            $("#retryTaxonomyCopy").on("click", function() {
+                const newName = $("#newTaxonomyName").val().trim();
+                if (!newName) {
+                    alert("Please enter a new name");
+                    return;
+                }
+                
+                if (currentCopyData) {
+                    // Show spinner and disable button
+                    const $btn = $(this);
+                    const originalText = $btn.text();
+                    $btn.prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-2" role="status"></span>Copying...');
+                    
+                    // Close the modal immediately
+                    $("#retryTaxonomyModal").modal('hide');
+                    
+                    // Show main loader and disable main copy button
+                    $("#loader").show();
+                    $("#copy").prop("disabled", true);
+                    
+                    // Reset button state after a delay (in case of success/error)
+                    setTimeout(() => {
+                        $btn.prop("disabled", false).text(originalText);
+                    }, 3000);
+                    
+                    performCopyTaxonomy(currentCopyData.taxonomyData, currentCopyData.taxonomyId, newName);
+                }
+            });
+
+            // Update the main copy button to use the new function
+            $("#copy").on("click", async function () {
+                $("#copy").prop("disabled", true);
+                $("#loader").show();
+                const id = selectedId;
+                const taxonomy = taxonomies.find(t => t.taxonomyId?.S === id);
+                if (!taxonomy) return alert("Taxonomy not found.");
+                
+                let taxonomyData;
+                try {
+                    taxonomyData = JSON.parse(taxonomy.taxonomyData.S);
+                } catch (e) {
+                    return alert("Invalid taxonomy data.");
+                }
+                
+                performCopyTaxonomy(taxonomyData, taxonomyData.id);
+            });
+            
+            // Delete functionality
+            let taxonomyIdToDelete = null;
+            $('#sharedTaxonomiesTable').on('click', '.delete-btn', function () {
+                taxonomyIdToDelete = $(this).data('id');
+                $('#confirmDeleteModal').modal('show');
+            });
+            
+            $('#confirmDeleteBtn').on('click', async function () {
+                if (!taxonomyIdToDelete) return;
+                try {
+                    await fetch(`${host}/delete_taxonomy`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            access_token: sessionStorage.getItem('token'),
+                            taxonomy_id: taxonomyIdToDelete
+                        })
+                    });
+                    $('#confirmDeleteModal').modal('hide');
+                    const table = $('#sharedTaxonomiesTable').DataTable();
+                    const rowIndex = table.rows().eq(0).filter(function(idx) {
+                        return table.cell(idx, 6).data() === taxonomyIdToDelete; 
+                    });
+                    table.row(rowIndex).remove().draw();
+                    window.location.reload();
+                } catch (err) {
+                    console.error("Failed to delete taxonomy:", err);
+                }
+            });
+            
+            // Form submission
+            $("#taxonomyShareForm").on("submit", function (e) {
+                e.preventDefault();
+                const mode = $("#taxonomyFormMode").val();
+                let taxonomyId;
+                const selectedTaxonomyId = $("#taxonomyId").val();
+                
+                if (!taxonomyId && mode === "create") {
+                    taxonomyId = $("#taxonomyToShare").val();
+                }
+                
+                const payload = {
+                    access_token: accessToken,
+                    category: $("#createTaxonomyCategory").val(),
+                    name: $("#createTaxonomyName").val(),
+                    description: $("#createTaxonomyDescription").val(),
+                    url: $("#createTaxonomyURL").val(),
+                    taxonomy_name: $("#selectedTaxonomyName").val()
+                };
+                
+                if (mode === "create") {
+                    payload.taxonomy_id = taxonomyId;
+                } else if (mode === "edit") {
+                    payload.taxonomyId = selectedTaxonomyId; 
+                }
+                
+                const url = mode === "edit" ? `${host}/edit_taxonomy` : `${host}/share_taxonomy`;
+                
+                $.post(url, payload)
+                    .done(function () {
+                        $("#taxonomyAddModal").modal("hide");
+                        $("#taxonomyMessage")
+                            .removeClass("text-danger")
+                            .addClass("text-success")
+                            .text(`Taxonomy ${mode === "edit" ? "updated" : "shared"} successfully!`)
+                            .stop(true, true)
+                            .fadeIn(200)
+                            .delay(3000)
+                            .fadeOut(400, function () {
+                                location.reload();
+                            });
+                    })
+                    .fail(function (xhr) {
+                        const errorMsg = xhr.responseText || "Something went wrong.";
+                        $("#taxonomyMessage")
+                            .removeClass("text-success")
+                            .addClass("text-danger")
+                            .text(`Failed to ${mode === "edit" ? "update" : "share"} taxonomy: ${errorMsg}`)
+                            .stop(true, true)
+                            .fadeIn(200)
+                            .delay(5000)
+                            .fadeOut(400);
+                    });
+            });
+        });
+        
+        // Data loading functions
+        function loadSharedTaxonomies() {
+            $.get(host + "/shared_taxonomies?token=" + accessToken, function (taxonomiesFound) {
+                taxonomies = taxonomiesFound.result;
+                loadSharedTaxonomiesTable(taxonomiesFound.result);
+            });
+        }
+        
+        function loadSharedTaxonomiesTable(taxonomyList) {
+            // DataTable initialization
+            var table = $('#sharedTaxonomiesTable').DataTable({
+                orderCellsTop: true,
+                fixedHeader: true,
+                columns: [
+                    { title: "Name" },
+                    { title: "Owner" },
+                    { title: "Category" },
+                    { title: "Actions", orderable: false, searchable: false },
+                    { title: "taxonomyId", visible: false } // hidden column
+                ],
+                columnDefs: [
+                    {
+                        targets: 3,
+                        className: 'text-end',
+                        render: function (data, type, row) {
+                            const taxonomyId = row[4];
+                            return `
+                              <button class="btn btn-xs btn-link p-0 me-1 text-primary edit-btn" title="Edit" data-id="${taxonomyId}"><i class="fas fa-edit"></i></button>
+                              <button class="btn btn-xs btn-link p-0 text-danger delete-btn" title="Delete" data-id="${taxonomyId}"><i class="fas fa-trash-alt"></i></button>
+                              <button class="btn btn-xs btn-link p-0 text-secondary permalink-btn" title="Copy Link" data-id="${taxonomyId}"><i class="fas fa-link"></i></button>
+                            `;
+                        }
+                    },
+                    { targets: 4, visible: false }
+                ]
+            });
+
+            // Apply the search for each column
+            $('#sharedTaxonomiesTable thead tr:eq(1) th').each(function (i) {
+                $('input, select', this).on('keyup change', function () {
+                    if (table.column(i).search() !== this.value) {
+                        table.column(i).search(this.value).draw();
+                    }
+                });
+            });
+
+            // When building row data for the table, provide 5 fields per row:
+            // [Name, Owner, Category, Actions, taxonomyId]
+            function buildTaxonomyRow(taxonomy) {
+                return [
+                    taxonomy.name?.S || 'Unnamed',
+                    taxonomy.owner?.S || 'Unknown',
+                    taxonomy.category?.S || '',
+                    '', // actions (to be filled in by render function)
+                    taxonomy.taxonomyId?.S || ''
+                ];
+            }
+            
+            table.rows.add(taxonomyList.map(taxonomy => {
+                const row = buildTaxonomyRow(taxonomy);
+                row.push(taxonomy.taxonomyId?.S || 'Unknown'); // taxonomyId
+                row.push(taxonomy.userId?.S || ''); // userId
+                return row;
+            }));
+            
+            table.draw();
+            
+            // Table event handlers
+            $('#sharedTaxonomiesTable').on('draw.dt', function () {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+            });
+            
+            $('#sharedTaxonomiesTable').on('click', '.permalink-btn', function (e) {
+                e.preventDefault();
+                const taxonomyId = $(this).data('id');
+                const permalink = `https://pcboxdemo.github.io/metadata/index_oauth.html?taxonomyId=${taxonomyId}`;
+                
+                navigator.clipboard.writeText(permalink).then(() => {
+                    $("#taxonomyMessage")
+                        .removeClass("text-danger")
+                        .addClass("text-success")
+                        .text("Link copied to clipboard")
+                        .stop(true, true)
+                        .fadeIn(200)
+                        .delay(3000)
+                        .fadeOut(400);
+                }).catch(err => {
+                    console.error("Failed to copy link:", err);
+                    alert("Could not copy the link.");
+                });
+            });
+            
+            $('#sharedTaxonomiesTable').on('click', '.edit-btn', function () {
+                const table = $('#sharedTaxonomiesTable').DataTable();
+                const rowData = table.row($(this).closest('tr')).data();
+                const taxonomyId = rowData[4];
+                const taxonomy = taxonomies.find(t => t.taxonomyId?.S === taxonomyId);
+                const name = rowData[0];
+                const owner = rowData[1];
+                const category = rowData[2];
+                // const action = rowData[3];
+                // const description = rowData[4]; // no longer used
+                // const taxonomyId = rowData[4];
+                $("#selectedTaxonomyName").val(name);
+                $('#taxonomyFormMode').val('edit');
+                $('#taxonomyId').val(taxonomyId);
+                $('#taxonomyToShare').prop('disabled', true).closest('.mb-3').hide();
+                $(".taxonomyCreateList").hide();
+                $("#taxonomyAddModalLabel").text("Edit Taxonomy");
+                $('#createTaxonomyName').val(owner);
+                $('#createTaxonomyCategory').val(category);
+                $('#createTaxonomyDescription').val(taxonomy?.description?.S || '');
+                $('#submitTaxonomyShare').text('Update');
+                $('#taxonomyAddModal').modal('show');
+            });
+            
+            $('#sharedTaxonomiesTable tbody').on('click', 'tr', function () {
+                table.$('tr.selected').removeClass('selected');
+                $(this).addClass('selected');
+                
+                const rowData = table.row(this).data();
+                selectedId = rowData[4]; // taxonomyId is now at index 4
+                loadDetails(rowData[4]);
+            });
+            
+            populateTaxonomyFilters(taxonomies);
+            
+            // Filter handlers
+            $('#nameFilter').on('keyup', function () {
+                table.column(0).search(this.value).draw();
+            });
+            
+            $('#ownerFilter').on('change', function () {
+                table.column(1).search(this.value).draw();
+            });
+            
+            $('#categoryFilter').on('change', function () {
+                table.column(2).search(this.value).draw();
+            });
+        }
+        
+        function loadUserTaxonomies() {
+            const sharedTaxonomyIds = new Set(taxonomies.map(t => t.taxonomyId?.S));
+            
+            $.ajax({
+                url: `https://api.box.com/2.0/metadata_taxonomies/${namespace}`,
+                headers: { Authorization: `Bearer ${accessToken}` },
+                success: function (res) {
+                    const $dropdown = $("#taxonomyToShare").empty();
+                    res.entries.forEach(taxonomy => {
+                        const isShared = sharedTaxonomyIds.has(taxonomy.key);
+                        const label = isShared ? `${taxonomy.displayName} (already shared)` : taxonomy.displayName;
+                        const disabledAttr = isShared ? 'disabled' : '';
+                        
+                        $dropdown.append(`<option value="${taxonomy.key}" ${disabledAttr}>${label}</option>`);
+                    });
+                }
+            });
+        }
+        
+        function loadDetails(taxonomyId) {
+            $("#linkdiv").show();
+            const taxonomy = taxonomies.find(t => t.taxonomyId?.S === taxonomyId);
+            if (!taxonomy) return;
+            $("#taxonomyDetails").show();
+            $('#taxonomyName').text(taxonomy.name?.S || '');
+            $('#taxonomyCategory').text(taxonomy.category?.S || '');
+            $('#taxonomyOwner').text(taxonomy.owner?.S || '');
+            $('#taxonomyDescription').text(taxonomy.description?.S || 'No description available');
+            if(taxonomy.url?.S) {
+                $('#taxonomyLink').attr('href', taxonomy.url.S);
+            } else {
+                $("#linkdiv").hide();
+            }
+            
+            // Render taxonomy tree
+            try {
+                const data = JSON.parse(taxonomy.taxonomyData?.S || '{}');
+                
+                if (data.levels && data.nodes) {
+                    const nestedTree = buildTreeFromFlatList(data.nodes);
+                    const maxLevel = Math.max(...data.nodes.map(n => n.level));
+                    const jsTreeNodes = convertNestedToJsTree(nestedTree, maxLevel);
+                    
+                    if ($.jstree.reference('#taxonomyTree')) {
+                        $('#taxonomyTree').jstree('destroy').empty();
+                    }
+                    
+                    $('#taxonomyTree').jstree({
+                        core: {
+                            check_callback: true,
+                            data: [{
+                                id: 'taxonomy_root',
+                                text: data.displayName || 'Taxonomy',
+                                icon: 'jstree-folder',
+                                state: { opened: true },
+                                children: jsTreeNodes
+                            }]
+                        },
+                        plugins: ['contextmenu', 'dnd', 'unique']
+                    });
+                } else {
+                    $('#taxonomyTree').html(renderTree(data));
+                }
+            } catch (err) {
+                $('#taxonomyTree').html('<div class="text-danger">Failed to parse taxonomyData</div>');
+            }
+            $("#copy").prop("disabled", false);
+        }
+        
+        function populateTaxonomyFilters(taxonomies) {
+            const owners = new Set();
+            const categories = new Set();
+            
+            taxonomies.forEach(taxonomy => {
+                if (taxonomy.owner?.S) owners.add(taxonomy.owner.S);
+                if (taxonomy.category?.S) categories.add(taxonomy.category.S);
+            });
+            
+            const $owner = $('#ownerFilter').empty().append(`<option value="">All Owners</option>`);
+            [...owners].sort().forEach(owner => {
+                $owner.append(`<option value="${owner}">${owner}</option>`);
+            });
+            
+            const $category = $('#categoryFilter').empty().append(`<option value="">All Categories</option>`);
+            [...categories].sort().forEach(category => {
+                $category.append(`<option value="${category}">${category}</option>`);
+            });
+        }
+        
+        // Helper functions from taxonomy.js
+        function buildTreeFromFlatList(entries) {
+            const nodeMap = {};
+            const roots = [];
+            
+            entries.forEach(entry => {
+                nodeMap[entry.id] = { ...entry };
+            });
+            
+            entries.forEach(entry => {
+                if (entry.parentId) {
+                    const parent = nodeMap[entry.parentId];
+                    if (parent) {
+                        if (!parent.children) parent.children = [];
+                        parent.children.push(nodeMap[entry.id]);
+                    }
+                } else {
+                    roots.push(nodeMap[entry.id]);
+                }
+            });
+            
+            function pruneChildren(node) {
+                if (node.children) {
+                    node.children.forEach(pruneChildren);
+                    if (node.children.length === 0) delete node.children;
+                }
+            }
+            roots.forEach(pruneChildren);
+            
+            return roots;
+        }
+        
+        function convertNestedToJsTree(nodes, maxLevel) {
+            return nodes.map(node => {
+                const isLastLevel = node.level === maxLevel;
+                const item = {
+                    id: node.id,
+                    text: node.displayName,
+                    icon: isLastLevel ? 'jstree-file' : 'jstree-folder'
+                };
+                if (node.children && node.children.length > 0) {
+                    item.children = convertNestedToJsTree(node.children, maxLevel);
+                }
+                return item;
+            });
+        }
+        
+        // Fallback tree renderer for non-hierarchical data
+        let nodeCounter = 0;
+        const excludedKeys = ['type', 'origin', 'created_by', 'modified_by'];
+        
+        function renderTree(obj, level = 0) {
+            if (typeof obj !== 'object' || obj === null) {
+                return `<div class="ms-${level}"><code>${String(obj)}</code></div>`;
+            }
+            
+            let html = '';
+            for (const key in obj) {
+                if (excludedKeys.includes(key)) continue;
+                
+                const value = obj[key];
+                const isObject = typeof value === 'object' && value !== null;
+                
+                if (isObject) {
+                    const collapseId = `tree-node-${nodeCounter++}`;
+                    html += `
+                        <div class="ms-${level}">
+                            <span class="tree-toggle collapsed" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" role="button">
+                                <strong>${snakeToLabel(key)}</strong>
+                            </span>
+                            <div class="collapse ms-3" id="${collapseId}">
+                                ${renderTree(value, level + 1)}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="ms-${level}">
+                            <strong>${snakeToLabel(key)}:</strong> <code>${String(value).replace(/\n/g, '<br>')}</code>
+                        </div>
+                    `;
+                }
+            }
+            return html;
+        }
+        
+        function snakeToLabel(snake) {
+            if (!snake) return '';
+            return snake
+                .replace(/_/g, ' ')
+                .replace(/\s+/, ' ')
+                .replace(/^\w/, c => c.toUpperCase());
+        }
+    </script>
+</body>
+</html> 
