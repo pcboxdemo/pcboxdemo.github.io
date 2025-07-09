@@ -109,10 +109,9 @@
                     
                     <div id="taxonomyDetails" class="mt-3" style="display:none;">
                         <div class="row g-2 text-start mb-1">
-                            <div class="col-md-3"><strong>Name:</strong> <br/><span id="taxonomyName"></span></div>
-                            <div class="col-md-3"><strong>Category:</strong> <br/><span id="taxonomyCategory"></span></div>
-                            <div class="col-md-3" id="linkdiv"><strong>Info:</strong> <br/><a id="taxonomyLink" href="#" target="_blank">Open</a></div>
-                            <div class="col-md-3"><strong>Owner:</strong> <br/><span id="taxonomyOwner"></span></div>
+                            <div class="col-md-4"><strong>Name:</strong> <br/><span id="taxonomyName"></span></div>
+                            <div class="col-md-4"><strong>Category:</strong> <br/><span id="taxonomyCategory"></span></div>
+                            <div class="col-md-4"><strong>Owner:</strong> <br/><span id="taxonomyOwner"></span></div>
                         </div>
                         <div class="row g-2 text-start mb-3">
                             <div class="col-md-12"><strong>Description:</strong> <br/><span id="taxonomyDescription" class="text-muted"></span></div>
@@ -185,14 +184,10 @@
                             </div>
                         </div>
                         
-                        <div class="row mb-3 align-items-end">
-                            <div class="col-md-6">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
                                 <label for="createTaxonomyName" class="form-label">Your Name *</label>
                                 <input type="text" class="form-control" id="createTaxonomyName" required />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="createTaxonomyURL" class="form-label">Box Note URL (optional)</label>
-                                <input type="url" class="form-control" id="createTaxonomyURL" />
                             </div>
                         </div>
                         
@@ -453,7 +448,6 @@
                     category: $("#createTaxonomyCategory").val(),
                     name: $("#createTaxonomyName").val(),
                     description: $("#createTaxonomyDescription").val(),
-                    url: $("#createTaxonomyURL").val(),
                     taxonomy_name: $("#selectedTaxonomyName").val()
                 };
                 
@@ -515,6 +509,26 @@
                 ],
                 columnDefs: [
                     {
+                        targets: 0, // Name column
+                        render: function (data, type, row) {
+                            const taxonomyId = row[4];
+                            const taxonomy = taxonomies.find(t => t.taxonomyId?.S === taxonomyId);
+                            const description = taxonomy?.description?.S || 'No description available';
+                            const safeDescription = $('<div>').text(description).html(); // Escape HTML safely
+                            return `
+                              <div class="d-flex align-items-center">
+                                <span class="text-truncate me-1">${data}</span>
+                                <i class="fas fa-info-circle text-primary" 
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="top"
+                                   title="${safeDescription}"
+                                   style="min-width: 16px;">
+                                </i>
+                              </div>
+                            `;
+                        }
+                    },
+                    {
                         targets: 3,
                         className: 'text-end',
                         render: function (data, type, row) {
@@ -560,8 +574,22 @@
             
             table.draw();
             
+            // Initialize tooltips after initial draw
+            setTimeout(() => {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+            }, 100);
+            
             // Table event handlers
             $('#sharedTaxonomiesTable').on('draw.dt', function () {
+                // Dispose of existing tooltips first
+                const existingTooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                existingTooltips.forEach(el => {
+                    const tooltip = bootstrap.Tooltip.getInstance(el);
+                    if (tooltip) tooltip.dispose();
+                });
+                
+                // Initialize new tooltips
                 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
                 tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
             });
@@ -644,7 +672,7 @@
                 success: function (res) {
                     const $dropdown = $("#taxonomyToShare").empty();
                     res.entries.forEach(taxonomy => {
-                        const isShared = sharedTaxonomyIds.has(taxonomy.key);
+                        const isShared = sharedTaxonomyIds.has(taxonomy.id);
                         const label = isShared ? `${taxonomy.displayName} (already shared)` : taxonomy.displayName;
                         const disabledAttr = isShared ? 'disabled' : '';
                         
@@ -655,7 +683,6 @@
         }
         
         function loadDetails(taxonomyId) {
-            $("#linkdiv").show();
             const taxonomy = taxonomies.find(t => t.taxonomyId?.S === taxonomyId);
             if (!taxonomy) return;
             $("#taxonomyDetails").show();
@@ -663,11 +690,6 @@
             $('#taxonomyCategory').text(taxonomy.category?.S || '');
             $('#taxonomyOwner').text(taxonomy.owner?.S || '');
             $('#taxonomyDescription').text(taxonomy.description?.S || 'No description available');
-            if(taxonomy.url?.S) {
-                $('#taxonomyLink').attr('href', taxonomy.url.S);
-            } else {
-                $("#linkdiv").hide();
-            }
             
             // Render taxonomy tree
             try {
