@@ -439,6 +439,26 @@ $(document).ready(async function () {
           
           { targets: [5, 6,7], visible: false }, // hide Description & Agent ID
           {
+            targets: 0, // Name column
+            render: function (data, type, row) {
+              const agentId = row[6]; // agentId
+              const agent = agents.find(a => a.agentId?.S === agentId);
+              const description = agent?.description?.S || 'No description available';
+              const safeDescription = $('<div>').text(description).html(); // Escape HTML safely
+              return `
+                <div class="d-flex align-items-center">
+                  <span class="text-truncate me-1">${data}</span>
+                  <i class="fas fa-info-circle text-warning" 
+                     data-bs-toggle="tooltip"
+                     data-bs-placement="top"
+                     title="${safeDescription}"
+                     style="min-width: 16px;">
+                  </i>
+                </div>
+              `;
+            }
+          },
+          {
             targets: 4, // Actions column
             className: 'text-end',
             render: function (data, type, row) {
@@ -446,7 +466,7 @@ $(document).ready(async function () {
               const rowUserId = row[7]; // userId
           
               const editBtn = `
-               <button class="btn btn-xs btn-link p-0 me-1 text-primary edit-btn" title="Edit" data-id="${agentId}">
+               <button class="btn btn-xs btn-link p-0 me-1 text-dark edit-btn" title="Edit" data-id="${agentId}">
                 <i class="fas fa-edit"></i>
                 </button>
               `;

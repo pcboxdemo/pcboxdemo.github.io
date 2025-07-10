@@ -47,6 +47,24 @@
             width: auto;
             display: inline-block;
         }
+        /* Highlight selected row with soft yellow */
+        #sharedTaxonomiesTable tr.selected {
+          background-color: #fffbe6 !important;
+        }
+        /* More specific selector for DataTables selected row */
+        table.dataTable tbody > tr.selected, 
+        #sharedTaxonomiesTable.dataTable tbody > tr.selected {
+          background-color: #fffbe6 !important;
+        }
+        table.dataTable tbody > tr.selected td, 
+        #sharedTaxonomiesTable.dataTable tbody > tr.selected td {
+          background-color: #fffbe6 !important;
+        }
+        /* Force background on all cells in the selected row */
+        #sharedTaxonomiesTable.dataTable tbody > tr.selected > td,
+        #sharedTaxonomiesTable.dataTable tbody > tr.selected > th {
+          background-color: #fffbe6 !important;
+        }
     </style>
 </head>
 <body>   
@@ -527,7 +545,7 @@
                             return `
                               <div class="d-flex align-items-center">
                                 <span class="text-truncate me-1">${data}</span>
-                                <i class="fas fa-info-circle text-primary" 
+                                <i class="fas fa-info-circle text-warning" 
                                    data-bs-toggle="tooltip"
                                    data-bs-placement="top"
                                    title="${safeDescription}"
@@ -543,7 +561,7 @@
                         render: function (data, type, row) {
                             const taxonomyId = row[4];
                             return `
-                              <button class="btn btn-xs btn-link p-0 me-1 text-primary edit-btn" title="Edit" data-id="${taxonomyId}"><i class="fas fa-edit"></i></button>
+                              <button class="btn btn-xs btn-link p-0 me-1 text-dark edit-btn" title="Edit" data-id="${taxonomyId}"><i class="fas fa-edit"></i></button>
                               <button class="btn btn-xs btn-link p-0 text-danger delete-btn" title="Delete" data-id="${taxonomyId}"><i class="fas fa-trash-alt"></i></button>
                               <button class="btn btn-xs btn-link p-0 text-secondary permalink-btn" title="Copy Link" data-id="${taxonomyId}"><i class="fas fa-link"></i></button>
                             `;
