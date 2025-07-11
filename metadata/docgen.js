@@ -462,13 +462,14 @@ const flattenObject = (obj, prefix = '') => {
 async function loadDocGenTemplates() {
     $('#allTemplates').empty();
     let docgenTemplates = await getDocGenTemplates();
-            docgenTemplates.forEach(function(temp) {
-                $('#allTemplates').append($('<option>', {
-                    value: temp.file.id,
-                    text: temp.file_name,
-                }));
-               
-            })
+    // Sort templates alphabetically by file_name
+    docgenTemplates.sort((a, b) => a.file_name.localeCompare(b.file_name));
+    docgenTemplates.forEach(function(temp) {
+        $('#allTemplates').append($('<option>', {
+            value: temp.file.id,
+            text: temp.file_name,
+        }));
+    })
 }
 async function getDocGenTemplates() {
     let url = "https://api.box.com/2.0/docgen_templates?limit=1000";

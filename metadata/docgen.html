@@ -45,11 +45,30 @@
      .jsonview {
         font-size:10px;
         font-family: 'Courier New', Courier, monospace;
-
      }
      #fields {
         font-size:12px;
         font-family: 'Lato, "Helvetica Neue", Helvetica, Arial, sans-serif';
+     }
+     /* Custom styles for exampleModal */
+     #exampleModal .modal-dialog {
+        max-width: 900px;
+        width: 90vw;
+        min-width: 600px;
+     }
+     #exampleModal .modal-content {
+        min-height: 500px;
+        max-height: 80vh;
+     }
+     #exampleModal .modal-body {
+        max-height: 60vh;
+        overflow-y: auto;
+     }
+     #jsonview {
+        font-size: 1.15em;
+        font-family: 'Courier New', Courier, monospace;
+        word-break: break-all;
+        white-space: pre-wrap;
      }
     </style>
 
@@ -263,6 +282,8 @@
                 
             }
             metadataTemplates = await getEnterpriseMetadataTemplates(accessToken);//.metadataTemplates.getEnterpriseMetadataTemplates();
+            // Sort templates alphabetically by displayName
+            metadataTemplates.entries.sort((a, b) => a.displayName.localeCompare(b.displayName));
             metadataTemplates.entries.forEach(function(temp) {
                 if(temp.hidden==false) {
                     $('#allMDTemplates').append($('<option>', {
@@ -831,7 +852,7 @@
             
         </div>
         <div class="modal fade" id="exampleModal" tabindex="-1000" aria-labelledby="exampleModalLabel" aria-hidden="true" style="display:none;">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
               <div class="modal-content ">
                 <div class="modal-header">
                   <h5 class="modal-title" id="exampleModalLabel">Example of AI generated values (actual values will be different for each call)</h5>
