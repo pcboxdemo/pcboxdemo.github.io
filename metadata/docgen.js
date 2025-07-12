@@ -347,7 +347,18 @@ function generateFieldHints(jsonString) {
         "Government": ["Policy Making", "Public Safety", "Infrastructure", "Defense", "Education"],
         "Non-Profit": ["Charity", "Environmental Organizations", "Education Initiatives", "Healthcare Aid", "Animal Welfare"],
         "Automotive": ["Electric Vehicles", "Autonomous Vehicles", "Luxury Cars", "Motorsports", "Aftermarket Parts"],
-        "Pharmaceutical": ["Drug Development", "Biotechnology", "Clinical Trials", "Generic Drugs", "Vaccines"]
+        "Pharmaceutical": ["Drug Development", "Biotechnology", "Clinical Trials", "Generic Drugs", "Vaccines"],
+        "Food & Beverage": ["Restaurants", "Breweries", "Wineries", "Food Processing", "Catering"],
+        "Fashion & Apparel": ["Luxury Fashion", "Streetwear", "Athletic Wear", "Accessories", "Sustainable Fashion"],
+        "Sports & Fitness": ["Professional Sports", "Fitness Centers", "Outdoor Recreation", "Sports Equipment", "Esports"],
+        "Media & Publishing": ["News Organizations", "Book Publishing", "Magazines", "Digital Media", "Podcasting"],
+        "Consulting": ["Management Consulting", "IT Consulting", "Strategy Consulting", "Financial Advisory", "HR Consulting"],
+        "Law Enforcement": ["Police Departments", "Federal Agencies", "Detective Work", "Forensics", "Community Policing"],
+        "Agriculture & Farming": ["Crop Farming", "Livestock Management", "Organic Agriculture", "Agricultural Technology", "Food Distribution"],
+        "Environmental Services": ["Waste Management", "Recycling", "Environmental Consulting", "Conservation", "Green Energy Services"],
+        "Human Resources": ["Recruitment", "Employee Benefits", "Training & Development", "Workplace Safety", "Performance Management"],
+        "Research & Development": ["Scientific Research", "Product Development", "Clinical Research", "Market Research", "Innovation Labs"],
+        "Travel & Tourism": ["Tour Operators", "Travel Agencies", "Destination Management", "Hospitality Services", "Adventure Tourism"]
     };
     
     // Select a random category

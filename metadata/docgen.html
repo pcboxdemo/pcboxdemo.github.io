@@ -181,7 +181,8 @@
                     //first convert to docx
                     //then run it through the docxreplacer
                     let newId = await $.ajax({
-                        url: 'http://localhost:8080/convert?file_id=' + selectedFile + '&access_token=' + accessToken + '&postfix=_generated',
+                        //url: 'http://localhost:8080/convert?file_id=' + selectedFile + '&access_token=' + accessToken + '&postfix=_generated',
+                        url: 'https://box-pdf-docx-conversion-3dd549e4fd46.herokuapp.com/convert?file_id=' + selectedFile + '&access_token=' + accessToken + '&postfix=_generated',
                         type: 'POST',
                         success: function(response) {
                             console.log('File saved successfully:', response);
