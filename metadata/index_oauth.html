@@ -18,51 +18,114 @@
     }
     
     $(document).ready(function () {
+        console.log("🔍 OAuth Debug: Page loaded, checking for stored tokens...");
+        
         // Check if we have a stored token hash
         const tokenHash = localStorage.getItem("tokenHash");
         const lastAuthTime = localStorage.getItem("lastAuthTime");
+        const userEmail = localStorage.getItem("userEmail");
         const clientId = "nsjffk9hhb01flji3cg21qucbe65efoj";
+        
+        console.log("🔍 OAuth Debug: Stored data check:", {
+            hasTokenHash: !!tokenHash,
+            tokenHashLength: tokenHash ? tokenHash.length : 0,
+            lastAuthTime: lastAuthTime,
+            userEmail: userEmail,
+            clientId: clientId
+        });
         
         if (tokenHash && lastAuthTime) {
             const timeSinceAuth = Date.now() - parseInt(lastAuthTime);
+            const daysOld = timeSinceAuth / (24 * 60 * 60 * 1000);
+            
+            console.log("🔍 OAuth Debug: Token age check:", {
+                timeSinceAuth: timeSinceAuth,
+                daysOld: daysOld.toFixed(2),
+                isValid: timeSinceAuth < 7 * 24 * 60 * 60 * 1000
+            });
+            
             // Check if token is less than 7 days old
             if (timeSinceAuth < 7 * 24 * 60 * 60 * 1000) {
+                console.log("✅ OAuth Debug: Token is valid, attempting validation...");
                 // Try to validate the stored token
                 validateStoredToken(tokenHash, clientId);
                 return;
             } else {
+                console.log("⏰ OAuth Debug: Token too old, clearing stored data");
                 // Token too old, clear it
                 clearStoredTokens();
             }
+        } else {
+            console.log("❌ OAuth Debug: No stored token or auth time found");
         }
         
         // No valid stored token, proceed with OAuth
+        console.log("🔄 OAuth Debug: Redirecting to OAuth...");
         redirectToOAuth();
     });
     
     function validateStoredToken(tokenHash, clientId) {
+        console.log("🔧 OAuth Debug: Starting token validation...", {
+            tokenHash: tokenHash.substring(0, 20) + "...",
+            clientId: clientId
+        });
+        
         $.ajax({
             method: 'get',
             url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
             data: { action: 'validate', tokenHash: tokenHash, clientId: clientId },
             crossDomain: true,
             cache: false,
+            beforeSend: function() {
+                console.log("📡 OAuth Debug: Sending validation request to backend...");
+            },
             success: function(response) {
+                console.log("✅ OAuth Debug: Validation response received:", {
+                    hasToken: !!response.token,
+                    hasRefreshToken: !!response.refreshToken,
+                    hasTokenHash: !!response.tokenHash,
+                    userEmail: response.userEmail,
+                    responseKeys: Object.keys(response)
+                });
+                
                 if (response.token) {
+                    console.log("🎉 OAuth Debug: Valid token received, storing and redirecting...");
                     // Valid token received, store it and redirect to main app
                     sessionStorage.setItem("token", response.token);
                     if (response.refreshToken) {
                         sessionStorage.setItem("refreshToken", response.refreshToken);
                     }
+                    
+                    // Update stored token hash if provided
+                    if (response.tokenHash) {
+                        localStorage.setItem("tokenHash", response.tokenHash);
+                        localStorage.setItem("lastAuthTime", Date.now());
+                    }
+                    
                     redirectToMainApp();
                 } else {
+                    console.log("❌ OAuth Debug: No token in response, clearing stored data");
                     // Token validation failed, clear stored data and re-authenticate
                     clearStoredTokens();
                     redirectToOAuth();
                 }
             },
             error: function(err) {
-                console.log("Token validation failed:", err);
+                console.log("❌ OAuth Debug: Token validation failed:", {
+                    status: err.status,
+                    statusText: err.statusText,
+                    responseText: err.responseText,
+                    error: err
+                });
+                
+                // Try to parse error response
+                try {
+                    const errorData = JSON.parse(err.responseText);
+                    console.log("📄 OAuth Debug: Parsed error response:", errorData);
+                } catch (e) {
+                    console.log("📄 OAuth Debug: Could not parse error response");
+                }
+                
                 // Clear stored tokens and force re-authentication
                 clearStoredTokens();
                 redirectToOAuth();
@@ -71,19 +134,42 @@
     }
     
     function clearStoredTokens() {
+        console.log("🧹 OAuth Debug: Clearing all stored tokens...");
+        const before = {
+            tokenHash: !!localStorage.getItem("tokenHash"),
+            userEmail: !!localStorage.getItem("userEmail"),
+            lastAuthTime: !!localStorage.getItem("lastAuthTime"),
+            sessionToken: !!sessionStorage.getItem("token"),
+            sessionRefreshToken: !!sessionStorage.getItem("refreshToken")
+        };
+        console.log("🧹 OAuth Debug: Before clearing:", before);
+        
         localStorage.removeItem("tokenHash");
         localStorage.removeItem("userEmail");
         localStorage.removeItem("lastAuthTime");
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("refreshToken");
+        
+        console.log("🧹 OAuth Debug: Tokens cleared successfully");
     }
     
     function redirectToOAuth() {
-        window.location = 'https://account.box.com/api/oauth2/authorize?client_id=nsjffk9hhb01flji3cg21qucbe65efoj&response_type=code&id=124092627842';
+        const oauthUrl = 'https://account.box.com/api/oauth2/authorize?client_id=nsjffk9hhb01flji3cg21qucbe65efoj&response_type=code&id=124092627842';
+        console.log("🔄 OAuth Debug: Redirecting to Box OAuth:", oauthUrl);
+        window.location = oauthUrl;
     }
     
     function redirectToMainApp() {
-        if(localStorage.getItem("agentId") != null) {
+        const agentId = localStorage.getItem("agentId");
+        const targetUrl = agentId ? "/metadata/agents.html" : "/metadata/index.html";
+        
+        console.log("🚀 OAuth Debug: Redirecting to main app:", {
+            hasAgentId: !!agentId,
+            agentId: agentId,
+            targetUrl: targetUrl
+        });
+        
+        if(agentId) {
             window.location.href = "/metadata/agents.html";
         } else {
             window.location.href = "/metadata/index.html";
