@@ -1,87 +1,93 @@
+ /* General cleanup */
+ .je-ready h3 > span,
+ span.je-object__title > span:last-of-type,
+ .je-ready label {
+   display: none !important;
+ }
 
-/* Inputs & base UI */
-.json-editor input,
-.json-editor select,
-.json-editor textarea {
-  font-size: 13px !important;
-  padding: 4px 6px !important;
-  height: auto !important;
-}
-
-/* Remove boxy card styling */
-.json-editor .card,
-.json-editor ,
-.json-editor .json-editor-array-inner,
-.json-editor .json-editor-object {
-  padding: 6px !important;
-  margin: 4px 0 !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Compact headers/labels */
-.json-editor .json-editor-label,
-.json-editor .card-header {
-  font-size: 13px !important;
-  padding: 2px 6px !important;
-  font-weight: 600 !important;
-  background: none !important;
-  border-bottom: none !important;
-}
-
-/* Buttons */
-.json-editor button {
-  padding: 3px 6px !important;
-  font-size: 12px !important;
-  height: 24px !important;
-  line-height: 1.1 !important;
-  border-radius: 3px !important;
-}
-
-/* Collapse/Expand button */
-.json-editor .json-editor-btn-collapse {
-  width: 16px !important;
-  height: 16px !important;
-  font-size: 12px !important;
-  background: none !important;
-  border: none !important;
-  color: #666 !important;
-  padding: 0 !important;
-}
-
-/* Level background differentiation */
-.json-editor .json-editor-object > div:nth-of-type(1) {
-  background-color: #f8f9fa !important;
-}
-.json-editor .json-editor-object > div .json-editor-object > div:nth-of-type(1) {
-  background-color: #f1f5f9 !important;
-}
-.json-editor .json-editor-object > div .json-editor-object > div .json-editor-object > div:nth-of-type(1) {
-  background-color: #f9f6ef !important;
-}
-
-/* Left border for hierarchy */
-.json-editor .json-editor-object > div {
-  border-left: 3px solid #ccc;
-  margin-left: 6px;
-  padding-left: 6px;
-}
-
-/* Hide move up/down buttons in arrays */
-.json-editor .json-editor-btn-moveup,
-.json-editor .json-editor-btn-movedown {
-  display: none !important;
-}
-
-/* Divider between States or Cities in nested arrays */
-.json-editor .card:not(:last-child) {
-    border-bottom: 1px solid #dee2e6;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
+ /* Flatten containers */
+ .je-ready .je-object__container {
+   background: transparent !important;
+   border: none !important;
+   box-shadow: none !important;
+   padding: 0 !important;
+   margin-bottom: 0.5rem;
+ }
+/* Level 1 (Country) */
+.je-ready .je-object__container > .card {
+    border-left: 3px solid #007bff !important; /* Blue */
   }
   
-  /* Optional: tighter spacing for children */
-  .json-editor .card-body > .form-row + .form-row {
-    margin-top: 0.5rem;
+  /* Level 2 (State) */
+  .je-ready .je-object__container > .je-object__container > .card {
+    border-left: 3px solid #28a745 !important; /* Green */
   }
   
+  /* Level 3 (City) */
+  .je-ready .je-object__container > .je-object__container > .je-object__container > .card {
+    border-left: 3px solid #ffc107 !important; /* Yellow/Orange */
+  }
+  
+  /* General card appearance */
+  .je-ready .card {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0.25rem 0 !important;
+    padding: 0.5rem !important;
+  }
+  
+
+ /* Visual nesting */
+ .je-ready .je-object__container { margin-left: 0.5rem; }
+ .je-ready .je-object__container .je-object__container { margin-left: 1rem; }
+ .je-ready .je-object__container .je-object__container .je-object__container { margin-left: 1.5rem; }
+ .je-ready .je-object__container .je-object__container .je-object__container .je-object__container { margin-left: 2rem; }
+
+ /* Title sizing */
+ .je-ready .card-title.level-2 { font-size: 0.9rem !important; font-weight: 500; }
+ .je-ready .card-title.level-3,
+ .je-ready .card-title.level-4 { font-size: 0.85rem !important; font-weight: 500; }
+ .je-ready .card-title.level-5,
+ .je-ready .card-title.level-6,
+ .je-ready .card-title.level-7 { font-size: 0.8rem !important; font-weight: 500; }
+ .je-ready .card-title { margin-bottom: 0.25rem !important; padding-top: 0.25rem; }
+
+ /* Collapse toggle */
+ .je-object__title {
+   display: inline-flex !important;
+   align-items: center;
+   font-size: 0 !important;
+   padding: 0 !important;
+   margin: 0 !important;
+   min-height: 0 !important;
+ }
+
+ .json-editor-btn-collapse {
+   padding: 0.2rem 0.35rem !important;
+   font-size: 0.75rem !important;
+   line-height: 1 !important;
+   scale: 0.8;
+   opacity: 0.5;
+   margin-right: 0.25rem;
+ }
+
+ /* Uniform button styling */
+ .je-ready .btn {
+    font-size: 0.7rem !important;
+    padding: 0.15rem 0.3rem !important;
+    line-height: 1.1 !important;
+   border-radius: 4px !important;
+ }
+
+
+ .je-ready .btn-group {
+   gap: 0.25rem;
+   margin-top: 0.25rem;
+   flex-wrap: wrap;
+ }
+
+ .je-ready .json-editor-btn-moveup,
+ .je-ready .json-editor-btn-movedown {
+   display: none !important;
+ }

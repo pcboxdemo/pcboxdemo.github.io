@@ -891,20 +891,31 @@ function convertArrayToNestedJsonWithArrays(array) {
 }
 
 function fetchTemplateTags(templateId, token) {
-    return new Promise((resolve, reject) => {
+    function tryFetch(resolve, reject) {
         $.ajax({
             url: `https://api.box.com/2.0/docgen_templates/${templateId}/tags`,
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${token}`
             },
-            success: function(response) {
-                resolve(response.entries);
+            success: function(response, textStatus, xhr) {
+                // If the response is a processing message, retry
+                if (xhr.status === 202 && response && response.message === "Processing tags for this file.") {
+                    setTimeout(() => tryFetch(resolve, reject), 5000);
+                } else {
+                    resolve(response.entries);
+                }
             },
             error: function(xhr, status, error) {
-                console.error(`Error fetching tags for template ${templateId}:`, error);
-                reject([]);
+                // If 202 with processing message, retry
+                if (xhr.status === 202 && xhr.responseJSON && xhr.responseJSON.message === "Processing tags for this file.") {
+                    setTimeout(() => tryFetch(resolve, reject), 5000);
+                } else {
+                    console.error(`Error fetching tags for template ${templateId}:`, error);
+                    reject([]);
+                }
             }
         });
-    });
+    }
+    return new Promise(tryFetch);
 }

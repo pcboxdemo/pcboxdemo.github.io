@@ -16,9 +16,85 @@
     if(agentId != null) {
         localStorage.setItem("agentId", agentId);
     }
-        $(document).ready(function () {
-            window.location='https://account.box.com/api/oauth2/authorize?client_id=nsjffk9hhb01flji3cg21qucbe65efoj&response_type=code&id=124092627842'
+    
+    $(document).ready(function () {
+        // Check if we have a stored token hash
+        const tokenHash = localStorage.getItem("tokenHash");
+        const lastAuthTime = localStorage.getItem("lastAuthTime");
+        const clientId = "nsjffk9hhb01flji3cg21qucbe65efoj";
+        
+        if (tokenHash && lastAuthTime) {
+            const timeSinceAuth = Date.now() - parseInt(lastAuthTime);
+            // Check if token is less than 7 days old
+            if (timeSinceAuth < 7 * 24 * 60 * 60 * 1000) {
+                // Try to validate the stored token
+                validateStoredToken(tokenHash, clientId);
+                return;
+            } else {
+                // Token too old, clear it
+                clearStoredTokens();
+            }
+        }
+        
+        // No valid stored token, proceed with OAuth
+        redirectToOAuth();
+    });
+    
+    function validateStoredToken(tokenHash, clientId) {
+        $.ajax({
+            method: 'get',
+            url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+            data: { action: 'validate', tokenHash: tokenHash, clientId: clientId },
+            crossDomain: true,
+            cache: false,
+            success: function(response) {
+                if (response.token) {
+                    // Valid token received, store it and redirect to main app
+                    sessionStorage.setItem("token", response.token);
+                    if (response.refreshToken) {
+                        sessionStorage.setItem("refreshToken", response.refreshToken);
+                    }
+                    redirectToMainApp();
+                } else {
+                    // Token validation failed, clear stored data and re-authenticate
+                    clearStoredTokens();
+                    redirectToOAuth();
+                }
+            },
+            error: function(err) {
+                console.log("Token validation failed:", err);
+                // Clear stored tokens and force re-authentication
+                clearStoredTokens();
+                redirectToOAuth();
+            }
         });
+    }
+    
+    function clearStoredTokens() {
+        localStorage.removeItem("tokenHash");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("lastAuthTime");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("refreshToken");
+    }
+    
+    function redirectToOAuth() {
+        window.location = 'https://account.box.com/api/oauth2/authorize?client_id=nsjffk9hhb01flji3cg21qucbe65efoj&response_type=code&id=124092627842';
+    }
+    
+    function redirectToMainApp() {
+        if(localStorage.getItem("agentId") != null) {
+            window.location.href = "/metadata/agents.html";
+        } else {
+            window.location.href = "/metadata/index.html";
+        }
+    }
+    
+    // Global logout function - can be called from other pages
+    window.boxLogout = function() {
+        clearStoredTokens();
+        window.location.href = "/metadata/index_oauth.html";
+    }
     </script>
 
 

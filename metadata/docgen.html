@@ -70,6 +70,24 @@
         word-break: break-all;
         white-space: pre-wrap;
      }
+     /* Fix spinner size and add status message styling */
+     #createLoader {
+        width: 32px;
+        height: 32px;
+     }
+     #createStatusMessage {
+        margin-top: 10px;
+        font-weight: 500;
+     }
+     .status-success {
+        color: #198754;
+     }
+     .status-error {
+        color: #dc3545;
+     }
+     .status-info {
+        color: #0d6efd;
+     }
     </style>
 
     <script>
@@ -177,25 +195,28 @@
             })
             $("#saveAsNewTemplate").click(async function() {
                 $("#createLoader").show();
-                if(!selectedFileName.endsWith('.docx')) {
-                    //first convert to docx
-                    //then run it through the docxreplacer
-                    let newId = await $.ajax({
-                        //url: 'http://localhost:8080/convert?file_id=' + selectedFile + '&access_token=' + accessToken + '&postfix=_generated',
-                        url: 'https://box-pdf-docx-conversion-3dd549e4fd46.herokuapp.com/convert?file_id=' + selectedFile + '&access_token=' + accessToken + '&postfix=_generated',
-                        type: 'POST',
-                        success: function(response) {
-                            console.log('File saved successfully:', response);
-                            return response.fileId;
-                        },
-                        error: function(error) {
-                            console.error('Error saving file:', error);
-                        } 
-
-                    });
-                    selectedFile = newId.fileId;
-                }   
+                $("#createStatusMessage").text("This may take a few minutes as the servers are starting up...").removeClass().addClass("status-info");
+                
+                try {
+                    if(!selectedFileName.endsWith('.docx')) {
+                        //first convert to docx
+                        //then run it through the docxreplacer
+                        $("#createStatusMessage").text("Converting file to DOCX format... This may take up to 30 seconds");
+                        
+                        let newId = await $.ajax({
+                            //url: 'http://localhost:8080/convert?file_id=' + selectedFile + '&access_token=' + accessToken + '&postfix=_generated',
+                            url: 'https://box-pdf-docx-conversion-3dd549e4fd46.herokuapp.com/convert?file_id=' + selectedFile + '&access_token=' + accessToken + '&postfix=_generated',
+                            type: 'POST',
+                            timeout: 300000 // 5 minute timeout
+                        });
+                        
+                        selectedFile = newId.fileId;
+                        $("#createStatusMessage").text("File converted successfully! Now creating docgen template...").removeClass().addClass("status-success");
+                    }   
+                    
                     console.log(selectedFile);
+                    $("#createStatusMessage").text("Creating docgen template... This may take up to 30 seconds.");
+                    
                     let downloadUrl = await client.downloads.getDownloadFileUrl(selectedFile);
                     let newFile = await $.ajax({
                         url: 'https://box-java-sandpit.herokuapp.com/docxreplacer',
@@ -206,18 +227,30 @@
                             boxFileId: selectedFile,
                             boxToken:accessToken
                         },
-                        success: function(response) {
-                            console.log('File saved successfully:', response);
-                            $("#createModal").modal("hide");
-                            loadDocGenTemplates();
-                        },
-                        error: function(error) {
-                            console.error('Error saving file:', error);
-                        }
+                        timeout: 300000 // 5 minute timeout
                     });
-                
-
-
+                    
+                    console.log('File saved successfully:', newFile);
+                    $("#createStatusMessage").text("Template created successfully!").removeClass().addClass("status-success");
+                    setTimeout(() => {
+                        $("#createModal").modal("hide");
+                        loadDocGenTemplates();
+                    }, 1500);
+                    
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    let errorMessage = "An error occurred while processing the file.";
+                    
+                    if (error.status === 0) {
+                        errorMessage = "Request timed out. The servers may be starting up. Please try again in a few minutes.";
+                    } else if (error.status === 500) {
+                        errorMessage = "Server error occurred. Please try again later.";
+                    } else if (error.status === 404) {
+                        errorMessage = "Service not found. Please check if the conversion service is available.";
+                    }
+                    
+                    $("#createStatusMessage").text(errorMessage).removeClass().addClass("status-error");
+                }
             });
             $("#tryAI").click(async function() {
                 $("#exampleModal").modal("show");
@@ -887,11 +920,13 @@
             <!-- Box File Picker -->
             <div id="box-file-picker-create" style="height:450px;"></div>
           </div>
-          <div class="custom-right-panel d-flex">
-            <!-- JSON Viewer -->
-             AI Identified tags
-             <div id="jsoneditor-create" class="flex-grow-1"></div>
-             <img src="ajax-loader.gif" id="createLoader" style="display:none;"/>
+          <div class="custom-right-panel d-flex flex-column" style="gap: 0.5rem;">
+            <div style="font-weight: 500; font-size: 1.1em; margin-bottom: 0.5rem;">AI Identified tags</div>
+            <div id="jsoneditor-create" style="flex: 1 1 auto; min-height: 300px;"></div>
+            <div id="createLoader" style="display:none; text-align: center; margin-top: 1rem;">
+              <img src="ajax-loader.gif" style="width: 32px; height: 32px;"/>
+              <div id="createStatusMessage" class="status-info" style="margin-top: 0.5rem;">Processing...</div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">

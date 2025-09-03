@@ -59,25 +59,45 @@
         var metadataTaxonomies;
 
         $(document).ready(async function() {
+          // Debug: Check what functions are available
+
            $("#import").click(function() {
                 $("#fileInput").show();                            
             });
             $('#fileInput').on('change', function (e) {
+              console.log('🔄 File input change event triggered');
               const file = e.target.files[0];
+              console.log('📁 File selected:', file.name, 'Size:', file.size);
+              
               const reader = new FileReader();
             
               reader.onload = function (e) {
+                console.log('📖 File read completed');
                 const data = new Uint8Array(e.target.result);
+                console.log('📊 Data length:', data.length);
+                
                 const workbook = XLSX.read(data, { type: 'array' });
+                console.log('📋 Workbook sheets:', workbook.SheetNames);
+                
                 const sheetName = workbook.SheetNames[0];
                 let sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: null });
+                console.log('📄 Raw sheet data:', sheet);
+                console.log('📄 Sheet length:', sheet.length);
             
-                if (!sheet.length) return;
+                if (!sheet.length) {
+                  console.error('❌ No data found in Excel file');
+                  return;
+                }
             
                 const columns = Object.keys(sheet[0]);
+                console.log('🏷️ Columns found:', columns);
+                console.log('🏷️ Column count:', columns.length);
+                
                 taxonomyLevels = columns.map(name => ({ displayName: name, description: name }));
+                console.log('🏷️ Taxonomy levels created:', taxonomyLevels);
             
                 // Fill down empty cells
+                console.log('🧹 Starting to fill down empty cells...');
                 for (let i = 1; i < sheet.length; i++) {
                   for (let col of columns) {
                     if (!sheet[i][col]) {
@@ -85,23 +105,84 @@
                     }
                   }
                 }
+                
             
                 // Remove incomplete rows
+                const originalLength = sheet.length;
                 sheet = sheet.filter(row => row[columns[columns.length - 1]]);
-            
+                if (typeof buildTree !== 'function') {
+                  console.error('❌ buildTree function is not available!');
+                  return;
+                }
+                
                 const nestedTree = buildTree(sheet, columns);
-                const maxLevel = Math.max(...originalEntries.map(n => n.level));
+                if (Array.isArray(nestedTree) && nestedTree.length > 0) {
+                  console.log('🌳 First tree node:', nestedTree[0]);
+                  console.log('🌳 First tree node keys:', Object.keys(nestedTree[0]));
+                }
+                
+                // Calculate maxLevel from the actual data, not from empty originalEntries
+                const maxLevel = columns.length;
+                console.log('📏 Max level calculated:', maxLevel);
+                console.log('📏 Columns length:', columns.length);
+                
+                console.log('🌿 Calling convertNestedToJsTree function...');
                 const jsTreeNodes = convertNestedToJsTree(nestedTree, maxLevel);
+                console.log('🌿 convertNestedToJsTree result:', jsTreeNodes);
+                console.log('🌿 First few nodes:', jsTreeNodes.slice(0, 3));
+                console.log('🌿 Node structure check:', jsTreeNodes[0] ? Object.keys(jsTreeNodes[0]) : 'No nodes');
             
                 const name = file.name.replace(/\.[^/.]+$/, "");
+                console.log('📝 Processed name:', name);
+                
                 originalEntries = [];
                 taxonomyId = null; 
                 $('#taxonomyKey').val(name.toLowerCase().replace(/\s+/g, '_'));
                 $('#taxonomyDisplayName').val(name);
+                
+                console.log('🎯 About to call renderTaxonomyTree with:');
+                console.log('  - name:', name);
+                console.log('  - jsTreeNodes:', jsTreeNodes);
+                console.log('  - taxonomyLevels:', taxonomyLevels);
             
                 renderTaxonomyTree(name, jsTreeNodes, taxonomyLevels);
+                
+                // Enable the save button after successful import
+                $('#saveButton').prop('disabled', false);
+                markTreeDirty(); // Mark tree as modified
+                
+                // Count total nodes in the imported tree for the counter
+                console.log('🔍 Debugging counter issue:');
+                console.log('  - jsTreeNodes:', jsTreeNodes);
+                console.log('  - jsTreeNodes type:', typeof jsTreeNodes);
+                console.log('  - jsTreeNodes length:', jsTreeNodes?.length);
+                console.log('  - First node:', jsTreeNodes?.[0]);
+                
+                // Try counting from the original sheet data as a backup
+                const sheetNodeCount = sheet.length;
+                console.log('  - Sheet row count (alternative):', sheetNodeCount);
+                
+                const totalNodeCount = countNodesInTree(jsTreeNodes);
+                console.log('  - countNodesInTree result:', totalNodeCount);
+                
+                // Use the higher count between the two methods
+                const finalCount = Math.max(totalNodeCount, sheetNodeCount);
+                console.log('  - Final count to use:', finalCount);
+                
+                nodesToCreate = finalCount;
+                $("#nodesToCreate").html(finalCount);
+                console.log(`📊 Total nodes to create: ${finalCount}`);
+                console.log('  - nodesToCreate variable:', nodesToCreate);
+                console.log('  - DOM element value:', $("#nodesToCreate").html());
+                
+                console.log('✅ Save button enabled after import');
+              };
+              
+              reader.onerror = function(e) {
+                console.error('❌ File read error:', e);
               };
             
+              console.log('📖 Starting to read file...');
               reader.readAsArrayBuffer(file);
             });
             
@@ -135,20 +216,32 @@
               });
               
               function renderTaxonomyTree(displayName, jsTreeNodes, taxonomyLevels) {
+                console.log('🎨 renderTaxonomyTree called with:');
+                console.log('  - displayName:', displayName);
+                console.log('  - jsTreeNodes:', jsTreeNodes);
+                console.log('  - taxonomyLevels:', taxonomyLevels);
+                
                 if ($.jstree.reference('#tree')) {
+                  console.log('🗑️ Destroying existing tree');
                   $('#tree').jstree('destroy').empty();
                 }
+              
+                const treeData = [{
+                  id: 'taxonomy_root',
+                  text: displayName,
+                  icon: 'jstree-folder',
+                  state: { opened: true },
+                  children: jsTreeNodes
+                }];
+                
+                console.log('🌲 Tree data to render:', treeData);
+                console.log('🌲 Root node children count:', treeData[0]?.children?.length || 0);
+                console.log('🌲 First child node:', treeData[0]?.children?.[0]);
               
                 $('#tree').jstree({
                   core: {
                     check_callback: true,
-                    data: [{
-                      id: 'taxonomy_root',
-                      text: displayName,
-                      icon: 'jstree-folder',
-                      state: { opened: true },
-                      children: jsTreeNodes
-                    }]
+                    data: treeData
                   },
                   plugins: ['contextmenu', 'dnd', 'unique'],
                   contextmenu: {
@@ -183,6 +276,8 @@
                     }
                   }
                 });
+                
+                console.log('✅ Tree rendered successfully');
               
                 $('#tree').on('select_node.jstree', function (e, data) {
                   setTimeout(() => {
@@ -195,9 +290,43 @@
                 
 
               }
-              function markTreeDirty() {
-                $('#saveButton').prop('disabled', false);
-              }
+                  function markTreeDirty() {
+      $('#saveButton').prop('disabled', false);
+    }
+    
+    // Helper function to count total nodes in a tree structure
+    function countNodesInTree(nodes) {
+      console.log('🔢 countNodesInTree called with:', nodes);
+      console.log('  - nodes type:', typeof nodes);
+      console.log('  - isArray:', Array.isArray(nodes));
+      
+      if (!Array.isArray(nodes)) {
+        console.log('  - Not an array, returning 0');
+        return 0;
+      }
+      
+      let count = 0;
+      console.log('  - Starting count, nodes length:', nodes.length);
+      
+      for (const node of nodes) {
+        count++; // Count this node
+        console.log(`  - Counted node ${count}:`, node);
+        
+        if (node.children && Array.isArray(node.children)) {
+          console.log(`  - Node has ${node.children.length} children, recursing...`);
+          const childCount = countNodesInTree(node.children);
+          count += childCount;
+          console.log(`  - Added ${childCount} children, total now: ${count}`);
+        } else {
+          console.log(`  - Node has no children or children is not an array`);
+        }
+      }
+      
+      console.log(`  - Final count for this level: ${count}`);
+      return count;
+    }
+    
+
 
 
             try {
@@ -425,22 +554,49 @@
                                     
                   
                   async function refreshTaxonomyTree(namespace, taxonomyId) {
-                    console.log("Refreshing taxonomy tree...",taxonomyId );
-                    const taxonomy = metadataTaxonomies.entries.find(t => t.key === taxonomyId);
-                    const taxonomyJSON = await getTaxonomyByKey(namespace, taxonomyId);
-                    const nodesJson = await getNodes(namespace, taxonomyId);
-                  
-                    taxonomyLevels = taxonomyJSON.levels;
-                    originalEntries = nodesJson.entries.sort((a, b) => a.displayName.localeCompare(b.displayName));
-                    const tree = buildTreeFromFlatList(originalEntries);
-                    const maxLevel = Math.max(...originalEntries.map(n => n.level));
-                    const jsTreeNodes = convertNestedToJsTree(tree, maxLevel);
-                  
-                    //$('#taxonomyKey').val(taxonomy.taxonomyKey);
-                    //$('#taxonomyDisplayName').val(taxonomy.displayName);
-                    console.log(taxonomy);
-                    renderTaxonomyTree(taxonomy.displayName, jsTreeNodes, taxonomyLevels);
-                    setNodesToCreate();
+                    console.log("Refreshing taxonomy tree...", taxonomyId);
+                    
+                    try {
+                      const taxonomy = metadataTaxonomies.entries.find(t => t.key === taxonomyId);
+                      console.log("Found taxonomy:", taxonomy);
+                      
+                      if (!taxonomy) {
+                        console.warn(`⚠️ Taxonomy not found in metadataTaxonomies for key: ${taxonomyId}`);
+                        console.log("Available taxonomies:", metadataTaxonomies.entries.map(t => ({ key: t.key, displayName: t.displayName })));
+                        return; // Exit early if taxonomy not found
+                      }
+                      
+                      const taxonomyJSON = await getTaxonomyByKey(namespace, taxonomyId);
+                      const nodesJson = await getNodes(namespace, taxonomyId);
+                    
+                      taxonomyLevels = taxonomyJSON.levels;
+                      originalEntries = nodesJson.entries.sort((a, b) => a.displayName.localeCompare(b.displayName));
+                      const tree = buildTreeFromFlatList(originalEntries);
+                      const maxLevel = Math.max(...originalEntries.map(n => n.level));
+                      const jsTreeNodes = convertNestedToJsTree(tree, maxLevel);
+                    
+                      //$('#taxonomyKey').val(taxonomy.taxonomyKey);
+                      //$('#taxonomyDisplayName').val(taxonomy.displayName);
+                      console.log("Rendering taxonomy tree with:", {
+                        displayName: taxonomy.displayName,
+                        nodeCount: jsTreeNodes.length,
+                        levels: taxonomyLevels
+                      });
+                      
+                      renderTaxonomyTree(taxonomy.displayName, jsTreeNodes, taxonomyLevels);
+                      // Only reset counters if we're not in import mode (i.e., if taxonomyId already exists)
+                      if (originalEntries.length === 0) {
+                        setNodesToCreate();
+                      }
+                      
+                    } catch (error) {
+                      console.error("❌ Error in refreshTaxonomyTree:", error);
+                      console.error("Error details:", {
+                        namespace,
+                        taxonomyId,
+                        metadataTaxonomies: metadataTaxonomies?.entries?.length || 0
+                      });
+                    }
                   }
 
         })

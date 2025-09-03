@@ -149,18 +149,49 @@ async function getNodeById(namespace, taxonomyKey, nodeId, includeAncestors = fa
   return await response.json();
 }
 
-// 11. Retrieve multiple nodes
+// 11. Retrieve multiple nodes with pagination
 async function getNodes(namespace, taxonomyKey, params = {}) {
   const token = getAuthToken();
-  const { level, parentId, limit = 1000, marker } = params;
-  const url = `https://api.box.com/2.0/metadata_taxonomies/${namespace}/${taxonomyKey}/nodes?limit=${limit}`;
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
-  return await response.json();
+  const { level, parentId, limit = 200, marker } = params; // Use Box API limit of 200
+  
+  let allNodes = [];
+  let currentMarker = marker;
+  
+  do {
+    // Build URL with current marker if available
+    let url = `https://api.box.com/2.0/metadata_taxonomies/${namespace}/${taxonomyKey}/nodes?limit=${limit}`;
+    if (currentMarker) {
+      url += `&marker=${currentMarker}`;
+    }
+    
+    console.log(`📥 Fetching nodes: ${url}`);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch nodes: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`📥 Received ${data.entries?.length || 0} nodes, next_marker: ${data.next_marker || 'null'}`);
+    
+    // Add nodes from this page to our collection
+    if (data.entries && Array.isArray(data.entries)) {
+      allNodes = allNodes.concat(data.entries);
+    }
+    
+    // Update marker for next iteration
+    currentMarker = data.next_marker;
+    
+  } while (currentMarker); // Continue until no more pages (next_marker is null)
+  
+  console.log(`✅ Total nodes fetched: ${allNodes.length}`);
+  return { entries: allNodes };
 }
 
 // 12. Update a node's display name and deprecated status
@@ -371,6 +402,9 @@ async function updateNodes(nodes) {
 async function createNodes(nodes) {
   const idMap = {}; // tempId → real Box ID
   setNodesToCreate(nodes.length);
+  
+  console.log(`🚀 Starting node creation for ${nodes.length} nodes with multi-threading (max 6 concurrent)`);
+  const startTime = Date.now();
 
   // Step 1: Assign tempIds to all NEW nodes
   let tempCounter = 0;
@@ -387,41 +421,70 @@ async function createNodes(nodes) {
     levelGroups[node.level].push(node);
   }
 
-  // Step 3: Process levels in order
+  // Step 3: Process levels in order with multi-threading for same-level nodes
   const levels = Object.keys(levelGroups).map(Number).sort((a, b) => a - b);
 
   for (const level of levels) {
-    for (const node of levelGroups[level]) {
-      const payload = {
-        displayName: node.displayName,
-        level: node.level
-      };
+    const levelNodes = levelGroups[level];
+    console.log(`🚀 Processing level ${level} with ${levelNodes.length} nodes`);
+    
+    // Process same-level nodes in parallel (max 6 concurrent requests)
+    const maxConcurrent = 6;
+    const chunks = [];
+    
+    // Split nodes into chunks of maxConcurrent
+    for (let i = 0; i < levelNodes.length; i += maxConcurrent) {
+      chunks.push(levelNodes.slice(i, i + maxConcurrent));
+    }
+    
+    // Process chunks sequentially, but nodes within each chunk in parallel
+    for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+      const chunk = chunks[chunkIndex];
+      console.log(`📦 Processing chunk ${chunkIndex + 1}/${chunks.length} with ${chunk.length} nodes`);
+      
+      // Process all nodes in this chunk concurrently
+      const chunkPromises = chunk.map(async (node) => {
+        const payload = {
+          displayName: node.displayName,
+          level: node.level
+        };
 
-      if (node.level > 1) {
-        const parentRef = node.parent_id;  
-        const resolvedParentId = parentRef?.startsWith('NEW_') ? idMap[parentRef] : parentRef;
-      
-        if (!resolvedParentId) {
-          console.warn(`Skipping ${node.displayName}, unresolved parent_id: ${parentRef}`);
-          continue;
+        if (node.level > 1) {
+          const parentRef = node.parent_id;  
+          const resolvedParentId = parentRef?.startsWith('NEW_') ? idMap[parentRef] : parentRef;
+        
+          if (!resolvedParentId) {
+            console.log(`⚠️ Skipping ${node.displayName}, unresolved parent_id: ${parentRef}`);
+            return null; // Return null for skipped nodes
+          }
+        
+          payload.parentId = resolvedParentId;
         }
-      
-        payload.parentId = resolvedParentId;
-      }
-      
 
-      try {
-        const created = await addNodeToTaxonomy(namespace, taxonomyId, payload);
-        incrementNodesCreated();
-        if (node.tempId) {
-          idMap[node.tempId] = created.id;
+        try {
+          const created = await addNodeToTaxonomy(namespace, taxonomyId, payload);
+          incrementNodesCreated();
+          if (node.tempId) {
+            idMap[node.tempId] = created.id;
+          }
+          console.log(`✅ Created: ${created.displayName} → ${created.id}`);
+          return created;
+        } catch (err) {
+          console.error(`❌ Failed to create node:`, payload, err);
+          return null; // Return null for failed nodes
         }
-        console.log("Created:", created.displayName, "→", created.id);
-      } catch (err) {
-        console.error("Failed to create node:", payload, err);
-      }
+      });
+      
+      // Wait for all nodes in this chunk to complete before moving to next chunk
+      const chunkResults = await Promise.all(chunkPromises);
+      const successfulNodes = chunkResults.filter(result => result !== null);
+      console.log(`📊 Chunk ${chunkIndex + 1} completed: ${successfulNodes.length}/${chunk.length} nodes created successfully`);
     }
   }
+  
+  const endTime = Date.now();
+  const totalTime = endTime - startTime;
+  console.log(`🎉 Node creation completed in ${totalTime}ms for ${nodes.length} nodes`);
 }
 
 function buildTree(rows, columns, level = 0) {
@@ -440,7 +503,8 @@ function buildTree(rows, columns, level = 0) {
   return Object.entries(grouped).map(([value, groupRows]) => {
     const node = {
       id: `new_${Date.now()}_${Math.random()}`,
-      [currentColumn]: value
+      [currentColumn]: value,
+      level: level + 1  // Add the level property
     };
 
     const children = buildTree(groupRows, columns, level + 1);
@@ -478,31 +542,76 @@ async function createNewTaxonomyTree(tree, levels, namespace, taxonomyKey) {
 
   const tempIdMap = new Map();
 
-  // 4. Create nodes in order
+  // 4. Create nodes in order with multi-threading for same-level nodes
+  console.log(`🚀 Starting node creation for new taxonomy with ${flat.length} nodes using multi-threading (max 6 concurrent)`);
+  const startTime = Date.now();
+  
+  // Group nodes by level for parallel processing
+  const levelGroups = {};
   for (const entry of flat) {
-    const nodePayload = {
-      displayName: entry.displayName,
-      level: entry.level
-    };
-
-    if (entry.parentTempId) {
-      const parentRealId = tempIdMap.get(entry.parentTempId);
-      if (!parentRealId) {
-        console.error("Missing parent ID for:", entry);
-        continue;
-      }
-      nodePayload.parentId = parentRealId;
+    if (!levelGroups[entry.level]) levelGroups[entry.level] = [];
+    levelGroups[entry.level].push(entry);
+  }
+  
+  // Process levels in order (maintain hierarchy)
+  const levelKeys = Object.keys(levelGroups).map(Number).sort((a, b) => a - b);
+  
+  for (const level of levelKeys) {
+    const levelNodes = levelGroups[level];
+    console.log(`🚀 Processing level ${level} with ${levelNodes.length} nodes`);
+    
+    // Process same-level nodes in parallel (max 6 concurrent requests)
+    const maxConcurrent = 6;
+    const chunks = [];
+    
+    // Split nodes into chunks of maxConcurrent
+    for (let i = 0; i < levelNodes.length; i += maxConcurrent) {
+      chunks.push(levelNodes.slice(i, i + maxConcurrent));
     }
+    
+    // Process chunks sequentially, but nodes within each chunk in parallel
+    for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+      const chunk = chunks[chunkIndex];
+      console.log(`📦 Processing chunk ${chunkIndex + 1}/${chunks.length} with ${chunk.length} nodes`);
+      
+      // Process all nodes in this chunk concurrently
+      const chunkPromises = chunk.map(async (entry) => {
+        const nodePayload = {
+          displayName: entry.displayName,
+          level: entry.level
+        };
 
-    try {
-      const realNode = await addNodeToTaxonomy(namespace, taxonomyId, nodePayload);
-      incrementNodesCreated();
-      tempIdMap.set(entry.tempId, realNode.id);
-      console.log("Created:", realNode.displayName, "→", realNode.id);
-    } catch (err) {
-      console.error("Failed to create node:", nodePayload, err);
+        if (entry.parentTempId) {
+          const parentRealId = tempIdMap.get(entry.parentTempId);
+          if (!parentRealId) {
+            console.error("Missing parent ID for:", entry);
+            return null; // Return null for failed nodes
+          }
+          nodePayload.parentId = parentRealId;
+        }
+
+        try {
+          const realNode = await addNodeToTaxonomy(namespace, taxonomyId, nodePayload);
+          incrementNodesCreated();
+          tempIdMap.set(entry.tempId, realNode.id);
+          console.log(`✅ Created: ${realNode.displayName} → ${realNode.id}`);
+          return realNode;
+        } catch (err) {
+          console.error(`❌ Failed to create node:`, nodePayload, err);
+          return null; // Return null for failed nodes
+        }
+      });
+      
+      // Wait for all nodes in this chunk to complete before moving to next chunk
+      const chunkResults = await Promise.all(chunkPromises);
+      const successfulNodes = chunkResults.filter(result => result !== null);
+      console.log(`📊 Chunk ${chunkIndex + 1} completed: ${successfulNodes.length}/${chunk.length} nodes created successfully`);
     }
   }
+  
+  const endTime = Date.now();
+  const totalTime = endTime - startTime;
+  console.log(`🎉 New taxonomy creation completed in ${totalTime}ms for ${flat.length} nodes`);
 
   console.log("✅ All nodes created for new taxonomy!");
 }
@@ -540,18 +649,50 @@ function flattenForCreate(tree, levels) {
 }
 
 function convertNestedToJsTree(nodes, maxLevel) {
-  
   return nodes.map(node => {
-    console.log(maxLevel + " " + node.level) ;
+    console.log('Converting node:', node);
+    console.log('Max level:', maxLevel, 'Node level:', node.level);
+    
+    // Find the display name from the dynamic properties
+    // The buildTree function creates nodes with properties like [columnName]: value
+    let displayName = node.displayName;
+    if (!displayName) {
+      // Look for the first property that's not 'id' or 'children'
+      const keys = Object.keys(node).filter(key => key !== 'id' && key !== 'children');
+      if (keys.length > 0) {
+        displayName = node[keys[0]];
+        console.log('Found display name from property:', keys[0], '=', displayName);
+      }
+    }
+    
+    if (!displayName) {
+      displayName = 'Unnamed';
+      console.warn('No display name found for node:', node);
+    }
+    
     const isLastLevel = node.level === maxLevel;
     const item = {
       id: node.id,
-      text: node.displayName,
+      text: displayName,
       icon: isLastLevel ? 'jstree-file' : 'jstree-folder'
     };
+    
+    // Handle children - look for the next level property or children array
     if (node.children && node.children.length > 0) {
       item.children = convertNestedToJsTree(node.children, maxLevel);
+    } else {
+      // Check if there are dynamic children properties
+      const keys = Object.keys(node).filter(key => key !== 'id' && key !== 'displayName');
+      for (const key of keys) {
+        if (Array.isArray(node[key]) && node[key].length > 0) {
+          console.log('Found children in property:', key, 'count:', node[key].length);
+          item.children = convertNestedToJsTree(node[key], maxLevel);
+          break;
+        }
+      }
     }
+    
+    console.log('Converted item:', item);
     return item;
   });
 }

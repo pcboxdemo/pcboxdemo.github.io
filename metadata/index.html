@@ -68,6 +68,14 @@
                $("#loader").hide();
                sessionStorage.setItem("token",response.token);
                sessionStorage.setItem("refreshToken",response.refreshToken);
+               
+               // Store token hash for future authentication
+               if(response.tokenHash) {
+                 localStorage.setItem("tokenHash", response.tokenHash);
+                 localStorage.setItem("userEmail", response.userEmail);
+                 localStorage.setItem("lastAuthTime", Date.now());
+               }
+               
                $("#loader").hide();
                $(".container").show();
                if(localStorage.getItem("agentId")!=null) {
