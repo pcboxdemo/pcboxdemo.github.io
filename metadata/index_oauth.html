@@ -71,9 +71,10 @@
         });
         
         $.ajax({
-            method: 'get',
+            method: 'post',
             url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
-            data: { action: 'validate', tokenHash: tokenHash, clientId: clientId },
+            data: JSON.stringify({ action: 'validate', tokenHash: tokenHash, clientId: clientId }),
+            contentType: 'application/json',
             crossDomain: true,
             cache: false,
             beforeSend: function() {
