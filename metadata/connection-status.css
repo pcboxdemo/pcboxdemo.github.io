@@ -1,0 +1,131 @@
+/* Connection Status Button Styles */
+.connection-status-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: #dc3545; /* Default red for not connected */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    pointer-events: auto; /* Ensure button is clickable */
+}
+
+.connection-status-btn:hover {
+    transform: scale(1.1);
+}
+
+.connection-status-btn.connected {
+    background: #28a745; /* Green for connected */
+}
+
+.connection-status-btn.connected:hover {
+    background: #1e7e34;
+}
+
+.connection-status-btn.disconnected {
+    background: #dc3545; /* Red for disconnected */
+}
+
+.connection-status-btn.disconnected:hover {
+    background: #c82333;
+}
+
+.connection-status-btn i {
+    font-size: 20px;
+}
+
+/* Status indicators */
+.status-connected {
+    color: #28a745;
+}
+
+.status-expired {
+    color: #dc3545;
+}
+
+.status-none {
+    color: #6c757d;
+}
+
+/* Disabled tiles when not connected */
+.box.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.box.disabled:hover {
+    transform: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Login message */
+.login-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 20px 0;
+    text-align: center;
+    border: 1px solid #f5c6cb;
+}
+
+.login-message a {
+    color: #721c24;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+/* Ensure modal is hidden by default */
+#connectionModal {
+    display: none;
+}
+
+#connectionModal.show {
+    display: block;
+}
+
+/* Ensure modal table displays properly */
+#connectionModal .table td {
+    white-space: nowrap;
+    word-wrap: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+#connectionModal .table td:first-child {
+    min-width: 120px;
+    width: auto;
+}
+
+#connectionModal .table td:last-child {
+    min-width: 100px;
+    width: auto;
+}
+
+/* Ensure modal has proper width and spacing */
+#connectionModal .modal-dialog {
+    max-width: 800px;
+    width: 90%;
+}
+
+#connectionModal .modal-body {
+    padding: 20px;
+}
+
+#connectionModal .table {
+    margin-bottom: 0;
+}
+
+#connectionModal .table td {
+    padding: 8px 12px;
+    vertical-align: middle;
+}

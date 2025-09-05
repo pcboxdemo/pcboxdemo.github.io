@@ -36,7 +36,8 @@
 <script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
 <script src="metadata.js"></script>
 <link rel="stylesheet" href="import.css"/>
-
+<!-- Connection Status Styles -->
+<link rel="stylesheet" href="connection-status.css"/>
 
 <script src="lib/bundle.js"></script>
 <style>
@@ -175,7 +176,8 @@ $(document).ready(async function () {
         currentUserName = userInfo.name;// + ' (' + userInfo.login + ')';
         currentUserEmail = userInfo.login;
       } catch (e) {
-        return alert("Login problem. Please re-login.");    
+        // Login problem - connection status will handle this
+        return;    
       }
       loadSharedAgents();
 
@@ -1069,6 +1071,26 @@ $(document).ready(async function () {
     </div>
   </div>
   
+    <!-- Font Awesome for connection button icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Connection Status HTML -->
+    <div id="connectionStatusContainer"></div>
+    
+    <!-- Connection Status JavaScript -->
+    <script src="connection-status.js"></script>
+    <script>
+        // Load connection status HTML
+        $(document).ready(function() {
+            $('#connectionStatusContainer').load('connection-status.html', function() {
+                console.log("Connection status HTML loaded, updating status...");
+                // Update connection status after HTML is loaded
+                if (typeof updateConnectionStatus === 'function') {
+                    setTimeout(updateConnectionStatus, 100);
+                }
+            });
+        });
+    </script>
 
 </body>
 </html>

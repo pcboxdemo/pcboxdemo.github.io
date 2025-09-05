@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
     <link rel="stylesheet" href="import.css"/>
+    <!-- Connection Status Styles -->
+    <link rel="stylesheet" href="connection-status.css"/>
     
     <!-- jQuery CDN -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -311,7 +313,8 @@
                 eid = userInfo.enterprise.id;
                 namespace = "enterprise_" + eid;
             } catch (e) {
-                return alert("Login problem. Please re-login.");    
+                // Login problem - connection status will handle this
+                return;    
             }
             
             loadSharedTaxonomies();
@@ -867,6 +870,27 @@
                 .replace(/\s+/, ' ')
                 .replace(/^\w/, c => c.toUpperCase());
         }
+    </script>
+    
+    <!-- Font Awesome for connection button icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Connection Status HTML -->
+    <div id="connectionStatusContainer"></div>
+    
+    <!-- Connection Status JavaScript -->
+    <script src="connection-status.js"></script>
+    <script>
+        // Load connection status HTML
+        $(document).ready(function() {
+            $('#connectionStatusContainer').load('connection-status.html', function() {
+                console.log("Connection status HTML loaded, updating status...");
+                // Update connection status after HTML is loaded
+                if (typeof updateConnectionStatus === 'function') {
+                    setTimeout(updateConnectionStatus, 100);
+                }
+            });
+        });
     </script>
 </body>
 </html> 

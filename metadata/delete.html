@@ -27,6 +27,8 @@
 <script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
 <script src="metadata.js"></script>
 <link rel="stylesheet" href="import.css"/>
+<!-- Connection Status Styles -->
+<link rel="stylesheet" href="connection-status.css"/>
 
     <style>
      
@@ -301,7 +303,27 @@ console.log(accessToken); // Confirm it exists immediately
 
     <!-- Bootstrap JS and dependencies -->
     
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Font Awesome for connection button icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Connection Status HTML -->
+    <div id="connectionStatusContainer"></div>
+    
+    <!-- Connection Status JavaScript -->
+    <script src="connection-status.js"></script>
+    <script>
+        // Load connection status HTML
+        $(document).ready(function() {
+            $('#connectionStatusContainer').load('connection-status.html', function() {
+                console.log("Connection status HTML loaded, updating status...");
+                // Update connection status after HTML is loaded
+                if (typeof updateConnectionStatus === 'function') {
+                    setTimeout(updateConnectionStatus, 100);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

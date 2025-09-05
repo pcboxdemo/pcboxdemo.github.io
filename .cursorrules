@@ -1,0 +1,18 @@
+# Debug Statement Guidelines
+
+## Console.log Statements
+- Always keep console.log statements to single lines when possible
+- Avoid multi-line objects or complex structures in console.log
+- Do NOT use emojis or icons in debug statements
+- Use clear, descriptive text instead of symbols
+- Example: `console.log("Status: " + status + " (" + count + ")")`
+- Avoid: `console.log("✅ Status:", { status, count })`
+
+## Code Style
+- Prefer string concatenation over template literals for simple debug messages
+- Keep debug messages concise but informative
+- Use consistent formatting across all JavaScript files
+
+## When to Use Multi-line
+- Only use multi-line console.log when absolutely necessary for complex debugging
+- Prefer breaking complex debug info into multiple single-line statements

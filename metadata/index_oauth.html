@@ -139,6 +139,7 @@
             tokenHash: !!localStorage.getItem("tokenHash"),
             userEmail: !!localStorage.getItem("userEmail"),
             lastAuthTime: !!localStorage.getItem("lastAuthTime"),
+            oldToken: !!localStorage.getItem("token"), // Check for old format
             sessionToken: !!sessionStorage.getItem("token"),
             sessionRefreshToken: !!sessionStorage.getItem("refreshToken")
         };
@@ -147,6 +148,7 @@
         localStorage.removeItem("tokenHash");
         localStorage.removeItem("userEmail");
         localStorage.removeItem("lastAuthTime");
+        localStorage.removeItem("token"); // Remove old format token
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("refreshToken");
         
