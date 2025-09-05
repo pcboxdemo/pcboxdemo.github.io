@@ -116,46 +116,39 @@ function updateConnectionButton(statusClass) {
 // Update tile states based on connection status
 function updateTileStates(statusClass) {
     const tiles = $('.box');
-    const loginMessage = $('#loginMessage');
     
     if (statusClass === 'status-connected') {
-        // Connected - enable all tiles
+        // Connected - enable all tiles and remove login message
         tiles.removeClass('disabled');
-        if (loginMessage.length) {
-            loginMessage.remove();
-        }
+        $('#loginMessage').remove();
     } else {
-        // Not connected - disable tiles and show login message
+        // Not connected or expired - disable tiles and show login message
         tiles.addClass('disabled');
-        // Only show login message if it doesn't already exist
-        if (loginMessage.length === 0) {
-            showLoginMessage();
-        }
+        showLoginMessage();
     }
 }
 
 // Show login message when not connected
 function showLoginMessage() {
-    // Check if page already has login links in header
-    const hasHeaderLogin = $('header a[href*="index_oauth.html"]').length > 0;
-    
-    // For pages with header login links, don't show any additional login message
-    if (hasHeaderLogin) {
-        console.log("🔗 Header login exists, skipping message");
+    // Check if login message already exists in DOM
+    if ($('#loginMessage').length > 0) {
+        console.log("Login message already exists, skipping...");
         return;
     }
     
-    // Remove any existing login messages first to prevent duplicates
-    $('#loginMessage').remove();
+    console.log("Creating login message...");
     
-    // Only create login message for pages without header login links
+    // Create login message with direct link for all pages
     const loginMessage = $(`
         <div id="loginMessage" class="login-message">
             <strong>Authentication Required</strong><br>
             Please <a href="index_oauth.html">login to Box</a> to access the metadata tools.
         </div>
     `);
-    $('.container').prepend(loginMessage);
+    
+    console.log("Prepending login message to first container...");
+    $('.container').first().prepend(loginMessage);
+    console.log("Login message created, count:", $('#loginMessage').length);
 }
 
 // Fetch user details from Box API using the session token
