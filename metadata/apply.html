@@ -44,6 +44,8 @@
         let metadataTemplates;
         let randomValues = [];
         let randomFileId;
+        let processingStartTime;
+        let totalProcessingTime = 0;
         $(document).ready(async function() {
             $(document).on('click', 'input[type="radio"]', function() {
                 const $button = $('button[aria-label="Choose"]');
@@ -112,12 +114,23 @@
                 });
     
                 $('.apply').click(async function() {
+                    var action = $(this).attr("id");
+                    
+                    // Validate extraction method if using AI
+                    if (action === 'applyAI' && !validateExtractionMethod()) {
+                        return; // Stop execution if validation fails
+                    }
+                    
+                    // Initialize processing time tracking
+                    processingStartTime = Date.now();
+                    totalProcessingTime = 0;
+                    $("#avgProcessingTime").text("0s");
+                    
                     $(this).hide();
                     $("#exportLoader").show();
                     $('.action').attr('disabled',true);
                     var templateToUse = $('#selectedTemplates').attr("key");
                     console.log($(this).attr("id"));
-                    var action = $(this).attr("id");
                     let stringFields = [];
                     let template =  metadataTemplates.entries.find(t => t.templateKey === $('#selectedTemplates').attr("key"));
                     let values;
@@ -147,10 +160,23 @@
                     $('#selectedTemplates').attr("key",template.templateKey);
 
                     generateTemplateLayout(template,'fields');
+                    
+                    // Show the metadata toggle button when template is selected
+                    $("#metadataToggle").show();
+                    
                     checkButton();
             });
 
             // Move items from SelectBox2 back to SelectBox1
+            
+            // Initialize extraction method selection functionality
+            initializeExtractionMethodSelection();
+            
+            // Initialize collapsible metadata fields
+            initializeCollapsibleMetadata();
+            
+            // Ensure Standard Extract is selected by default
+            $('#standardExtract').prop('checked', true);
           
         });
         async function populateCounts(folderId) {
@@ -199,6 +225,15 @@
         function increment(id) {
             $("#"+id).text(parseInt($("#"+id).text())+1);
             checkLoader();
+        }
+
+        function updateAverageProcessingTime() {
+            const fileCount = parseInt($("#fileApplyCount").text());
+            if (fileCount > 0) {
+                const averageTime = totalProcessingTime / fileCount;
+                const averageSeconds = (averageTime / 1000).toFixed(1);
+                $("#avgProcessingTime").text(averageSeconds + "s");
+            }
         }
         function getQuery(metadata) {
             for (let field of metadata.fields) {
@@ -320,6 +355,8 @@
 
         async function processFileMetadata(data, template, values, action) {
             queue.add(async () => {
+                const fileStartTime = Date.now();
+                
                 let md;
                 if (action === 'applyAI') {
                     md = await getMetadataSuggestionsFromAI(template.templateKey, data.id);
@@ -329,7 +366,13 @@
                 }
         
                 await upsertMetadata(data.id, md, template.templateKey, 'file');
+                
+                // Calculate processing time for this file
+                const fileProcessingTime = Date.now() - fileStartTime;
+                totalProcessingTime += fileProcessingTime;
+                
                 increment('fileApplyCount');
+                updateAverageProcessingTime();
             });
         }
        async function generateRandomData(template,values) {
@@ -428,14 +471,139 @@
         function checkButton() {
             
             console.log($('#selectedTemplates').text().length);
-            if(selectedFolder!=null) {
-                if($('#selectedTemplates').text().length>0) {
-                    $(".action").attr('disabled',false);
-                    return;
+            if(selectedFolder!=null && $('#selectedTemplates').text().length>0) {
+                // Show all buttons when both folder and template are selected
+                $(".main-action-buttons").show();
+                $(".action").attr('disabled',false);
+                $("#aiButtonGroup").show();
+                return;
+            }
+            
+            // Hide all buttons when folder or template is not selected
+            $(".main-action-buttons").hide();
+            $(".action").attr('disabled',true);
+            $("#aiButtonGroup").hide();
+        }
+
+        // Initialize extraction method selection functionality
+        function initializeExtractionMethodSelection() {
+            // Handle extraction method radio button changes
+            $('input[name="extractionMethod"]').on('change', function() {
+                const selectedMethod = $(this).val();
+                
+                if (selectedMethod === 'custom') {
+                    $("#customAgentConfig").show();
+                } else {
+                    $("#customAgentConfig").hide();
+                }
+            });
+
+            // Handle opening the Box Agent Configurator
+            $("#openAgentConfigurator").on('click', function() {
+                window.open('https://developer.box.com/agent-configurator/', '_blank', 'noopener,noreferrer');
+            });
+
+            // Handle clearing custom configuration
+            $("#clearCustomConfig").on('click', function() {
+                $("#customAgentJson").val('');
+                updateJsonStatus();
+            });
+
+            // Handle JSON textarea changes
+            $("#customAgentJson").on('input', function() {
+                updateJsonStatus();
+            });
+
+            // Handle paste events for better UX
+            $("#customAgentJson").on('paste', function() {
+                setTimeout(updateJsonStatus, 100); // Small delay to allow paste to complete
+            });
+        }
+
+        // Initialize collapsible metadata fields functionality
+        function initializeCollapsibleMetadata() {
+            $("#metadataToggle").on('click', function() {
+                const $content = $("#fields");
+                const $icon = $("#metadataToggleIcon");
+                const $text = $("#metadataToggleText");
+                const $button = $(this);
+                
+                if ($content.is(':visible')) {
+                    // Collapse
+                    $content.slideUp(300);
+                    $icon.removeClass('bi-chevron-up').addClass('bi-chevron-down');
+                    $text.text('Show Metadata Fields');
+                    $button.removeClass('expanded');
+                } else {
+                    // Expand
+                    $content.slideDown(300);
+                    $icon.removeClass('bi-chevron-down').addClass('bi-chevron-up');
+                    $text.text('Hide Metadata Fields');
+                    $button.addClass('expanded');
+                }
+            });
+        }
+
+        // Update JSON status
+        function updateJsonStatus() {
+            const jsonText = $("#customAgentJson").val().trim();
+            const statusElement = $("#jsonStatus");
+
+            if (jsonText === '') {
+                statusElement.text('No configuration pasted').removeClass('text-success text-danger').addClass('text-muted');
+                return;
+            }
+
+            try {
+                // Try to parse the JSON
+                const parsedJson = JSON.parse(jsonText);
+                
+                statusElement.text('Valid JSON configuration').removeClass('text-muted text-danger').addClass('text-success');
+                
+                // Store the parsed configuration for later use
+                window.customAgentConfig = parsedJson;
+                
+            } catch (error) {
+                statusElement.text('Invalid JSON format').removeClass('text-muted text-success').addClass('text-danger');
+                window.customAgentConfig = null;
+            }
+        }
+
+        // Get the selected extraction method and configuration
+        function getExtractionMethod() {
+            const selectedMethod = $('input[name="extractionMethod"]:checked').val();
+            
+            if (selectedMethod === 'custom' && window.customAgentConfig) {
+                return {
+                    method: 'custom',
+                    config: window.customAgentConfig
+                };
+            }
+            
+            return {
+                method: selectedMethod,
+                config: null
+            };
+        }
+
+        // Validate extraction method configuration
+        function validateExtractionMethod() {
+            const selectedMethod = $('input[name="extractionMethod"]:checked').val();
+            
+            if (selectedMethod === 'custom') {
+                const jsonText = $("#customAgentJson").val().trim();
+                if (!jsonText) {
+                    alert('Please paste a custom agent configuration JSON before proceeding.');
+                    return false;
                 }
                 
+                if (!window.customAgentConfig) {
+                    alert('Please provide a valid JSON configuration for the custom agent.');
+                    return false;
+                }
             }
-            $(".action").attr('disabled',true);
+            
+            return true;
         }
 
        
@@ -507,7 +675,10 @@
             return '';
         }
         function getMetadataSuggestionsFromAI(templateKey, fileID) {
-            // Create the data payload for the POST request
+            // Get the selected extraction method and configuration
+            const extractionConfig = getExtractionMethod();
+            
+            // Create the base data payload for the POST request
             const data = {
                 "metadata_template": {
                     "type": "metadata_template",
@@ -519,6 +690,18 @@
                     "id": fileID
                 }]
             };
+
+            // Add extraction method specific configuration
+            if (extractionConfig.method === 'enhanced') {
+                data.ai_agent = {
+                    "type": "ai_agent_id",
+                    "id": "enhanced_extract_agent"
+                };
+            } else if (extractionConfig.method === 'custom' && extractionConfig.config) {
+                // Use the custom agent configuration directly
+                data.ai_agent = extractionConfig.config;
+            }
+            // For 'standard', no additional configuration is needed
         
             // Return a new promise for the AJAX call
             return new Promise((resolve, reject) => {
@@ -678,6 +861,13 @@
                     <li>Click analyze and it will show how many folders and files you are applying to</li>
                     <li>Click Apply random values to populate metadata for selected files and folders. This uses Box AI textgen to try to generate plausible random values for each text field. </li>
                     <li>Click Use AI to Apply Metadata to invoke the Metadata AI API endpoint to extract metadata from files. This only affects files and assumes that the files are relevant for the chosen metadata template</li>
+                    <li><strong>Choose your extraction method:</strong>
+                        <ul>
+                            <li><strong>Standard Extract:</strong> Uses the default Box AI extraction capabilities</li>
+                            <li><strong>Enhanced Extract:</strong> Uses enhanced extraction with improved accuracy</li>
+                            <li><strong>Custom Extract:</strong> Configure your own AI agent using the <a href="https://developer.box.com/agent-configurator/" target="_blank">Box Agent Configurator</a> and paste the JSON configuration</li>
+                        </ul>
+                    </li>
                 </ul>
                 
                     </div>
@@ -711,60 +901,117 @@
       
         <div class="row">
             <div class="col-12">
-                <div id="fields"></div>
+                <div class="metadata-fields-section">
+                    <button class="btn btn-outline-secondary btn-sm metadata-toggle" id="metadataToggle" style="display: none;">
+                        <i class="bi bi-chevron-down" id="metadataToggleIcon"></i>
+                        <span id="metadataToggleText">Show Metadata Fields</span>
+                    </button>
+                    <div id="fields" class="metadata-fields-content" style="display: none;"></div>
+                </div>
             </div>
         </div>
         <div class="button-section">
-            <button class="btn btn-primary action" id="analyze" disabled>Analyze</button>
-            <button class="btn btn-secondary apply" id="apply" disabled>Apply random values</button>
-            <button class="btn btn-secondary apply" id="applyAI" disabled>Use AI to apply metadata</button>
+            <!-- Main Action Buttons -->
+            <div class="main-action-buttons" style="display: none;">
+                <button class="btn btn-primary action" id="analyze" disabled>Analyze</button>
+                <button class="btn btn-secondary apply" id="apply" disabled>Apply random values</button>
+                
+                <!-- AI Button Group -->
+                <div class="ai-button-group" id="aiButtonGroup" style="display: none;">
+                    <button class="btn btn-secondary apply" id="applyAI" disabled>Use AI to apply metadata</button>
+                    
+                    <!-- Extraction Method Selection -->
+                    <div class="extraction-method-selection">
+                        <div class="btn-group" role="group" aria-label="Extraction methods">
+                            <input type="radio" class="btn-check" name="extractionMethod" id="standardExtract" value="standard" checked>
+                            <label class="btn btn-outline-primary" for="standardExtract">Standard Extract</label>
+                            
+                            <input type="radio" class="btn-check" name="extractionMethod" id="enhancedExtract" value="enhanced">
+                            <label class="btn btn-outline-primary" for="enhancedExtract">Enhanced Extract</label>
+                            
+                            <input type="radio" class="btn-check" name="extractionMethod" id="customExtract" value="custom">
+                            <label class="btn btn-outline-primary" for="customExtract">Custom Extract</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Apply Section for Custom Config -->
+            <div class="ai-apply-section">
+                    
+                    <!-- Custom Agent Configuration -->
+                    <div class="custom-agent-config" id="customAgentConfig" style="display: none;">
+                        <div class="custom-instructions">
+                            <strong>Custom Agent Setup:</strong>
+                            <ol>
+                                <li>Click the button below to open the Box Agent Configurator in a new window and configure your custom agent settings</li>
+                                <li>Copy the generated JSON configuration and paste it in the text area below</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="custom-config-inline">
+                            <button type="button" class="btn btn-outline-info" id="openAgentConfigurator">
+                                <i class="bi bi-box-arrow-up-right"></i> Open Agent Configurator
+                            </button>
+                            <textarea class="form-control" id="customAgentJson" rows="4" placeholder="Paste your custom agent JSON configuration here..."></textarea>
+                            <button type="button" class="btn btn-outline-secondary" id="clearCustomConfig">
+                                <i class="bi bi-trash"></i> Clear
+                            </button>
+                            <div class="json-status">
+                                <span id="jsonStatus">No configuration pasted</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <img src="ajax-loader.gif" id="exportLoader" style="display:none;"/>
             <div id="sharedLink" style="display:none;"><a href="#" target="_new" id="zipper">Shared link to Zip file for importing</a></div>
-        </div>
-        <!-- Row with one section -->
+       
+        
+        <!-- Row with results section -->
         <div class="row">
-            <div class="col-12">
+            <div class="col-md-6">
                 <div class="section">
                     <h4 id="sec2"></h4>
                     <h4 id="selectedTemplates"></h4>
-                    <div class="row">
-                        <!-- Left Section (sec2content) -->
-                        <div class="col-md-6" id="sec2content">
-                            <ul class="list-group">
-                                <li class="list-group-item">
-                                    Folders 
-                                    <span class="badge rounded-pill bg-primary" id="folderCount">0</span>
-                                </li>
-                                <li class="list-group-item">
-                                    Files
-                                    <span class="badge rounded-pill bg-primary" id="fileCount">0</span>
-                                </li>
-                                <li class="list-group-item">
-                                    Folder metadata instances 
-                                    <span class="badge rounded-pill bg-primary" id="folderInstanceCount">0</span>
-                                </li>
-                                <li class="list-group-item">
-                                    File metadata instances
-                                    <span class="badge rounded-pill bg-primary" id="fileInstanceCount">0</span>
-                                </li>
-                                
-                            </ul>
-                        </div>
-                        
-                        <!-- Right Section (sec3content) -->
-                        <div class="col-md-6" id="sec3content">
-                            <ul class="list-group">
-                                <li class="list-group-item">
-                                    Applied folders 
-                                    <span class="badge rounded-pill bg-success" id="folderApplyCount">0</span>
-                                </li>
-                                <li class="list-group-item">
-                                    Applied files
-                                    <span class="badge rounded-pill bg-success" id="fileApplyCount">0</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            Folders 
+                            <span class="badge rounded-pill bg-primary" id="folderCount">0</span>
+                        </li>
+                        <li class="list-group-item">
+                            Files
+                            <span class="badge rounded-pill bg-primary" id="fileCount">0</span>
+                        </li>
+                        <li class="list-group-item">
+                            Folder metadata instances 
+                            <span class="badge rounded-pill bg-primary" id="folderInstanceCount">0</span>
+                        </li>
+                        <li class="list-group-item">
+                            File metadata instances
+                            <span class="badge rounded-pill bg-primary" id="fileInstanceCount">0</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="section">
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            Applied folders 
+                            <span class="badge rounded-pill bg-success" id="folderApplyCount">0</span>
+                        </li>
+                        <li class="list-group-item">
+                            Applied files
+                            <span class="badge rounded-pill bg-success" id="fileApplyCount">0</span>
+                        </li>
+                        <li class="list-group-item">
+                            Average per file
+                            <span class="badge rounded-pill bg-success" id="avgProcessingTime">0s</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
