@@ -5,6 +5,9 @@
 
 // Connection status functions
 let isUpdatingConnectionStatus = false;
+let isTestingToken = false;
+let tokenTestCompleted = false;
+let tokenTestResult = null; // 'valid', 'invalid', or null
 
 function updateConnectionStatus() {
     // Prevent multiple simultaneous calls
@@ -15,65 +18,147 @@ function updateConnectionStatus() {
     
     isUpdatingConnectionStatus = true;
     
-    const token = sessionStorage.getItem("token");
-    const refreshToken = sessionStorage.getItem("refreshToken");
-    const tokenHash = localStorage.getItem("tokenHash");
-    const userEmail = localStorage.getItem("userEmail");
-    const lastAuthTime = localStorage.getItem("lastAuthTime");
+    // Use TokenManager to get current status
+    let tokenStatus = null;
     
-    // Debug: Check for old token entries
-    const oldToken = localStorage.getItem("token");
-    console.log("🔍 Status: Token=" + (token ? "✓" : "✗") + " Refresh=" + (refreshToken ? "✓" : "✗") + " Hash=" + (tokenHash ? "✓" : "✗") + " User=" + (userEmail || "None"));
+    if (window.TokenManager && typeof window.TokenManager.getTokenValidationStatus === 'function') {
+        tokenStatus = window.TokenManager.getTokenValidationStatus();
+        console.log("🔍 Connection Status Check (TokenManager):", tokenStatus);
+    } else {
+        console.log("⚠️ TokenManager not available yet, using fallback logic");
+    }
     
-    console.log("📦 SessionStorage: " + Object.keys(sessionStorage).join(", ") || "Empty");
-
     let statusIcon = '🔴';
     let statusText = 'Not Connected';
     let statusClass = 'status-none';
 
-    if (token && token !== 'null') {
-        // We have a session token, let's get user details
-        statusIcon = '🟢';
-        statusText = 'Connected';
-        statusClass = 'status-connected';
+    if (tokenStatus) {
+        switch (tokenStatus.status) {
+            case 'valid':
+                statusIcon = '🟢';
+                statusText = 'Connected (Live)';
+                statusClass = 'status-connected';
+                break;
+            case 'refreshing':
+                statusIcon = '🟡';
+                statusText = 'Refreshing Token...';
+                statusClass = 'status-connected';
+                break;
+            case 'pending':
+                statusIcon = '🟡';
+                statusText = 'Validating Token...';
+                statusClass = 'status-connected';
+                break;
+            case 'invalid':
+            default:
+                statusIcon = '🔴';
+                statusText = 'Not Connected';
+                statusClass = 'status-none';
+                break;
+        }
+    } else {
+        // Fallback to old logic if TokenManager not available
+        const token = sessionStorage.getItem("token");
+        const tokenHash = localStorage.getItem("tokenHash");
+        const lastAuthTime = localStorage.getItem("lastAuthTime");
         
-        // Fetch user details from Box API
-        fetchUserDetails(token);
-    } else if (tokenHash && lastAuthTime) {
-        const timeSinceAuth = Date.now() - parseInt(lastAuthTime);
-        const daysOld = timeSinceAuth / (24 * 60 * 60 * 1000);
-
-        if (daysOld < 7) {
-            statusIcon = '🟡';
-            statusText = 'Token Stored';
-            statusClass = 'status-connected';
+        console.log("🔍 Fallback status check:", {
+            hasToken: !!token,
+            hasTokenHash: !!tokenHash,
+            hasLastAuthTime: !!lastAuthTime
+        });
+        
+        if (token && token !== 'null') {
+            // Only test the token once per page load
+            if (!isTestingToken && !tokenTestCompleted) {
+                isTestingToken = true;
+                console.log("🧪 Testing token (one-time test)...");
+                
+                testTokenQuickly(token).then(isValid => {
+                    console.log("🧪 Token test result:", isValid ? "VALID" : "INVALID");
+                    tokenTestResult = isValid ? 'valid' : 'invalid';
+                    
+                    if (isValid) {
+                        updateStatusDisplay('🟢', 'Connected (Live)', 'status-connected');
+                        updateConnectionButton('status-connected');
+                        updateTileStates('status-connected');
+                    } else {
+                        updateStatusDisplay('🔴', 'Token Expired', 'status-expired');
+                        updateConnectionButton('status-expired');
+                        updateTileStates('status-expired');
+                    }
+                    isTestingToken = false;
+                    tokenTestCompleted = true;
+                }).catch(error => {
+                    console.error("🧪 Token test failed:", error);
+                    tokenTestResult = 'invalid';
+                    updateStatusDisplay('🔴', 'Token Expired', 'status-expired');
+                    updateConnectionButton('status-expired');
+                    updateTileStates('status-expired');
+                    isTestingToken = false;
+                    tokenTestCompleted = true;
+                });
+            } else if (isTestingToken) {
+                console.log("⏭️ Token test already in progress, skipping...");
+            } else if (tokenTestCompleted) {
+                console.log("⏭️ Token test already completed, using result:", tokenTestResult);
+                // Use the stored test result
+                if (tokenTestResult === 'valid') {
+                    statusIcon = '🟢';
+                    statusText = 'Connected (Live)';
+                    statusClass = 'status-connected';
+                } else {
+                    statusIcon = '🔴';
+                    statusText = 'Token Expired';
+                    statusClass = 'status-expired';
+                }
+            }
+            
+            // Show validating status while testing (only if not completed)
+            if (!tokenTestCompleted) {
+                statusIcon = '🟡';
+                statusText = 'Validating Token...';
+                statusClass = 'status-connected';
+            }
+        } else if (tokenHash && lastAuthTime) {
+            const timeSinceAuth = Date.now() - parseInt(lastAuthTime);
+            const daysOld = timeSinceAuth / (24 * 60 * 60 * 1000);
+            
+            if (daysOld < 7) {
+                statusIcon = '🟡';
+                statusText = 'Token Stored (Validating...)';
+                statusClass = 'status-connected';
+            } else {
+                statusIcon = '🔴';
+                statusText = 'Token Expired';
+                statusClass = 'status-expired';
+            }
         } else {
             statusIcon = '🔴';
-            statusText = 'Token Expired';
-            statusClass = 'status-expired';
+            statusText = 'Not Connected';
+            statusClass = 'status-none';
         }
     }
 
     console.log("🔄 Updating status: " + statusClass + " (" + statusText + ")");
     
     // Update modal status (if modal exists)
-    if ($('#connectionStatusIcon').length) {
-        $('#connectionStatusIcon').html(statusIcon);
-        $('#connectionStatusText').text(statusText);
-        $('#connectionStatusText').removeClass('status-connected status-expired status-none').addClass(statusClass);
-    }
-    
+    updateStatusDisplay(statusIcon, statusText, statusClass);
     console.log("✅ Status elements updated - Icon:" + $('#connectionStatusIcon').length + " Text:" + $('#connectionStatusText').length);
     
-    // Update connection button color
+    // Update connection button color and tile states
     updateConnectionButton(statusClass);
-    
-    // Update tile states
     updateTileStates(statusClass);
 
     // Update detailed info (if modal exists)
     if ($('#sessionToken').length) {
-        $('#sessionToken').text(token ? token.substring(0, 20) + '...' : 'None');
+        const currentToken = window.TokenManager ? window.TokenManager.getCurrentValidToken() : sessionStorage.getItem("token");
+        const refreshToken = sessionStorage.getItem("refreshToken");
+        const tokenHash = localStorage.getItem("tokenHash");
+        const userEmail = localStorage.getItem("userEmail");
+        const lastAuthTime = localStorage.getItem("lastAuthTime");
+        
+        $('#sessionToken').text(currentToken ? currentToken.substring(0, 20) + '...' : 'None');
         $('#refreshToken').text(refreshToken ? refreshToken.substring(0, 20) + '...' : 'None');
         $('#tokenHash').text(tokenHash ? tokenHash.substring(0, 20) + '...' : 'None');
         $('#userEmail').text(userEmail || 'None');
@@ -151,45 +236,37 @@ function showLoginMessage() {
     console.log("Login message created, count:", $('#loginMessage').length);
 }
 
-// Fetch user details from Box API using the session token
-function fetchUserDetails(accessToken) {
-    console.log("🔍 Fetching user details from Box API...");
+// Helper function to update status display
+function updateStatusDisplay(icon, text, statusClass) {
+    if ($('#connectionStatusIcon').length) {
+        $('#connectionStatusIcon').html(icon);
+    }
+    if ($('#connectionStatusText').length) {
+        $('#connectionStatusText').text(text);
+        $('#connectionStatusText').removeClass('status-connected status-expired status-none').addClass(statusClass);
+    }
+}
+
+// Quick token validation for fallback logic
+async function testTokenQuickly(token) {
+    if (!token || token === 'null') {
+        return false;
+    }
     
-    $.ajax({
-        url: 'https://api.box.com/2.0/users/me',
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-        },
-        success: function(userData) {
-            console.log("✅ User details: " + (userData.name || 'Unknown') + " (" + (userData.login || 'Unknown') + ")");
-            
-            // Update the user email in the modal with live data
-            if ($('#userEmail').length) {
-                $('#userEmail').text(userData.login || 'Unknown');
+    try {
+        const response = await fetch('https://api.box.com/2.0/users/me', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
-            
-            // Update the status to show we have live connection
-            if ($('#connectionStatusText').length) {
-                $('#connectionStatusText').text('Connected (Live)');
-            }
-            
-            // Store the user email if we don't have it
-            if (!localStorage.getItem("userEmail") && userData.login) {
-                localStorage.setItem("userEmail", userData.login);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.log("❌ User fetch failed: " + xhr.status + " " + xhr.statusText);
-            
-            // Token might be expired, update status
-            if (xhr.status === 401 && $('#connectionStatusText').length) {
-                $('#connectionStatusText').text('Token Expired');
-                $('#connectionStatusText').removeClass('status-connected').addClass('status-expired');
-            }
-        }
-    });
+        });
+        
+        return response.ok;
+    } catch (error) {
+        console.error("❌ Quick token test failed:", error);
+        return false;
+    }
 }
 
 // Clean up old token format on page load
@@ -221,6 +298,10 @@ function logout() {
 window.debugConnectionStatus = function() {
     console.log("🔍 DEBUG: Token=" + (sessionStorage.getItem("token") ? "✓" : "✗") + " Refresh=" + (sessionStorage.getItem("refreshToken") ? "✓" : "✗") + " Hash=" + (localStorage.getItem("tokenHash") ? "✓" : "✗") + " User=" + (localStorage.getItem("userEmail") || "None"));
     console.log("🔍 DEBUG: Modal elements - Icon:" + $('#connectionStatusIcon').length + " Text:" + $('#connectionStatusText').length + " Content:" + $('#connectionStatusText').text());
+    console.log("🔍 DEBUG: TokenManager available:", !!window.TokenManager);
+    if (window.TokenManager) {
+        console.log("🔍 DEBUG: TokenManager status:", window.TokenManager.getTokenValidationStatus());
+    }
 };
 
 // Test function - call from browser console: testConnectionStatus()
@@ -234,8 +315,27 @@ $(document).ready(function() {
     // Clean up old token format
     cleanupOldTokens();
     
+    // Listen for TokenManager events
+    $(document).on('tokenValidated', function(event, token) {
+        console.log("🎉 Token validated event received");
+        updateConnectionStatus();
+    });
+    
+    $(document).on('tokenValidationFailed', function() {
+        console.log("❌ Token validation failed event received");
+        updateConnectionStatus();
+    });
+    
     // Check connection status on page load with a small delay to ensure button is loaded
     setTimeout(updateConnectionStatus, 500);
+    
+    // Also check again after a longer delay to ensure TokenManager is loaded
+    setTimeout(function() {
+        if (!window.TokenManager && !isTestingToken && !tokenTestCompleted) {
+            console.log("🔄 TokenManager still not loaded, retrying connection status...");
+            updateConnectionStatus();
+        }
+    }, 2000);
     
     // Set up modal event handlers (if modal exists)
     if ($('#connectionModal').length) {
@@ -276,10 +376,10 @@ $(document).ready(function() {
     
     // Also try to update periodically in case the HTML loads but observer misses it
     let updateAttempts = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 5; // Reduced from 10
     const updateInterval = setInterval(function() {
         updateAttempts++;
-        if ($('.connection-status-btn').length > 0) {
+        if ($('.connection-status-btn').length > 0 && !isTestingToken && !tokenTestCompleted) {
             console.log("🔘 Button found, updating...");
             updateConnectionStatus();
             clearInterval(updateInterval);
@@ -287,5 +387,5 @@ $(document).ready(function() {
             console.log("⏹️ Max attempts reached, stopping...");
             clearInterval(updateInterval);
         }
-    }, 500);
+    }, 1000); // Increased from 500ms to 1000ms
 });

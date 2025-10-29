@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="459f7581-de5e-40fb-a3c7-a330a23bfdaf"></script>
+    <!-- GoatCounter Analytics -->
+    <script data-goatcounter="https://pcdemo.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,7 +39,7 @@
         var contentExplorer = new Box.ContentExplorer();
         const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
         var client;
-        var accessToken=sessionStorage.getItem("token");
+        var accessToken = null; // Will be set by TokenManager
         var selectedFolder=null;
         var eid;
         let metadataTemplates;
@@ -64,15 +65,32 @@
         
         });
       
+            // Wait for token validation to complete
+            $(document).on('tokenValidated', async function(event, token) {
+                console.log("Token validated, initializing Box client...");
+                accessToken = token;
+                
+                try {
+                    //Create a Box client using the validated token
+                    client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
+                    });
+                   eid = getEid(client); 
+                   
+                   // Initialize the rest of the page
+                   await initializePage();
+                } catch (error) {
+                    console.error("Error creating Box client:", error);
+                }
+            });
+            
+            $(document).on('tokenValidationFailed', function() {
+                console.log("Token validation failed, page will show login message");
+                // TokenManager will handle showing the login message
+            });
+        });
+        
+        async function initializePage() {
             try {
-                //Create a Box client using the token
-                client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
-                });
-               eid = getEid(client); 
-            }
-            catch (e) {
-                console.error(e);
-            }
             
             metadataTemplates = await getEnterpriseMetadataTemplates(accessToken);// client.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
@@ -1039,7 +1057,8 @@
     <!-- Connection Status HTML -->
     <div id="connectionStatusContainer"></div>
     
-    <!-- Connection Status JavaScript -->
+    <!-- Token Manager and Connection Status JavaScript -->
+    <script src="token-manager.js"></script>
     <script src="connection-status.js"></script>
     <script>
         // Load connection status HTML

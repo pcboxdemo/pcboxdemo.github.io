@@ -30,7 +30,6 @@ option,input,select,.form-label {
 }
 .button-section {
     display: flex;
-    flex-direction: column;
     align-items: center;
     gap: 25px;
     margin-bottom: 30px;
@@ -527,5 +526,12 @@ option {
 
 .metadata-fields-content.show {
     display: block !important;
+}
+
+/* Selected folder and template text styling */
+#sec2, #selectedTemplates {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
 }
 
