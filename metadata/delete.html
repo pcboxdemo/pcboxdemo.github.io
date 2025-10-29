@@ -87,13 +87,13 @@ console.log(accessToken); // Confirm it exists immediately
                 //Create a Box client using the token
                 client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
                 });
-               eid = getEid(client); 
+               await getEid(); 
             }
             catch (e) {
                 console.error(e);
             }
         
-            let metadataTemplates = await getEnterpriseMetadataTemplates(accessToken);//client.metadataTemplates.getEnterpriseMetadataTemplates();
+            let metadataTemplates = await getEnterpriseMetadataTemplates(accessToken, eid);//client.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
                 if(temp.hidden==false && temp.templateKey!=='securityClassification-6VMVochwUWo') {
                     $('#allTemplates').append($('<option>', {

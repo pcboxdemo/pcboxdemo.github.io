@@ -312,13 +312,13 @@
                 //Create a Box client using the token
                 client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
                 });
-               eid = getEid(client); 
+               await getEid(); 
             }
             catch (e) {
                 console.error(e);
                 
             }
-            metadataTemplates = await getEnterpriseMetadataTemplates(accessToken);//.metadataTemplates.getEnterpriseMetadataTemplates();
+            metadataTemplates = await getEnterpriseMetadataTemplates(accessToken, eid);//.metadataTemplates.getEnterpriseMetadataTemplates();
             // Sort templates alphabetically by displayName
             metadataTemplates.entries.sort((a, b) => a.displayName.localeCompare(b.displayName));
             metadataTemplates.entries.forEach(function(temp) {
@@ -546,7 +546,7 @@
             }); 
            
         
-            metadataTemplates = await getEnterpriseMetadataTemplates(accessToken);//.metadataTemplates.getEnterpriseMetadataTemplates();
+            metadataTemplates = await getEnterpriseMetadataTemplates(accessToken, eid);//.metadataTemplates.getEnterpriseMetadataTemplates();
             loadDocGenTemplates();
             function loadExplorer() {
                 $("#files").show();

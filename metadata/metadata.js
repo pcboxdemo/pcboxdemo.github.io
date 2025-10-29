@@ -182,8 +182,7 @@ function generateFieldList(template, containerId) {
 }
 
 
-async function getEnterpriseMetadataTemplates(accessToken) {
-    await getEid();
+async function getEnterpriseMetadataTemplates(accessToken, eid) {
     return new Promise((resolve, reject) => {
         $.ajax({
             url: 'https://api.box.com/2.0/metadata_templates/enterprise_' + eid,

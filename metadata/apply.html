@@ -74,7 +74,7 @@
                     //Create a Box client using the validated token
                     client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken }),
                     });
-                   eid = getEid(client); 
+                    await getEid(); 
                    
                    // Initialize the rest of the page
                    await initializePage();
@@ -92,7 +92,7 @@
         async function initializePage() {
             try {
             
-            metadataTemplates = await getEnterpriseMetadataTemplates(accessToken);// client.metadataTemplates.getEnterpriseMetadataTemplates();
+            metadataTemplates = await getEnterpriseMetadataTemplates(accessToken, eid);// client.metadataTemplates.getEnterpriseMetadataTemplates();
             metadataTemplates.entries.forEach(function(temp) {
                 if(temp.hidden==false) {
                     $('#allTemplates').append($('<option>', {
@@ -196,7 +196,10 @@
             // Ensure Standard Extract is selected by default
             $('#standardExtract').prop('checked', true);
           
-        });
+        } catch (error) {
+            console.error("Error initializing page:", error);
+        }
+        }
         async function populateCounts(folderId) {
             let fields = 'id,name,type';
             
