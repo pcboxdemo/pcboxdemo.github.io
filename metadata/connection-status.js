@@ -20,10 +20,12 @@ function updateConnectionStatus() {
     
     // Use TokenManager to get current status
     let tokenStatus = null;
+    let useTokenManager = false;
     
     if (window.TokenManager && typeof window.TokenManager.getTokenValidationStatus === 'function') {
         tokenStatus = window.TokenManager.getTokenValidationStatus();
         console.log("🔍 Connection Status Check (TokenManager):", tokenStatus);
+        useTokenManager = true;
     } else {
         console.log("⚠️ TokenManager not available yet, using fallback logic");
     }
@@ -32,7 +34,7 @@ function updateConnectionStatus() {
     let statusText = 'Not Connected';
     let statusClass = 'status-none';
 
-    if (tokenStatus) {
+    if (useTokenManager && tokenStatus) {
         switch (tokenStatus.status) {
             case 'valid':
                 statusIcon = '🟢';
@@ -51,9 +53,17 @@ function updateConnectionStatus() {
                 break;
             case 'invalid':
             default:
-                statusIcon = '🔴';
-                statusText = 'Not Connected';
-                statusClass = 'status-none';
+                // Even if TokenManager says invalid, check sessionStorage as fallback
+                const fallbackToken = sessionStorage.getItem("token");
+                if (fallbackToken && fallbackToken !== 'null') {
+                    statusIcon = '🟡';
+                    statusText = 'Validating Token...';
+                    statusClass = 'status-connected';
+                } else {
+                    statusIcon = '🔴';
+                    statusText = 'Not Connected';
+                    statusClass = 'status-none';
+                }
                 break;
         }
     } else {
@@ -152,7 +162,20 @@ function updateConnectionStatus() {
 
     // Update detailed info (if modal exists)
     if ($('#sessionToken').length) {
-        const currentToken = window.TokenManager ? window.TokenManager.getCurrentValidToken() : sessionStorage.getItem("token");
+        // Get token from TokenManager if available, otherwise fall back to sessionStorage
+        let currentToken = null;
+        if (window.TokenManager && typeof window.TokenManager.getCurrentValidToken === 'function') {
+            currentToken = window.TokenManager.getCurrentValidToken();
+        }
+        // Fallback to sessionStorage if TokenManager doesn't have a token yet
+        if (!currentToken) {
+            currentToken = sessionStorage.getItem("token");
+        }
+        // Clean up null/undefined values
+        if (currentToken === 'null' || currentToken === null || currentToken === undefined) {
+            currentToken = null;
+        }
+        
         const refreshToken = sessionStorage.getItem("refreshToken");
         const tokenHash = localStorage.getItem("tokenHash");
         const userEmail = localStorage.getItem("userEmail");
