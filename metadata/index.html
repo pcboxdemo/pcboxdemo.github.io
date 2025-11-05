@@ -61,7 +61,7 @@
           }
 
         .logo-row {
-            margin-top: 80px;
+            margin-top: 150px;
         }
 
         /* Connection status styles are now in connection-status.css */
@@ -71,9 +71,6 @@
         $(document).ready(function() {
             // Clean up old token format
             cleanupOldTokens();
-            
-            // Check connection status on page load
-            updateConnectionStatus();
             
             $(".container").hide();
             var params = new URLSearchParams(window.location.search);

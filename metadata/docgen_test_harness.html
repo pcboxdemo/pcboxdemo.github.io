@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- GoatCounter Analytics -->
+    <script data-goatcounter="https://pcdemo.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Randomness Test Harness</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS --> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+    <!-- jQuery CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.js"></script>
+    
+    <!-- JSONEditor CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsoneditor/dist/jsoneditor.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsoneditor/dist/jsoneditor.min.js"></script>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script src="./lib/bundle.js"></script>
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.css"/>
+    <script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/explorer.js"></script>
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/picker.css"/>
+    <script src="https://cdn01.boxcdn.net/platform/elements/22.0.0/en-US/picker.js"></script>
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/preview.css"/>
+    <script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/preview.js"></script>
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.css"/>
+    <script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/explorer.js"></script>
+    
+    <script src="metadata.js"></script>
+    <script src="docgen.js"></script>
+    <script src="docgen_test_harness.js"></script>
+    <link rel="stylesheet" href="import.css"/>
+    <link rel="stylesheet" href="connection-status.css"/>
+    <link rel="stylesheet" href="docgen_test_harness.css"/>
+
+    <style>
+        .parameter-slider {
+            margin: 10px 0;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .slider-value {
+            min-width: 60px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .diversity-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .diversity-excellent { background-color: #28a745; }
+        .diversity-good { background-color: #ffc107; }
+        .diversity-poor { background-color: #dc3545; }
+        .results-table {
+            margin-top: 20px;
+        }
+        .test-controls {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .metrics-panel {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .preset-buttons {
+            margin: 10px 0;
+        }
+        .preset-buttons .btn {
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+    </style>
+
+    <script>
+        const { BoxClient, BoxDeveloperTokenAuth } = window['box-typescript-sdk-gen'];
+        var client, eid;
+        var accessToken = sessionStorage.getItem("token");
+        var testResults = [];
+        var currentTestId = 0;
+
+        $(document).ready(async function() {
+            try {
+                // Create a Box client using the token
+                client = new BoxClient({auth: new BoxDeveloperTokenAuth({token: accessToken})});
+                eid = getEid(client); 
+            } catch (e) {
+                console.error(e);
+            }
+
+            // Load docgen templates
+            console.log('About to load docgen templates...');
+            if (typeof loadDocGenTemplates === 'function') {
+                await loadDocGenTemplates();
+                console.log('Docgen templates loaded successfully');
+            } else {
+                console.error('loadDocGenTemplates function not found');
+                $('#templateSelect').append('<option value="">Function not found - check console</option>');
+            }
+            
+            // Initialize parameter controls
+            initializeParameterControls();
+            
+            // Set up event handlers
+            setupEventHandlers();
+        });
+
+        function initializeParameterControls() {
+            // Initialize sliders with default values
+            updateSliderValue('temperature', 1.0);
+            updateSliderValue('frequencyPenalty', 0.5);
+            updateSliderValue('presencePenalty', 0.5);
+            updateSliderValue('topP', 0.95);
+        }
+
+        function setupEventHandlers() {
+            // Slider change handlers
+            $('#temperature').on('input', function() {
+                updateSliderValue('temperature', $(this).val());
+            });
+            $('#frequencyPenalty').on('input', function() {
+                updateSliderValue('frequencyPenalty', $(this).val());
+            });
+            $('#presencePenalty').on('input', function() {
+                updateSliderValue('presencePenalty', $(this).val());
+            });
+            $('#topP').on('input', function() {
+                updateSliderValue('topP', $(this).val());
+            });
+
+            // Preset button handlers
+            $('.preset-btn').on('click', function() {
+                const preset = $(this).data('preset');
+                applyPreset(preset);
+            });
+
+            // Reset to defaults
+            $('#resetDefaults').on('click', function() {
+                applyPreset('balanced');
+            });
+
+            // Run test button
+            $('#runTest').on('click', function() {
+                runRandomnessTest();
+            });
+
+            // Export results
+            $('#exportResults').on('click', function() {
+                exportResults();
+            });
+        }
+
+        function updateSliderValue(sliderId, value) {
+            $(`#${sliderId}`).val(value);
+            $(`#${sliderId}Value`).text(parseFloat(value).toFixed(2));
+        }
+
+        function applyPreset(preset) {
+            const presets = {
+                'conservative': { temperature: 0.7, frequencyPenalty: 0.3, presencePenalty: 0.3, topP: 0.9 },
+                'balanced': { temperature: 1.0, frequencyPenalty: 0.5, presencePenalty: 0.5, topP: 0.95 },
+                'aggressive': { temperature: 1.5, frequencyPenalty: 1.2, presencePenalty: 1.2, topP: 0.98 },
+                'maximum': { temperature: 2.0, frequencyPenalty: 1.8, presencePenalty: 1.8, topP: 1.0 }
+            };
+
+            const settings = presets[preset];
+            if (settings) {
+                updateSliderValue('temperature', settings.temperature);
+                updateSliderValue('frequencyPenalty', settings.frequencyPenalty);
+                updateSliderValue('presencePenalty', settings.presencePenalty);
+                updateSliderValue('topP', settings.topP);
+            }
+        }
+
+        async function runRandomnessTest() {
+            const selectedTemplate = $('#templateSelect').val();
+            const iterations = parseInt($('#iterations').val());
+            const useDialogueHistory = $('#useDialogueHistory').is(':checked');
+            
+            console.log('Test configuration:', {
+                selectedTemplate,
+                iterations,
+                useDialogueHistory,
+                generateNewPrompt: $('#generateNewPrompt').is(':checked')
+            });
+
+            if (!selectedTemplate) {
+                alert('Please select a docgen template');
+                return;
+            }
+
+            if (iterations < 1 || iterations > 300) {
+                alert('Please enter a number of iterations between 1 and 300');
+                return;
+            }
+
+            // Get current parameters
+            const aiParams = {
+                temperature: parseFloat($('#temperature').val()),
+                frequency_penalty: parseFloat($('#frequencyPenalty').val()),
+                presence_penalty: parseFloat($('#presencePenalty').val()),
+                top_p: parseFloat($('#topP').val())
+            };
+
+            // Clear previous results
+            $('#resultsTable tbody').empty();
+            $('#diversityMetrics').empty();
+            $('#resultsSection').hide();
+            $('#exportResults').hide();
+            $('#testStatus').hide();
+
+            // Show loading state
+            $('#runTest').prop('disabled', true).text('Running Test...');
+            $('#testProgress').show();
+            $('#testProgress .progress-bar').css('width', '0%');
+
+            try {
+                // Load template tags
+                const tags = await fetchTemplateTags(selectedTemplate, accessToken);
+                const tagsJson = convertArrayToNestedJsonWithArrays(tags);
+                const generateNewPrompt = $('#generateNewPrompt').is(':checked');
+                const baseFieldHints = generateNewPrompt ? null : generateFieldHints(tagsJson);
+                const basePrompt = generateNewPrompt ? null : getPrompt('Test Document');
+
+                // Run test iterations
+                const testProcessor = new AITestProcessor(client, accessToken);
+                const results = await testProcessor.runTest({
+                    templateId: selectedTemplate,
+                    iterations: iterations,
+                    prompt: basePrompt,
+                    fieldHints: baseFieldHints,
+                    tagsJson: tagsJson,
+                    aiParams: aiParams,
+                    useDialogueHistory: useDialogueHistory,
+                    generateNewPrompt: generateNewPrompt
+                });
+
+                // Store results
+                testResults = results;
+                currentTestId++;
+
+                // Display results
+                displayResults(results);
+
+                // Show success message
+                $('#testStatus').removeClass('alert-danger').addClass('alert-success')
+                    .text(`Test completed successfully! Generated ${results.length} datasets.`).show();
+
+            } catch (error) {
+                console.error('Test failed:', error);
+                $('#testStatus').removeClass('alert-success').addClass('alert-danger')
+                    .text(`Test failed: ${error.message}`).show();
+            } finally {
+                $('#runTest').prop('disabled', false).text('Run Test');
+                $('#testProgress').hide();
+            }
+        }
+
+        function displayResults(results) {
+            // Clear previous results
+            $('#resultsTable tbody').empty();
+            $('#diversityMetrics').empty();
+
+            if (results.length === 0) {
+                $('#resultsTable tbody').append('<tr><td colspan="6" class="text-center">No results to display</td></tr>');
+                return;
+            }
+
+            // Calculate diversity metrics
+            const diversityMetrics = analyzeDiversityMetrics(results);
+
+            // Display results table
+            results.forEach((result, index) => {
+                const diversityScore = calculateOverallDiversity(result, results);
+                const diversityClass = getDiversityClass(diversityScore);
+                const generatedValues = generateReadableValues(result.data);
+
+                const row = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>T:${result.aiParams.temperature} F:${result.aiParams.frequency_penalty} P:${result.aiParams.presence_penalty}</td>
+                        <td><div class="generated-values">${generatedValues}</div></td>
+                        <td><span class="diversity-indicator ${diversityClass}"></span>${diversityScore.toFixed(1)}%</td>
+                        <td>${result.timestamp}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewResult(${index})">View</button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="compareResult(${index})">Compare</button>
+                        </td>
+                    </tr>
+                `;
+                $('#resultsTable tbody').append(row);
+            });
+
+            // Display diversity metrics
+            displayDiversityMetrics(diversityMetrics);
+
+            // Show the results section
+            $('#resultsSection').show();
+
+            // Initialize DataTable - always destroy and recreate to ensure clean state
+            if ($.fn.DataTable.isDataTable('#resultsTable')) {
+                $('#resultsTable').DataTable().destroy();
+            }
+            
+            $('#resultsTable').DataTable({
+                pageLength: 10,
+                order: [[3, 'desc']], // Sort by diversity score descending
+                columnDefs: [
+                    { orderable: false, targets: [5] } // Disable sorting on Actions column
+                ]
+            });
+        }
+
+        function generateFieldsPreview(data) {
+            const fields = [];
+            const flattened = flattenObject(data);
+            let count = 0;
+            
+            for (const [key, value] of Object.entries(flattened)) {
+                if (count >= 3) break;
+                fields.push(`${key}: ${String(value).substring(0, 20)}${String(value).length > 20 ? '...' : ''}`);
+                count++;
+            }
+            
+            return fields.join(', ');
+        }
+
+        function getDiversityClass(score) {
+            if (score >= 80) return 'diversity-excellent';
+            if (score >= 60) return 'diversity-good';
+            return 'diversity-poor';
+        }
+
+        function displayDiversityMetrics(metrics) {
+            const metricsHtml = `
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h6>Overall Diversity</h6>
+                            <div class="metric-value ${getDiversityClass(metrics.overallDiversity)}">
+                                ${metrics.overallDiversity.toFixed(1)}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h6>Unique Combinations</h6>
+                            <div class="metric-value">${metrics.uniqueCombinations}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h6>Problem Fields</h6>
+                            <div class="metric-value ${metrics.problemFields.length > 0 ? 'text-danger' : 'text-success'}">
+                                ${metrics.problemFields.length}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h6>Average Field Diversity</h6>
+                            <div class="metric-value">${metrics.averageFieldDiversity.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                </div>
+                ${metrics.problemFields.length > 0 ? `
+                    <div class="mt-3">
+                        <h6>Fields Needing Attention:</h6>
+                        <ul class="list-group">
+                            ${metrics.problemFields.map(field => `
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    ${field.path}
+                                    <span class="badge bg-danger">${field.diversity.toFixed(1)}%</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+            `;
+            
+            $('#diversityMetrics').html(metricsHtml);
+        }
+
+        function viewResult(index) {
+            const result = testResults[index];
+            const modal = $('#resultModal');
+            
+            $('#resultModalTitle').text(`Result ${index + 1} - ${result.timestamp}`);
+            $('#resultModalBody').JSONView(result.data, { collapsed: false });
+            
+            modal.modal('show');
+        }
+
+        function compareResult(index) {
+            if (index === 0) {
+                alert('Cannot compare first result with previous');
+                return;
+            }
+            
+            const currentResult = testResults[index];
+            const previousResult = testResults[index - 1];
+            
+            const modal = $('#compareModal');
+            $('#compareModalTitle').text(`Comparing Results ${index} and ${index + 1}`);
+            $('#compareResult1').JSONView(previousResult.data, { collapsed: false });
+            $('#compareResult2').JSONView(currentResult.data, { collapsed: false });
+            
+            modal.modal('show');
+        }
+
+        function exportResults() {
+            if (testResults.length === 0) {
+                alert('No results to export');
+                return;
+            }
+
+            const exportData = {
+                testId: currentTestId,
+                timestamp: new Date().toISOString(),
+                parameters: {
+                    temperature: $('#temperature').val(),
+                    frequencyPenalty: $('#frequencyPenalty').val(),
+                    presencePenalty: $('#presencePenalty').val(),
+                    topP: $('#topP').val(),
+                    iterations: $('#iterations').val(),
+                    useDialogueHistory: $('#useDialogueHistory').is(':checked')
+                },
+                results: testResults,
+                diversityMetrics: analyzeDiversityMetrics(testResults)
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `randomness_test_${currentTestId}_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+    </script>
+</head>
+<body>  
+    <header class="header">
+        <!-- Left side links -->
+        <div class="left">
+            <a href="index.html">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+            <a href="index_oauth.html">
+                <i class="bi bi-box-arrow-in-right"></i> Login
+            </a>
+        </div>
+
+        <!-- Center links -->
+        <div class="center">
+            <a href="export.html"><i class="bi bi-arrow-up-circle"></i> Export</a>
+            <a href="import.html"><i class="bi bi-arrow-down-circle"></i> Import</a>
+            <a href="apply.html"><i class="bi bi-check-circle"></i> Apply</a>
+            <a href="delete.html" class="text-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Delete Template</a>
+            <a href="docgen.html"><i class="bi bi-tools"></i> Generate documents</a>
+            <a href="docgen_test_harness.html" class="active"><i class="bi bi-speedometer2"></i> Test Randomness</a>
+            <a href="taxonomies.html"><i class="bi bi-share"></i>Taxonomies</a>
+            <a href="agents.html"><i class="bi bi-robot"></i>AI Agents</a>
+        </div>
+
+        <!-- Right side -->
+        <div class="right">
+        </div>
+    </header>
+
+    <div class="container mt-5">
+        <!-- Header -->
+        <header class="text-center mb-4">
+            <h3>AI Randomness Test Harness</h3>
+            <p class="text-muted">Test and optimize Box AI parameters for maximum data diversity</p>
+        </header>
+
+        <!-- Test Controls -->
+        <div class="test-controls">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Test Configuration</h5>
+                    <div class="mb-3">
+                        <label for="templateSelect" class="form-label">DocGen Template:</label>
+
+                        <select id="templateSelect" class="form-select flex-grow-1 templates" size="5" style="height:200px;">
+                            <option value="">Select a template...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="iterations" class="form-label">Number of Iterations (10-30):</label>
+                        <input type="number" id="iterations" class="form-control" value="15" min="1" max="30">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="useDialogueHistory">
+                        <label class="form-check-label" for="useDialogueHistory">
+                            Use Dialogue History (may reduce randomness)
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="generateNewPrompt" checked>
+                        <label class="form-check-label" for="generateNewPrompt">
+                            Generate new prompt for each iteration (increases diversity)
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h5>AI Parameters</h5>
+                    
+                    <div class="parameter-slider">
+                        <label for="temperature" class="form-label">Temperature: <span id="temperatureValue">1.00</span></label>
+                        <div class="slider-container">
+                            <span>0.0</span>
+                            <input type="range" id="temperature" class="form-range" min="0" max="2" step="0.1" value="1.0">
+                            <span>2.0</span>
+                        </div>
+                    </div>
+
+                    <div class="parameter-slider">
+                        <label for="frequencyPenalty" class="form-label">Frequency Penalty: <span id="frequencyPenaltyValue">0.50</span></label>
+                        <div class="slider-container">
+                            <span>0.0</span>
+                            <input type="range" id="frequencyPenalty" class="form-range" min="0" max="2" step="0.1" value="0.5">
+                            <span>2.0</span>
+                        </div>
+                    </div>
+
+                    <div class="parameter-slider">
+                        <label for="presencePenalty" class="form-label">Presence Penalty: <span id="presencePenaltyValue">0.50</span></label>
+                        <div class="slider-container">
+                            <span>0.0</span>
+                            <input type="range" id="presencePenalty" class="form-range" min="0" max="2" step="0.1" value="0.5">
+                            <span>2.0</span>
+                        </div>
+                    </div>
+
+                    <div class="parameter-slider">
+                        <label for="topP" class="form-label">Top P: <span id="topPValue">0.95</span></label>
+                        <div class="slider-container">
+                            <span>0.0</span>
+                            <input type="range" id="topP" class="form-range" min="0" max="1" step="0.05" value="0.95">
+                            <span>1.0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <h6>Parameter Presets:</h6>
+                    <div class="preset-buttons">
+                        <button class="btn btn-sm btn-outline-secondary preset-btn" data-preset="conservative">Conservative</button>
+                        <button class="btn btn-sm btn-outline-primary preset-btn" data-preset="balanced">Balanced</button>
+                        <button class="btn btn-sm btn-outline-warning preset-btn" data-preset="aggressive">Aggressive</button>
+                        <button class="btn btn-sm btn-outline-danger preset-btn" data-preset="maximum">Maximum Chaos</button>
+                        <button class="btn btn-sm btn-outline-info" id="resetDefaults">Reset to Defaults</button>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-primary btn-lg" id="runTest">
+                        <i class="bi bi-play-circle"></i> Run Test
+                    </button>
+                    <button class="btn btn-success" id="exportResults" style="display: none;">
+                        <i class="bi bi-download"></i> Export Results
+                    </button>
+                </div>
+            </div>
+
+            <div id="testProgress" class="mt-3" style="display: none;">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="testStatus" class="alert mt-3" style="display: none;"></div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="results-table" id="resultsSection" style="display: none;">
+            <h5>Test Results</h5>
+            <table id="resultsTable" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Parameters</th>
+                        <th>Generated Values</th>
+                        <th>Diversity Score</th>
+                        <th>Timestamp</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Diversity Metrics -->
+        <div class="metrics-panel" id="diversityMetrics">
+        </div>
+    </div>
+
+    <!-- Result View Modal -->
+    <div class="modal fade" id="resultModal" tabindex="-1" style="display:none;">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resultModalTitle">Result Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="resultModalBody"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compare Modal -->
+    <div class="modal fade" id="compareModal" tabindex="-1" style="display:none;">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="compareModalTitle">Compare Results</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Previous Result</h6>
+                            <div id="compareResult1"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Current Result</h6>
+                            <div id="compareResult2"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Connection Status -->
+    <div id="connectionStatusContainer"></div>
+    <script src="connection-status.js"></script>
+    <script>
+        // Load connection status HTML
+        $(document).ready(function() {
+            $('#connectionStatusContainer').load('connection-status.html', function() {
+                console.log("Connection status HTML loaded, updating status...");
+                if (typeof updateConnectionStatus === 'function') {
+                    setTimeout(updateConnectionStatus, 100);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
