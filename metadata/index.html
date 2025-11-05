@@ -21,11 +21,21 @@
                 justify-content: space-between;
             }
         
-            .col-md-2 {
+            .row > div {
+                flex: 1;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 height: 150px; /* Adjust height as needed */
+                margin: 0 5px; /* Small gap between boxes */
+            }
+        
+            .row > div:first-child {
+                margin-left: 0;
+            }
+        
+            .row > div:last-child {
+                margin-right: 0;
             }
         
             .box {
@@ -49,6 +59,10 @@
         a {
             text-decoration: none;
           }
+
+        .logo-row {
+            margin-top: 80px;
+        }
 
         /* Connection status styles are now in connection-status.css */
     </style>
@@ -130,38 +144,43 @@
     <div class="container text-center mt-5">
         <h1 class="mb-4">I want to...</h1>
         <div class="row">
-            <div class="col-md-2">
+            <div>
                 <a href="export.html" class="box d-block">
                     Export a folder structure with metadata
                 </a>
             </div>
-            <div class="col-md-2">
+            <div>
                 <a href="import.html" class="box d-block">
                     Import a folder structure with metadata
                 </a>
             </div>
-            <div class="col-md-2">
+            <div>
                 <a href="apply.html" class="box d-block">
                     Use API and AI to apply metadata to a large data set
                 </a>
             </div>
-            <div class="col-md-2">
+            <div>
                 <a href="delete.html" class="box d-block">
                     Delete a metadata template
                 </a>
             </div>
-            <div class="col-md-2">
+            <div>
                 <a href="docgen.html" class="box d-block">
                     Use DocGen and AI to generate documents
                 </a>
             </div>
-            <div class="col-md-2">
+            <div>
                 <a href="agents.html" class="box d-block">
                     Use the AI Agent Sharing Hub
                 </a>
             </div>
+            <div>
+                <a href="taxonomies.html" class="box d-block">
+                    Create, edit and share taxonomies
+                </a>
+            </div>
         </div>
-        <div class="row">
+        <div class="row logo-row">
             <div class="col-md-12 align-center">
                 <img src="pppanic.png" alt="Panic! at the Box" class="logo" width="500"  />
             </div>

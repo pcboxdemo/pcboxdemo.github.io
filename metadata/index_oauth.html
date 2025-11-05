@@ -14,9 +14,13 @@
   <script>
     var params = new URLSearchParams(window.location.search);
     var agentId = params.get('agentId');
+    var taxonomyId = params.get('taxonomyId');
     let state='';
     if(agentId != null) {
         localStorage.setItem("agentId", agentId);
+    }
+    if(taxonomyId != null) {
+        localStorage.setItem("taxonomyId", taxonomyId);
     }
     
     $(document).ready(function () {
@@ -165,16 +169,13 @@
     
     function redirectToMainApp() {
         const agentId = localStorage.getItem("agentId");
-        const targetUrl = agentId ? "/metadata/agents.html" : "/metadata/index.html";
+        const taxonomyId = localStorage.getItem("taxonomyId");
         
-        console.log("🚀 OAuth Debug: Redirecting to main app:", {
-            hasAgentId: !!agentId,
-            agentId: agentId,
-            targetUrl: targetUrl
-        });
-        
-        if(agentId) {
+        // Prioritize agentId (matches behavior in index.html)
+        if (agentId) {
             window.location.href = "/metadata/agents.html";
+        } else if (taxonomyId) {
+            window.location.href = "/metadata/taxonomies.html?taxonomyId=" + taxonomyId;
         } else {
             window.location.href = "/metadata/index.html";
         }

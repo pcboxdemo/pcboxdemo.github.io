@@ -573,7 +573,50 @@
                         }
                     },
                     { targets: 4, visible: false }
-                ]
+                ],
+                initComplete: function () {
+                    // Initialize tooltips
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+                    
+                    // Check for taxonomyId in localStorage (from index_oauth.html) or URL query string
+                    const params = new URLSearchParams(window.location.search);
+                    let presetTaxonomyId = localStorage.getItem("taxonomyId");
+                    
+                    // If not in localStorage, check URL query string
+                    if (!presetTaxonomyId) {
+                        presetTaxonomyId = params.get("taxonomyId");
+                    }
+                    
+                    if (!presetTaxonomyId) return;
+                    
+                    // Remove from localStorage and clean up URL
+                    localStorage.removeItem("taxonomyId");
+                    if (params.has("taxonomyId")) {
+                        params.delete("taxonomyId");
+                        const newUrl = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
+                        window.history.replaceState({}, "", newUrl);
+                    }
+                    
+                    const table = this.api();
+                    const rowIndex = table.rows().eq(0).filter(function (idx) {
+                        return table.cell(idx, 4).data() === presetTaxonomyId;
+                    });
+            
+                    if (rowIndex.length) {
+                        const rowNode = table.row(rowIndex).node();
+                        $(rowNode).addClass('selected');
+            
+                        // Jump to page
+                        const rowPosition = table.row(rowIndex).index();
+                        const pageIndex = Math.floor(rowPosition / table.page.len());
+                        table.page(pageIndex).draw(false);
+            
+                        // Show details
+                        selectedId = presetTaxonomyId;
+                        loadDetails(presetTaxonomyId);
+                    }
+                }
             });
 
             // Apply the search for each column
