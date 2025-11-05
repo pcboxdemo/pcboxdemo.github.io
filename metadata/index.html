@@ -103,8 +103,23 @@
                  localStorage.setItem("lastAuthTime", Date.now());
                }
                
-               // Update connection status after successful login
-               updateConnectionStatus();
+               // Re-initialize token validation with new tokens (force reset to re-validate)
+               if (window.TokenManager && typeof window.TokenManager.initializeTokenValidation === 'function') {
+                 window.TokenManager.initializeTokenValidation(true).then((token) => {
+                   console.log("✅ OAuth tokens stored, token validation complete:", token ? "valid" : "invalid");
+                   // Update connection status after token validation completes
+                   updateConnectionStatus();
+                   // Trigger token validated event
+                   if (token) {
+                     $(document).trigger('tokenValidated', [token]);
+                   } else {
+                     $(document).trigger('tokenValidationFailed');
+                   }
+                 });
+               } else {
+                 // Update connection status after successful login
+                 updateConnectionStatus();
+               }
                
                $("#loader").hide();
                $(".container").show();

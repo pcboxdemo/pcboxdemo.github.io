@@ -14,10 +14,25 @@ const CLIENT_ID = "nsjffk9hhb01flji3cg21qucbe65efoj";
 const BACKEND_URL = "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator";
 
 /**
+ * Reset token validation state (useful after OAuth callback)
+ */
+function resetTokenValidation() {
+    console.log("🔄 Resetting token validation state...");
+    tokenValidationPromise = null;
+    validatedToken = null;
+    tokenValidationStatus = 'pending';
+}
+
+/**
  * Initialize token validation on page load
  * This is the ONLY place where we validate tokens - called once per page
  */
-async function initializeTokenValidation() {
+async function initializeTokenValidation(forceReset = false) {
+    // If force reset is requested (e.g., after OAuth callback), reset state first
+    if (forceReset) {
+        resetTokenValidation();
+    }
+    
     if (tokenValidationPromise) {
         console.log("🔄 Token validation already in progress, waiting...");
         return tokenValidationPromise;
@@ -38,6 +53,9 @@ async function initializeTokenValidation() {
         tokenValidationStatus = 'invalid';
         validatedToken = null;
         return null;
+    } finally {
+        // Reset promise after completion to allow future re-validation
+        tokenValidationPromise = null;
     }
 }
 
@@ -260,6 +278,17 @@ async function makeAuthenticatedRequest(url, options = {}) {
  */
 $(document).ready(function() {
     console.log("📄 Page loaded, initializing token validation...");
+    
+    // Check if we're in the middle of an OAuth callback (code parameter present)
+    const params = new URLSearchParams(window.location.search);
+    const oauthCode = params.get('code');
+    
+    if (oauthCode) {
+        console.log("🔄 OAuth callback detected, deferring token validation until OAuth completes...");
+        // Don't validate yet - wait for OAuth callback to complete
+        // The OAuth callback handler will trigger validation after storing tokens
+        return;
+    }
     
     // Initialize token validation
     initializeTokenValidation().then(token => {
