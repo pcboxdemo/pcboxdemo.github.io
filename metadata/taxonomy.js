@@ -696,3 +696,241 @@ function convertNestedToJsTree(nodes, maxLevel) {
     return item;
   });
 }
+
+// Helper function to parse Box Text Gen response (strip markdown code blocks)
+function parseBoxTextGenResponse(text) {
+  if (!text) return '';
+  
+  // Remove markdown code blocks if present
+  text = text.trim();
+  
+  // Check for ```json or ``` at start/end
+  if (text.startsWith('```')) {
+    const lines = text.split('\n');
+    // Remove first line if it's ```json or ```
+    if (lines[0].match(/^```(json)?$/)) {
+      lines.shift();
+    }
+    // Remove last line if it's ```
+    if (lines.length > 0 && lines[lines.length - 1].trim() === '```') {
+      lines.pop();
+    }
+    text = lines.join('\n');
+  }
+  
+  return text.trim();
+}
+
+// Helper function to get or find a file ID for Box Text Gen API
+async function getFileIdForBoxTextGen() {
+  const token = getAuthToken();
+  
+  try {
+    // First, try to search for any file in the user's account
+    const searchResponse = await fetch('https://api.box.com/2.0/search?type=file&limit=1', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (searchResponse.ok) {
+      const searchData = await searchResponse.json();
+      if (searchData.entries && searchData.entries.length > 0) {
+        console.log('Found file via search:', searchData.entries[0].id);
+        return searchData.entries[0].id;
+      }
+    }
+    
+    // Fallback: Try to get first file from root folder (folder ID "0")
+    // Note: This might require different permissions
+    const folderResponse = await fetch('https://api.box.com/2.0/folders/0/items?limit=100', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (folderResponse.ok) {
+      const folderData = await folderResponse.json();
+      if (folderData.entries && folderData.entries.length > 0) {
+        // Find first file in the entries
+        const file = folderData.entries.find(item => item.type === 'file');
+        if (file) {
+          console.log('Found file in root folder:', file.id);
+          return file.id;
+        }
+      }
+    } else {
+      console.warn('Could not access root folder:', folderResponse.status, await folderResponse.text());
+    }
+    
+    // If no file found, return null
+    console.warn('No file found for Box Text Gen API');
+    return null;
+  } catch (error) {
+    console.error('Error getting file ID for Box Text Gen:', error);
+    return null;
+  }
+}
+
+// Generate taxonomy structure using Box Text Gen AI
+async function generateTaxonomyWithAI(prompt, fileId = null) {
+  const token = getAuthToken();
+  
+  if (!token) {
+    throw new Error('No authentication token found. Please log in first.');
+  }
+  
+  // Get file ID if not provided
+  if (!fileId) {
+    fileId = await getFileIdForBoxTextGen();
+    if (!fileId) {
+      throw new Error('Box Text Gen requires a file. Please ensure you have at least one file in your Box account that is accessible. The API needs a file ID to process the request.');
+    }
+  }
+  
+  console.log('Using file ID for Box Text Gen:', fileId);
+  
+  // Construct the AI prompt with taxonomy structure requirements
+  const aiPrompt = `You are a taxonomy expert. Generate a hierarchical taxonomy structure based on the following request: "${prompt}"
+
+IMPORTANT: You must respond with ONLY valid JSON, no markdown code blocks, no explanations.
+
+Auto-detect the number of levels and level names from the prompt. If the prompt is unclear, suggest appropriate levels.
+
+Extract or generate:
+1. A taxonomy key (lowercase, underscores, no spaces, max 50 chars) - e.g., "vw_car_models"
+2. A taxonomy display name (human-readable) - e.g., "VW Car Makes and Models"
+
+Return a JSON object with this exact structure:
+{
+  "key": "vw_car_models",
+  "displayName": "VW Car Makes and Models",
+  "levels": [
+    {"displayName": "Level 1 Name", "description": "Description of level 1"},
+    {"displayName": "Level 2 Name", "description": "Description of level 2"}
+  ],
+  "nodes": [
+    {
+      "displayName": "Root Node 1",
+      "level": 1,
+      "children": [
+        {"displayName": "Child Node 1", "level": 2},
+        {"displayName": "Child Node 2", "level": 2}
+      ]
+    }
+  ]
+}
+
+If you cannot auto-detect levels clearly, include a "suggested" field set to true and provide suggested levels:
+{
+  "suggested": true,
+  "key": "...",
+  "displayName": "...",
+  "levels": [...],
+  "nodes": [...]
+}
+
+Generate 5-10 example nodes per level to demonstrate the taxonomy structure. Make sure the hierarchy is correct (children belong to their parent nodes).`;
+
+  try {
+    const response = await fetch('https://api.box.com/2.0/ai/text_gen', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: aiPrompt,
+        items: [{ id: fileId, type: 'file' }],
+        ai_agent: {
+          type: 'ai_agent_text_gen',
+          basic_gen: {
+            model: 'google__gemini_2_5_pro'
+          }
+        }
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Box Text Gen API error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        fileId: fileId,
+        error: errorText
+      });
+      throw new Error(`Box Text Gen API error (${response.status}): ${errorText}. File ID used: ${fileId}`);
+    }
+    
+    const data = await response.json();
+    const rawAnswer = data.answer || '';
+    
+    if (!rawAnswer) {
+      throw new Error('Box Text Gen returned empty response');
+    }
+    
+    // Parse the response
+    const cleanedText = parseBoxTextGenResponse(rawAnswer);
+    const parsed = JSON.parse(cleanedText);
+    
+    // Validate structure
+    if (!parsed.levels || !Array.isArray(parsed.levels)) {
+      throw new Error('Invalid response: missing or invalid levels array');
+    }
+    
+    if (!parsed.nodes || !Array.isArray(parsed.nodes)) {
+      throw new Error('Invalid response: missing or invalid nodes array');
+    }
+    
+    // Generate key and displayName if not provided
+    if (!parsed.key) {
+      // Generate key from prompt or displayName
+      const source = parsed.displayName || prompt;
+      parsed.key = source.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .substring(0, 50);
+    }
+    
+    if (!parsed.displayName) {
+      // Generate displayName from prompt
+      parsed.displayName = prompt.trim() || 'AI Generated Taxonomy';
+    }
+    
+    // Validate levels structure
+    parsed.levels.forEach((level, index) => {
+      if (!level.displayName) {
+        throw new Error(`Invalid level at index ${index}: missing displayName`);
+      }
+    });
+    
+    // Validate nodes structure
+    function validateNode(node, level = 1) {
+      if (!node.displayName) {
+        throw new Error('Invalid node: missing displayName');
+      }
+      if (node.level !== level) {
+        // Auto-correct level if it doesn't match
+        node.level = level;
+      }
+      if (node.children && Array.isArray(node.children)) {
+        node.children.forEach(child => validateNode(child, level + 1));
+      }
+      // Ensure node has an id for jstree (will be assigned in UI if missing)
+      if (!node.id) {
+        // Will be assigned in UI handler
+      }
+    }
+    
+    parsed.nodes.forEach(node => validateNode(node, 1));
+    
+    return parsed;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`Failed to parse AI response as JSON: ${error.message}`);
+    }
+    throw error;
+  }
+}

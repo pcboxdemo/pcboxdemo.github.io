@@ -355,6 +355,26 @@
             
             // Enable "Create New" button - users should be able to create new taxonomies
             $('button[data-bs-target="#taxonomyModal"]').prop('disabled', false);
+            
+            // Reset modal state when it's closed
+            $('#taxonomyModal').on('hidden.bs.modal', function () {
+              // Reset AI state
+              aiGeneratedData = null;
+              $('#aiPreviewSection').hide();
+              $('#approveAIGenerated').hide();
+              $('#regenerateAI').hide();
+              $('#manualLevelSection').show();
+              $('#aiPrompt').val('');
+              $('#aiError').hide();
+              $('#aiLoadingSpinner').addClass('d-none');
+              $('#aiButtonText').text('Let AI create the taxonomy values');
+              $('#aiSuggest').prop('disabled', false);
+              
+              // Destroy preview tree if it exists
+              if ($.jstree.reference('#aiPreviewTree')) {
+                $('#aiPreviewTree').jstree('destroy').empty();
+              }
+            });
                 
             $('#saveButton').on('click', async function () {
               $("#loader").show();
@@ -457,6 +477,7 @@
             });
             
             let createdTaxonomyLevels = [];
+            let aiGeneratedData = null; // Store AI-generated taxonomy data
 
                 $('#levelCount').on('input', function () {
                 const count = parseInt($(this).val());
@@ -471,6 +492,161 @@
                     </div>
                     `);
                 }
+                });
+                
+                // AI Generation Handler
+                $('#aiSuggest').on('click', async function () {
+                  const prompt = $('#aiPrompt').val().trim();
+                  
+                  if (!prompt) {
+                    alert('Please enter a prompt describing the taxonomy you want to generate.');
+                    return;
+                  }
+                  
+                  // Show loading state
+                  $('#aiLoadingSpinner').removeClass('d-none');
+                  $('#aiButtonText').text('Generating...');
+                  $('#aiSuggest').prop('disabled', true);
+                  $('#aiError').hide();
+                  
+                  try {
+                    // Call AI generation
+                    const result = await generateTaxonomyWithAI(prompt);
+                    aiGeneratedData = result;
+                    
+                    // Populate key and displayName fields from AI response
+                    if (result.key) {
+                      $('#taxonomyKey').val(result.key);
+                    }
+                    if (result.displayName) {
+                      $('#taxonomyDisplayName').val(result.displayName);
+                    }
+                    
+                    // Ensure all nodes have IDs for jstree
+                    let nodeIdCounter = 1;
+                    function assignIds(node) {
+                      if (!node.id) {
+                        node.id = `AI_NEW_${nodeIdCounter++}`;
+                      }
+                      if (node.children && Array.isArray(node.children)) {
+                        node.children.forEach(assignIds);
+                      }
+                    }
+                    result.nodes.forEach(assignIds);
+                    
+                    // Convert to jstree format
+                    const maxLevel = Math.max(...result.levels.map((l, i) => i + 1));
+                    const jsTreeNodes = convertNestedToJsTree(result.nodes, maxLevel);
+                    
+                    // Display preview
+                    if ($.jstree.reference('#aiPreviewTree')) {
+                      $('#aiPreviewTree').jstree('destroy').empty();
+                    }
+                    
+                    const treeData = [{
+                      id: 'ai_preview_root',
+                      text: result.displayName || 'AI Generated Taxonomy',
+                      icon: 'jstree-folder',
+                      state: { opened: true },
+                      children: jsTreeNodes
+                    }];
+                    
+                    $('#aiPreviewTree').jstree({
+                      core: {
+                        check_callback: true,
+                        data: treeData
+                      },
+                      plugins: ['contextmenu', 'dnd', 'unique']
+                    });
+                    
+                    // Show preview section
+                    $('#aiPreviewSection').show();
+                    $('#approveAIGenerated').show();
+                    $('#regenerateAI').show();
+                    $('#manualLevelSection').hide();
+                    
+                    // Hide loading state
+                    $('#aiLoadingSpinner').addClass('d-none');
+                    $('#aiButtonText').text('Let AI create the taxonomy values');
+                    $('#aiSuggest').prop('disabled', false);
+                    
+                  } catch (error) {
+                    console.error('AI generation error:', error);
+                    $('#aiError').text('Error: ' + error.message).show();
+                    $('#aiLoadingSpinner').addClass('d-none');
+                    $('#aiButtonText').text('Let AI create the taxonomy values');
+                    $('#aiSuggest').prop('disabled', false);
+                  }
+                });
+                
+                // Regenerate Handler
+                $('#regenerateAI').on('click', function () {
+                  $('#aiSuggest').click();
+                });
+                
+                // Approve AI Generated Taxonomy
+                $('#approveAIGenerated').on('click', function () {
+                  if (!aiGeneratedData) {
+                    alert('No AI-generated data to approve.');
+                    return;
+                  }
+                  
+                  // Set taxonomy levels
+                  taxonomyLevels = aiGeneratedData.levels.map((level, index) => ({
+                    displayName: level.displayName,
+                    description: level.description || level.displayName,
+                    level: index + 1,
+                    type: "metadata_taxonomy_level"
+                  }));
+                  
+                  // Key and displayName should already be populated from AI generation
+                  // But ensure they're set if somehow missing
+                  if (!$('#taxonomyKey').val().trim()) {
+                    $('#taxonomyKey').val(aiGeneratedData.key || 'ai_generated_taxonomy');
+                  }
+                  
+                  if (!$('#taxonomyDisplayName').val().trim()) {
+                    $('#taxonomyDisplayName').val(aiGeneratedData.displayName || 'AI Generated Taxonomy');
+                  }
+                  
+                  // Convert AI node IDs from "AI_NEW_X" to "NEW_X" format for save handler
+                  function convertNodeIds(node) {
+                    if (node.id && node.id.startsWith('AI_NEW_')) {
+                      node.id = node.id.replace('AI_NEW_', 'NEW_');
+                    }
+                    if (node.children && Array.isArray(node.children)) {
+                      node.children.forEach(convertNodeIds);
+                    }
+                  }
+                  aiGeneratedData.nodes.forEach(convertNodeIds);
+                  
+                  // Convert AI nodes to format expected by renderTaxonomyTree
+                  const maxLevel = Math.max(...aiGeneratedData.levels.map((l, i) => i + 1));
+                  const jsTreeNodes = convertNestedToJsTree(aiGeneratedData.nodes, maxLevel);
+                  
+                  // Reset original entries since this is a new taxonomy
+                  originalEntries = [];
+                  
+                  // Render the tree
+                  const displayName = $('#taxonomyDisplayName').val().trim() || 'AI Generated Taxonomy';
+                  renderTaxonomyTree(displayName, jsTreeNodes, taxonomyLevels);
+                  
+                  // Set taxonomyId for save operation
+                  taxonomyId = $('#taxonomyKey').val().trim();
+                  
+                  // Enable save button
+                  $('#saveButton').prop('disabled', false);
+                  
+                  // Close modal
+                  $('#taxonomyModal').modal('hide');
+                  
+                  // Reset AI state
+                  aiGeneratedData = null;
+                  $('#aiPreviewSection').hide();
+                  $('#approveAIGenerated').hide();
+                  $('#regenerateAI').hide();
+                  $('#manualLevelSection').show();
+                  $('#aiPrompt').val('');
                 });
 
                 $('#createTaxonomy').on('click', function () {
@@ -764,7 +940,7 @@
 
 <!-- Modal -->
 <div class="modal fade" id="taxonomyModal" tabindex="-1" aria-labelledby="taxonomyModalLabel" aria-hidden="true" style="display:none;">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="taxonomyModalLabel">Create New Taxonomy</h5>
@@ -774,14 +950,36 @@
         <div class="mb-3">
             <input type="text" id="taxonomyKey" placeholder="Key" />
             <input type="text" id="taxonomyDisplayName" placeholder="Display Name" /><br/>
+        </div>
+        
+        <!-- AI Prompt Section -->
+        <div class="mb-3">
+          <label for="aiPrompt" class="form-label">AI Prompt (Optional)</label>
+          <textarea class="form-control" id="aiPrompt" rows="3" placeholder="e.g., generate a two level taxonomy for VW car makes and models"></textarea>
+          <button id="aiSuggest" class="btn btn-outline-secondary w-100 mt-2">
+            <span class="spinner-border spinner-border-sm d-none" id="aiLoadingSpinner" role="status" aria-hidden="true"></span>
+            <span id="aiButtonText">Let AI create the taxonomy values</span>
+          </button>
+        </div>
+        
+        <!-- AI Preview Section (hidden by default) -->
+        <div id="aiPreviewSection" class="mb-3" style="display:none;">
+          <h6>AI Generated Preview</h6>
+          <div id="aiPreviewTree" style="height:300px; overflow-y:auto; border:1px solid #dee2e6; padding:10px; border-radius:4px;"></div>
+          <div id="aiError" class="alert alert-danger mt-2" style="display:none;"></div>
+        </div>
+        
+        <!-- Manual Level Input Section -->
+        <div id="manualLevelSection">
           <label for="levelCount" class="form-label">Number of Levels</label>
           <input type="number" class="form-control" id="levelCount" min="0" max="5" value="0">
+          <div id="levelInputs"></div>
         </div>
-        <div id="levelInputs"></div>
-        <button id="aiSuggest" class="btn btn-outline-secondary w-100 mt-2" disabled>🤖 Let AI create the taxonomy values (Coming Soon)</button>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button id="approveAIGenerated" type="button" class="btn btn-success" style="display:none;">Approve</button>
+        <button id="regenerateAI" type="button" class="btn btn-outline-primary" style="display:none;">Regenerate</button>
         <button id="createTaxonomy" type="button" class="btn btn-primary">Create</button>
       </div>
     </div>
