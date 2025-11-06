@@ -352,10 +352,14 @@
             }));
                 
             })
+            
+            // Enable "Create New" button - users should be able to create new taxonomies
+            $('button[data-bs-target="#taxonomyModal"]').prop('disabled', false);
                 
             $('#saveButton').on('click', async function () {
               $("#loader").show();
-              $(".action").prop("disabled", true);
+              // Disable save button during operation, but keep "Create New" enabled
+              $('#saveButton').prop("disabled", true);
             
               const treeData = $('#tree').jstree(true).get_json('#', { flat: false });
               const flattened = [];
@@ -411,7 +415,7 @@
                 await refreshTaxonomyTree(namespace, taxonomyKey);
               
                 $("#loader").hide();
-                $(".action").prop("disabled", false);
+                $('#saveButton').prop("disabled", false);
                 return;
               
               }
@@ -449,7 +453,7 @@
               await refreshTaxonomyTree(namespace, taxonomyId);
 
               $("#loader").hide();
-              $(".action").prop("disabled", false);
+              $('#saveButton').prop("disabled", false);
             });
             
             let createdTaxonomyLevels = [];
@@ -483,76 +487,44 @@
                       }
                     });
                   
-                    const schema = {
-                      type: "array",
-                      title: "Taxonomy",
-                      items: generateLevelSchema(0)
-                    };
+                    const taxonomyKey = $('#taxonomyKey').val().trim();
+                    const taxonomyDisplayName = $('#taxonomyDisplayName').val().trim();
                   
-                    const tree = [];
+                    if (!taxonomyKey || !taxonomyDisplayName) {
+                      alert('Please enter both Key and Display Name');
+                      return;
+                    }
+                  
+                    if (createdTaxonomyLevels.length === 0) {
+                      alert('Please add at least one level');
+                      return;
+                    }
+                  
+                    // Set taxonomy levels from created levels
+                    taxonomyLevels = createdTaxonomyLevels.map(level => ({
+                      displayName: level.displayName,
+                      level: level.level,
+                      type: level.type
+                    }));
+                  
+                    // Set form fields
+                    $('#taxonomyKey').val(taxonomyKey);
+                    $('#taxonomyDisplayName').val(taxonomyDisplayName);
+                  
+                    // Reset original entries since this is a new taxonomy
+                    originalEntries = [];
+                  
+                    // Initialize empty jstree
+                    const emptyTree = [];
+                    renderTaxonomyTree(taxonomyDisplayName, emptyTree, taxonomyLevels);
+                  
+                    // Set taxonomyId for save operation
+                    taxonomyId = taxonomyKey;
+                  
+                    // Enable save button
+                    $('#saveButton').prop('disabled', false);
                   
                     $('#taxonomyModal').modal('hide');
-                    loadEditor(schema, tree);
-                  
-                    function generateLevelSchema(index) {
-                      const level = createdTaxonomyLevels[index];
-                      if (!level) return undefined;
-                  
-                      const isLastLevel = index === createdTaxonomyLevels.length - 1;
-                      const next = generateLevelSchema(index + 1);
-                  
-                      const schema = {
-                        type: "object",
-                        title: level.displayName,
-                        properties: {}
-                      };
-                  
-                      // Root level gets key/displayName/custom product name/id
-                      if (index === 0) {
-                        schema.properties.key = { type: "string", title: "Key" };
-                        schema.properties.displayName = { type: "string", title: "Name" };
-                  
-                        const secondLevel = createdTaxonomyLevels[1];
-                        if (secondLevel) {
-                          const fieldName = secondLevel.displayName;
-                          schema.properties[fieldName] = {
-                            type: "array",
-                            title: fieldName,
-                            items: {
-                              type: "object",
-                              properties: {
-                                name: { type: "string", title: `${fieldName} Name` },
-                                code: { type: "string", title: `${fieldName} Code` }
-                              }
-                            }
-                          };
-                        }
-                  
-                        schema.properties.id = {
-                          type: "string",
-                          default: "NEW",
-                          options: { hidden: true }
-                        };
-                      } else {
-                        schema.properties.displayName = { type: "string", title: "Name" };
-                      }
-                  
-                      if (next) {
-                        schema.properties.children = {
-                          type: "array",
-                          title: "Children",
-                          items: next
-                        };
-                      } else {
-                        schema.properties.children = {
-                          type: "array",
-                          title: "Values",
-                          items: { type: "string" }
-                        };
-                      }
-                  
-                      return schema;
-                    }
                   });
                                     
                   
@@ -806,7 +778,7 @@
           <input type="number" class="form-control" id="levelCount" min="0" max="5" value="0">
         </div>
         <div id="levelInputs"></div>
-        <button id="aiSuggest" class="btn btn-outline-secondary w-100 mt-2">🤖 Let AI create the taxonomy values</button>
+        <button id="aiSuggest" class="btn btn-outline-secondary w-100 mt-2" disabled>🤖 Let AI create the taxonomy values (Coming Soon)</button>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

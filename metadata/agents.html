@@ -113,6 +113,54 @@
               border-right-color: #0d6efd !important;
             }
             
+            /* Prevent table overflow */
+            .card-body {
+                overflow-x: auto;
+                overflow-y: visible;
+            }
+            
+            #sharedAgentsTable {
+                width: 100% !important;
+            }
+            
+            /* Name column - allow wrapping for long names */
+            #sharedAgentsTable th:first-child,
+            #sharedAgentsTable td:first-child {
+                max-width: 300px;
+                min-width: 150px;
+                word-wrap: break-word;
+                white-space: normal;
+            }
+            
+            /* Other columns - truncate with ellipsis */
+            #sharedAgentsTable th:not(:first-child):not(:last-child),
+            #sharedAgentsTable td:not(:first-child):not(:last-child) {
+                max-width: 150px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            /* Actions column - narrow and fixed */
+            #sharedAgentsTable th:last-child,
+            #sharedAgentsTable td:last-child {
+                width: 80px;
+                min-width: 80px;
+                max-width: 80px;
+                white-space: nowrap;
+            }
+            
+            /* Ensure filter row doesn't overflow */
+            #sharedAgentsTable tfoot th {
+                padding: 0.25rem;
+            }
+            
+            #sharedAgentsTable tfoot .form-control,
+            #sharedAgentsTable tfoot .form-select {
+                max-width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+            }
             
 </style>
 <script>
