@@ -46,6 +46,27 @@
 
     </style>
     
+    <style>
+/* Success message styles */
+#successMessage {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#successMessage.show {
+    opacity: 1;
+}
+
+#successMessage.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+    </style>
 
     <script>
         const { BoxClient, BoxDeveloperTokenAuth } =window['box-typescript-sdk-gen'];
@@ -343,6 +364,26 @@
                 console.error(e);
             }
           
+            // Function to reload taxonomy list
+            async function reloadTaxonomyList() {
+              try {
+                // Clear existing options
+                $('#allTemplates').empty();
+                
+                // Reload taxonomies
+                metadataTaxonomies = await getTaxonomiesByNamespace(namespace);
+                metadataTaxonomies.entries.forEach(function(temp) {
+                  $('#allTemplates').append($('<option>', {
+                    value: temp.key,
+                    text: temp.displayName + ' (' + temp.key + ')',
+                  }));
+                });
+              } catch (error) {
+                console.error('Error reloading taxonomy list:', error);
+              }
+            }
+            
+            // Initial load
             metadataTaxonomies = await getTaxonomiesByNamespace(namespace);
             metadataTaxonomies.entries.forEach(function(temp) {
                 
@@ -433,6 +474,12 @@
               
                 await createNewTaxonomyTree(newTree, taxonomyLevels, namespace, taxonomyId);
                 await refreshTaxonomyTree(namespace, taxonomyKey);
+                
+                // Reload taxonomy list
+                await reloadTaxonomyList();
+                
+                // Show success message
+                showSuccessMessage(`Taxonomy "${displayName}" created successfully!`);
               
                 $("#loader").hide();
                 $('#saveButton').prop("disabled", false);
@@ -955,7 +1002,7 @@
         <!-- AI Prompt Section -->
         <div class="mb-3">
           <label for="aiPrompt" class="form-label">AI Prompt (Optional)</label>
-          <textarea class="form-control" id="aiPrompt" rows="3" placeholder="e.g., generate a two level taxonomy for VW car makes and models"></textarea>
+          <textarea class="form-control" id="aiPrompt" rows="3" placeholder="e.g., generate a two level taxonomy for German car makes and models"></textarea>
           <button id="aiSuggest" class="btn btn-outline-secondary w-100 mt-2">
             <span class="spinner-border spinner-border-sm d-none" id="aiLoadingSpinner" role="status" aria-hidden="true"></span>
             <span id="aiButtonText">Let AI create the taxonomy values</span>
@@ -998,7 +1045,32 @@
     
     <!-- Connection Status JavaScript -->
     <script src="connection-status.js"></script>
+    
+    <!-- Success Message Container -->
+    <div id="successMessage" class="alert alert-success alert-dismissible fade" role="alert">
+        <strong>Success!</strong> <span id="successMessageText"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    
     <script>
+        // Function to show success message with fade effect
+        function showSuccessMessage(message) {
+            const $message = $('#successMessage');
+            const $messageText = $('#successMessageText');
+            
+            $messageText.text(message);
+            $message.removeClass('fade-out').addClass('show');
+            
+            // Auto-fade out after 3 seconds
+            setTimeout(function() {
+                $message.removeClass('show').addClass('fade-out');
+                // Remove from DOM after fade completes
+                setTimeout(function() {
+                    $message.removeClass('show fade-out');
+                }, 500);
+            }, 3000);
+        }
+        
         // Load connection status HTML
         $(document).ready(function() {
             $('#connectionStatusContainer').load('connection-status.html', function() {
