@@ -162,7 +162,7 @@
     }
     
     function redirectToOAuth() {
-        const oauthUrl = 'https://account.box.com/api/oauth2/authorize?client_id=nsjffk9hhb01flji3cg21qucbe65efoj&response_type=code&id=124092627842';
+        const oauthUrl = 'https://account.box.com/api/oauth2/authorize?client_id=nsjffk9hhb01flji3cg21qucbe65efoj&response_type=code&id=124092627842&redirect_uri=https://pcboxdemo.github.io/metadata/index.html?clientId=nsjffk9hhb01flji3cg21qucbe65efoj';
         console.log("🔄 OAuth Debug: Redirecting to Box OAuth:", oauthUrl);
         window.location = oauthUrl;
     }
