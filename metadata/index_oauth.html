@@ -1,192 +1,85 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <!-- GoatCounter Analytics -->
   <script data-goatcounter="https://pcdemo.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-  <title>MDQ</title>
-  <!-- for-mobile-apps -->
+  <title>MDQ - Moved</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="robots" content="noindex, nofollow">
-  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+    .container {
+      background: white;
+      padding: 3rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      max-width: 600px;
+      margin: 2rem;
+    }
+    h1 {
+      color: #667eea;
+      margin-bottom: 1rem;
+      font-size: 2rem;
+    }
+    p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    .new-url {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #667eea;
+      margin: 1.5rem 0;
+      word-break: break-all;
+    }
+    .button {
+      display: inline-block;
+      padding: 1rem 2rem;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: background 0.3s ease;
+      margin-top: 1rem;
+    }
+    .button:hover {
+      background: #5568d3;
+    }
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+  </style>
   <script>
-    var params = new URLSearchParams(window.location.search);
-    var agentId = params.get('agentId');
-    var taxonomyId = params.get('taxonomyId');
-    let state='';
-    if(agentId != null) {
-        localStorage.setItem("agentId", agentId);
-    }
-    if(taxonomyId != null) {
-        localStorage.setItem("taxonomyId", taxonomyId);
-    }
-    
-    $(document).ready(function () {
-        console.log("🔍 OAuth Debug: Page loaded, checking for stored tokens...");
-        
-        // Check if we have a stored token hash
-        const tokenHash = localStorage.getItem("tokenHash");
-        const lastAuthTime = localStorage.getItem("lastAuthTime");
-        const userEmail = localStorage.getItem("userEmail");
-        const clientId = "nsjffk9hhb01flji3cg21qucbe65efoj";
-        
-        console.log("🔍 OAuth Debug: Stored data check:", {
-            hasTokenHash: !!tokenHash,
-            tokenHashLength: tokenHash ? tokenHash.length : 0,
-            lastAuthTime: lastAuthTime,
-            userEmail: userEmail,
-            clientId: clientId
-        });
-        
-        if (tokenHash && lastAuthTime) {
-            const timeSinceAuth = Date.now() - parseInt(lastAuthTime);
-            const daysOld = timeSinceAuth / (24 * 60 * 60 * 1000);
-            
-            console.log("🔍 OAuth Debug: Token age check:", {
-                timeSinceAuth: timeSinceAuth,
-                daysOld: daysOld.toFixed(2),
-                isValid: timeSinceAuth < 7 * 24 * 60 * 60 * 1000
-            });
-            
-            // Check if token is less than 7 days old
-            if (timeSinceAuth < 7 * 24 * 60 * 60 * 1000) {
-                console.log("✅ OAuth Debug: Token is valid, attempting validation...");
-                // Try to validate the stored token
-                validateStoredToken(tokenHash, clientId);
-                return;
-            } else {
-                console.log("⏰ OAuth Debug: Token too old, clearing stored data");
-                // Token too old, clear it
-                clearStoredTokens();
-            }
-        } else {
-            console.log("❌ OAuth Debug: No stored token or auth time found");
-        }
-        
-        // No valid stored token, proceed with OAuth
-        console.log("🔄 OAuth Debug: Redirecting to OAuth...");
-        redirectToOAuth();
-    });
-    
-    function validateStoredToken(tokenHash, clientId) {
-        console.log("🔧 OAuth Debug: Starting token validation...", {
-            tokenHash: tokenHash.substring(0, 20) + "...",
-            clientId: clientId
-        });
-        
-        $.ajax({
-            method: 'get',
-            url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
-            data: { action: 'validate', tokenHash: tokenHash, clientId: clientId },
-            crossDomain: true,
-            cache: false,
-            beforeSend: function() {
-                console.log("📡 OAuth Debug: Sending validation request to backend...");
-            },
-            success: function(response) {
-                console.log("✅ OAuth Debug: Validation response received:", {
-                    hasToken: !!response.token,
-                    hasRefreshToken: !!response.refreshToken,
-                    hasTokenHash: !!response.tokenHash,
-                    userEmail: response.userEmail,
-                    responseKeys: Object.keys(response)
-                });
-                
-                if (response.token) {
-                    console.log("🎉 OAuth Debug: Valid token received, storing and redirecting...");
-                    // Valid token received, store it and redirect to main app
-                    sessionStorage.setItem("token", response.token);
-                    if (response.refreshToken) {
-                        sessionStorage.setItem("refreshToken", response.refreshToken);
-                    }
-                    
-                    // Update stored token hash if provided
-                    if (response.tokenHash) {
-                        localStorage.setItem("tokenHash", response.tokenHash);
-                        localStorage.setItem("lastAuthTime", Date.now());
-                    }
-                    
-                    redirectToMainApp();
-                } else {
-                    console.log("❌ OAuth Debug: No token in response, clearing stored data");
-                    // Token validation failed, clear stored data and re-authenticate
-                    clearStoredTokens();
-                    redirectToOAuth();
-                }
-            },
-            error: function(err) {
-                console.log("❌ OAuth Debug: Token validation failed:", {
-                    status: err.status,
-                    statusText: err.statusText,
-                    responseText: err.responseText,
-                    error: err
-                });
-                
-                // Try to parse error response
-                try {
-                    const errorData = JSON.parse(err.responseText);
-                    console.log("📄 OAuth Debug: Parsed error response:", errorData);
-                } catch (e) {
-                    console.log("📄 OAuth Debug: Could not parse error response");
-                }
-                
-                // Clear stored tokens and force re-authentication
-                clearStoredTokens();
-                redirectToOAuth();
-            }
-        });
-    }
-    
-    function clearStoredTokens() {
-        console.log("🧹 OAuth Debug: Clearing all stored tokens...");
-        const before = {
-            tokenHash: !!localStorage.getItem("tokenHash"),
-            userEmail: !!localStorage.getItem("userEmail"),
-            lastAuthTime: !!localStorage.getItem("lastAuthTime"),
-            oldToken: !!localStorage.getItem("token"), // Check for old format
-            sessionToken: !!sessionStorage.getItem("token"),
-            sessionRefreshToken: !!sessionStorage.getItem("refreshToken")
-        };
-        console.log("🧹 OAuth Debug: Before clearing:", before);
-        
-        localStorage.removeItem("tokenHash");
-        localStorage.removeItem("userEmail");
-        localStorage.removeItem("lastAuthTime");
-        localStorage.removeItem("token"); // Remove old format token
-        sessionStorage.removeItem("token");
-        sessionStorage.removeItem("refreshToken");
-        
-        console.log("🧹 OAuth Debug: Tokens cleared successfully");
-    }
-    
-    function redirectToOAuth() {
-        const oauthUrl = 'https://account.box.com/api/oauth2/authorize?client_id=nsjffk9hhb01flji3cg21qucbe65efoj&response_type=code&id=124092627842&redirect_uri=https://pcboxdemo.github.io/metadata/index.html?clientId=nsjffk9hhb01flji3cg21qucbe65efoj';
-        console.log("🔄 OAuth Debug: Redirecting to Box OAuth:", oauthUrl);
-        window.location = oauthUrl;
-    }
-    
-    function redirectToMainApp() {
-        const agentId = localStorage.getItem("agentId");
-        const taxonomyId = localStorage.getItem("taxonomyId");
-        
-        // Prioritize agentId (matches behavior in index.html)
-        if (agentId) {
-            window.location.href = "/metadata/agents.html";
-        } else if (taxonomyId) {
-            window.location.href = "/metadata/taxonomies.html?taxonomyId=" + taxonomyId;
-        } else {
-            window.location.href = "/metadata/index.html";
-        }
-    }
-    
-    // Global logout function - can be called from other pages
-    window.boxLogout = function() {
-        clearStoredTokens();
-        window.location.href = "/metadata/index_oauth.html";
-    }
-    </script>
-
-
+    // Auto-redirect after 5 seconds
+    setTimeout(function() {
+      window.location.href = 'https://ppp-tool.fly.dev';
+    }, 5000);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🚀</div>
+    <h1>We've Moved!</h1>
+    <p>The PPP (Metadata Management) tool has been moved to a new location.</p>
+    <p>You will be automatically redirected in a few seconds, or click the button below to go there now.</p>
+    <div class="new-url">https://ppp-tool.fly.dev</div>
+    <a href="https://ppp-tool.fly.dev" class="button">Go to New Site</a>
+  </div>
+</body>
 </html>
