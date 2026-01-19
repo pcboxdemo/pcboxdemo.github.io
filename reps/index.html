@@ -388,7 +388,7 @@
                 </h1>
                 
                 <!-- File Selection Form -->
-                <div class="card mb-4">
+                <div class="card mb-4" id="fileSelectionCard">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0"><i class="bi bi-search"></i> Select File</h5>
                     </div>
@@ -1485,8 +1485,9 @@
         $(document).ready(function() {
             const params = new URLSearchParams(window.location.search);
             const authCode = params.get('auth');
-            const id = params.get('id');
+            const id = params.get('id'); // This is the folder ID for auth, not file ID
             const clientId = params.get('clientId');
+            const fileId = params.get('fileId'); // File ID parameter for direct file loading
             
             // Fallback: Check for token in query string (for dev purposes)
             const queryToken = params.get('token') || params.get('access_token');
@@ -1496,9 +1497,21 @@
                 token = queryToken;
                 $('#loader').removeClass('show');
                 $('.container').show();
-                setTimeout(function() {
-                    initializeBoxPicker();
-                }, 100);
+                
+                // If fileId is provided, hide file selection and load it automatically
+                if (fileId) {
+                    $('#fileSelectionCard').hide();
+                    $('#fileId').val(fileId);
+                    // Wait a bit for everything to initialize, then load
+                    setTimeout(function() {
+                        initializeBoxPicker();
+                        $('#fileForm').submit();
+                    }, 100);
+                } else {
+                    setTimeout(function() {
+                        initializeBoxPicker();
+                    }, 100);
+                }
                 return;
             }
             
@@ -1543,11 +1556,22 @@
                     $('#loader').removeClass('show');
                     $('.container').show();
                     
-                    // Initialize picker when page loads (Box library should be loaded by now)
-                    // Give it a small delay to ensure Box is available
-                    setTimeout(function() {
-                        initializeBoxPicker();
-                    }, 100);
+                    // If fileId is provided in query string, hide file selection and load it automatically
+                    if (fileId) {
+                        $('#fileSelectionCard').hide();
+                        $('#fileId').val(fileId);
+                        // Wait a bit for picker to initialize, then load the file
+                        setTimeout(function() {
+                            initializeBoxPicker();
+                            $('#fileForm').submit();
+                        }, 100);
+                    } else {
+                        // Initialize picker when page loads (Box library should be loaded by now)
+                        // Give it a small delay to ensure Box is available
+                        setTimeout(function() {
+                            initializeBoxPicker();
+                        }, 100);
+                    }
                 },
                 error: function(xhr, status, error) {
                     // Fallback: Try query string token if available
@@ -1555,9 +1579,20 @@
                         token = queryToken;
                         $('#loader').removeClass('show');
                         $('.container').show();
-                        setTimeout(function() {
-                            initializeBoxPicker();
-                        }, 100);
+                        
+                        // If fileId is provided, hide file selection and load it automatically
+                        if (fileId) {
+                            $('#fileSelectionCard').hide();
+                            $('#fileId').val(fileId);
+                            setTimeout(function() {
+                                initializeBoxPicker();
+                                $('#fileForm').submit();
+                            }, 100);
+                        } else {
+                            setTimeout(function() {
+                                initializeBoxPicker();
+                            }, 100);
+                        }
                     } else {
                         showError('Failed to authenticate: ' + (error || 'Unknown error') + '. For dev, you can use ?token=YOUR_TOKEN');
                         $('#loader').removeClass('show');
