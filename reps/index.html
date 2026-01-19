@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box File Representations Viewer</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Box UI Elements Content Picker CSS -->
+    <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.css" />
+    
+    <style>
+        .representation-card {
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #007bff;
+        }
+        
+        .representation-card.success {
+            border-left-color: #28a745;
+        }
+        
+        .representation-card.pending {
+            border-left-color: #ffc107;
+        }
+        
+        .representation-card.error {
+            border-left-color: #dc3545;
+        }
+        
+        .rep-content {
+            max-height: 500px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border-radius: 0.25rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .rep-content-placeholder {
+            margin-top: 1rem;
+        }
+        
+        .rep-content-wrapper {
+            background-color: #f8f9fa;
+            border-radius: 0.25rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .rep-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.25rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .rep-pdf {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+        }
+        
+        .rep-text {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 500px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border-radius: 0.25rem;
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .rep-text::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .rep-text::-webkit-scrollbar-track {
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        
+        .rep-text::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        .rep-text::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .rep-markdown {
+            max-height: 500px;
+            overflow-y: auto;
+            background-color: #fff;
+            border-radius: 0.25rem;
+            padding: 1.5rem;
+            margin-top: 0.5rem;
+            border: 1px solid #dee2e6;
+        }
+        
+        .rep-markdown::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .rep-markdown::-webkit-scrollbar-track {
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        
+        .rep-markdown::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        .rep-markdown::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .rep-markdown h1,
+        .rep-markdown h2,
+        .rep-markdown h3,
+        .rep-markdown h4,
+        .rep-markdown h5,
+        .rep-markdown h6 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .rep-markdown h1 {
+            font-size: 2rem;
+            border-bottom: 2px solid #eaecef;
+            padding-bottom: 0.3rem;
+        }
+        
+        .rep-markdown h2 {
+            font-size: 1.5rem;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3rem;
+        }
+        
+        .rep-markdown p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        .rep-markdown code {
+            background-color: #f6f8fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .rep-markdown pre {
+            background-color: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        
+        .rep-markdown pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        
+        .rep-markdown blockquote {
+            border-left: 4px solid #dfe2e5;
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #6a737d;
+        }
+        
+        .rep-markdown table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .rep-markdown table th,
+        .rep-markdown table td {
+            border: 1px solid #dfe2e5;
+            padding: 0.5rem;
+        }
+        
+        .rep-markdown table th {
+            background-color: #f6f8fa;
+            font-weight: 600;
+        }
+        
+        .rep-markdown ul,
+        .rep-markdown ol {
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }
+        
+        .rep-markdown a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        
+        .rep-markdown a:hover {
+            text-decoration: underline;
+        }
+        
+        .rep-markdown img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        
+        .markdown-tabs {
+            margin-top: 0.5rem;
+        }
+        
+        .markdown-tabs .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .markdown-tabs .nav-link {
+            color: #495057;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 0.5rem 1rem;
+            margin-bottom: -2px;
+        }
+        
+        .markdown-tabs .nav-link:hover {
+            border-color: #dee2e6;
+            color: #007bff;
+        }
+        
+        .markdown-tabs .nav-link.active {
+            color: #007bff;
+            background-color: transparent;
+            border-color: #007bff;
+            border-bottom-color: #007bff;
+            font-weight: 600;
+        }
+        
+        .markdown-tab-content {
+            margin-top: 0.5rem;
+        }
+        
+        .collapse-toggle-btn {
+            color: #495057;
+            transition: all 0.2s;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        
+        .collapse-toggle-btn:hover {
+            color: #212529;
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+        
+        .collapse-toggle-btn i {
+            font-size: 0.875rem;
+            transition: transform 0.2s;
+        }
+        
+        .collapse-toggle-btn[aria-expanded="false"] i.bi-chevron-down {
+            transform: rotate(-90deg);
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .file-info {
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: 0.25rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+        }
+        
+        .loading-spinner.active {
+            display: inline-block;
+        }
+        
+        .error-alert {
+            display: none;
+        }
+        
+        code {
+            background-color: #f8f9fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        #boxPickerModal .modal-dialog {
+            height: calc(100vh - 100px);
+            max-height: 90vh;
+        }
+        
+        #boxPickerModal .modal-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #boxPickerModal .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            min-height: 600px;
+        }
+        
+        #boxPickerContainer {
+            height: 100%;
+            min-height: 600px;
+            width: 100%;
+        }
+        
+        #representationsList {
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 0.5rem;
+        }
+        
+        #representationsList::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #representationsList::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        #representationsList::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        #representationsList::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        #loader {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+        
+        #loader.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading indicator -->
+    <div id="loader" class="text-center">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Authenticating...</p>
+    </div>
+    
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">
+                    <i class="bi bi-file-earmark-image"></i> Box File Representations Viewer
+                </h1>
+                
+                <!-- File Selection Form -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-search"></i> Select File</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="fileForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="fileId" class="form-label">File ID</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="fileId" placeholder="Enter Box File ID">
+                                        <button class="btn btn-outline-secondary" type="button" id="pasteBtn" title="Paste from clipboard">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Or Pick File from Box</label>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-primary" id="boxPickerBtn" data-bs-toggle="modal" data-bs-target="#boxPickerModal">
+                                            <i class="bi bi-folder2-open"></i> Choose File from Box
+                                        </button>
+                                    </div>
+                                    <small class="form-text text-muted">Browse and select a file from your Box account</small>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="loadBtn">
+                                <span class="spinner-border spinner-border-sm loading-spinner" role="status" aria-hidden="true"></span>
+                                <i class="bi bi-arrow-down-circle"></i> Load Representations
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Error Alert -->
+                <div class="alert alert-danger error-alert" role="alert" id="errorAlert">
+                    <i class="bi bi-exclamation-triangle"></i> <span id="errorMessage"></span>
+                </div>
+                
+                <!-- File Info -->
+                <div class="file-info" id="fileInfo" style="display: none;">
+                    <h5><i class="bi bi-info-circle"></i> File Information</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Name:</strong> <span id="fileName"></span><br>
+                            <strong>Type:</strong> <span id="fileType"></span><br>
+                            <strong>Path:</strong> <code id="filePath" style="word-break: break-all;"></code>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>ID:</strong> <code id="fileIdDisplay"></code><br>
+                            <strong>Size:</strong> <span id="fileSize"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Representations List -->
+                <div id="representationsContainer">
+                    <h3 class="mb-3"><i class="bi bi-list-ul"></i> Representations</h3>
+                    <div id="representationsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Box File Picker Modal -->
+    <div class="modal fade" id="boxPickerModal" tabindex="-1" aria-labelledby="boxPickerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="boxPickerModalLabel">
+                        <i class="bi bi-folder2-open"></i> Choose File from Box
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="boxPickerContainer"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <!-- Highlight.js for code syntax highlighting in markdown -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Box UI Elements Content Picker JS -->
+    <script src="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/picker.js"></script>
+    
+    <script>
+        const BOX_API_BASE = 'https://api.box.com/2.0';
+        
+        // Global token variable (set by auth API call)
+        let token = null;
+        
+        // Get token (returns the global token variable)
+        function getAccessToken() {
+            return token;
+        }
+        
+        // Format file size
+        function formatFileSize(bytes) {
+            if (!bytes) return 'N/A';
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            if (bytes === 0) return '0 Bytes';
+            const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+            return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+        }
+        
+        // Show error
+        function showError(message) {
+            $('#errorMessage').text(message);
+            $('#errorAlert').fadeIn();
+            setTimeout(() => $('#errorAlert').fadeOut(), 5000);
+        }
+        
+        // Build file path from path_collection
+        function buildFilePath(pathCollection) {
+            if (!pathCollection || !pathCollection.entries || pathCollection.entries.length === 0) {
+                return '/';
+            }
+            
+            // Skip the first entry (usually "All Files" with id "0")
+            const pathEntries = pathCollection.entries.slice(1);
+            const pathParts = pathEntries.map(entry => entry.name || 'Unknown');
+            
+            return '/' + pathParts.join('/');
+        }
+        
+        // Get file info
+        async function getFileInfo(fileId) {
+            const accessToken = getAccessToken();
+            if (!accessToken) {
+                throw new Error('Access token not available. Please wait for authentication to complete.');
+            }
+            
+            const response = await fetch(`${BOX_API_BASE}/files/${fileId}?fields=name,type,size,representations,path_collection`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || `Failed to fetch file: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+        
+        // Request representation
+        async function requestRepresentation(fileId, repHint) {
+            const accessToken = getAccessToken();
+            if (!accessToken) {
+                throw new Error('Access token not available. Please wait for authentication to complete.');
+            }
+            
+            const response = await fetch(`${BOX_API_BASE}/files/${fileId}?fields=representations`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                    'x-rep-hints': `[${repHint}]`
+                }
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || `Failed to request representation: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+        
+        // Download representation content
+        async function downloadRepresentation(urlTemplate, assetPath = '') {
+            const accessToken = getAccessToken();
+            if (!accessToken) {
+                throw new Error('Access token not available. Please wait for authentication to complete.');
+            }
+            const url = urlTemplate.replace('{+asset_path}', assetPath);
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            
+            if (response.status === 202) {
+                // Representation is being generated
+                const location = response.headers.get('location');
+                const retryAfter = response.headers.get('retry-after');
+                return {
+                    status: 'pending',
+                    location: location,
+                    retryAfter: retryAfter
+                };
+            }
+            
+            if (!response.ok) {
+                throw new Error(`Failed to download representation: ${response.status}`);
+            }
+            
+            return response;
+        }
+        
+        // Load text representation
+        async function loadTextRepresentation(urlTemplate) {
+            try {
+                const response = await downloadRepresentation(urlTemplate);
+                if (response.status === 'pending') {
+                    return { type: 'pending', message: 'Text is being generated...' };
+                }
+                const text = await response.text();
+                return { type: 'text', content: text };
+            } catch (error) {
+                return { type: 'error', message: error.message };
+            }
+        }
+        
+        // Load image representation
+        async function loadImageRepresentation(urlTemplate) {
+            try {
+                const response = await downloadRepresentation(urlTemplate);
+                if (response.status === 'pending') {
+                    return { type: 'pending', message: 'Image is being generated...' };
+                }
+                const blob = await response.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                return { type: 'image', url: imageUrl };
+            } catch (error) {
+                return { type: 'error', message: error.message };
+            }
+        }
+        
+        // Load PDF representation
+        async function loadPdfRepresentation(urlTemplate) {
+            try {
+                const response = await downloadRepresentation(urlTemplate);
+                if (response.status === 'pending') {
+                    return { type: 'pending', message: 'PDF is being generated...' };
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                return { type: 'pdf', data: arrayBuffer };
+            } catch (error) {
+                return { type: 'error', message: error.message };
+            }
+        }
+        
+        // Render PDF using PDF.js
+        async function renderPdfWithViewer(pdfData, containerId) {
+            try {
+                // Set up PDF.js worker
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                
+                // Load the PDF
+                const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+                const pdf = await loadingTask.promise;
+                
+                const container = $(`#${containerId}`);
+                let currentPage = 1;
+                const totalPages = pdf.numPages;
+                
+                // Create viewer container
+                const viewerId = `${containerId}-viewer`;
+                container.html(`
+                    <div class="pdf-viewer-container" id="${viewerId}">
+                        <div class="pdf-viewer-controls">
+                            <button class="btn btn-sm btn-outline-secondary" id="${viewerId}-prev" ${currentPage === 1 ? 'disabled' : ''}>
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </button>
+                            <span class="pdf-viewer-page-info">Page <span id="${viewerId}-page">1</span> of ${totalPages}</span>
+                            <button class="btn btn-sm btn-outline-secondary" id="${viewerId}-next" ${currentPage === totalPages ? 'disabled' : ''}>
+                                Next <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                        <canvas class="pdf-viewer-canvas" id="${viewerId}-canvas"></canvas>
+                    </div>
+                `);
+                
+                const canvas = document.getElementById(`${viewerId}-canvas`);
+                const ctx = canvas.getContext('2d');
+                
+                // Render page function
+                const renderPage = async (pageNum) => {
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    const renderContext = {
+                        canvasContext: ctx,
+                        viewport: viewport
+                    };
+                    
+                    await page.render(renderContext).promise;
+                    
+                    // Update page info
+                    $(`#${viewerId}-page`).text(pageNum);
+                    $(`#${viewerId}-prev`).prop('disabled', pageNum === 1);
+                    $(`#${viewerId}-next`).prop('disabled', pageNum === totalPages);
+                };
+                
+                // Render first page
+                await renderPage(1);
+                
+                // Add navigation handlers
+                $(`#${viewerId}-prev`).on('click', async function() {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        await renderPage(currentPage);
+                    }
+                });
+                
+                $(`#${viewerId}-next`).on('click', async function() {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        await renderPage(currentPage);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error rendering PDF:', error);
+                $(`#${containerId}`).html(`
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Failed to render PDF: ${error.message}
+                    </div>
+                `);
+            }
+        }
+        
+        // Determine if representation is image or text based
+        function isImageRepresentation(rep) {
+            const contentType = rep.content?.type || '';
+            return contentType.includes('image') || 
+                   rep.representation === 'jpg' || 
+                   rep.representation === 'png' ||
+                   rep.representation?.includes('jpg') ||
+                   rep.representation?.includes('png');
+        }
+        
+        function isTextRepresentation(rep) {
+            return rep.representation === 'extracted_text' || 
+                   rep.representation === 'text' ||
+                   rep.content?.type?.includes('text');
+        }
+        
+        function isMarkdownRepresentation(rep) {
+            return rep.representation === 'markdown' ||
+                   rep.content?.type?.includes('markdown');
+        }
+        
+        function isPdfRepresentation(rep) {
+            return rep.representation === 'pdf' ||
+                   rep.content?.type?.includes('pdf') ||
+                   rep.content?.type === 'application/pdf';
+        }
+        
+        // Fetch detailed representation info (status and url_template)
+        async function getRepresentationDetails(repUrl) {
+            const accessToken = getAccessToken();
+            if (!accessToken) {
+                throw new Error('Access token not available. Please wait for authentication to complete.');
+            }
+            
+            const response = await fetch(repUrl, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch representation details: ${response.status}`);
+            }
+            
+            return await response.json();
+        }
+        
+        // Store polling state for each representation
+        const pollingState = {};
+        
+        // Poll representation details for pending representations
+        function pollRepresentationDetails(repUrl, repIndex, maxAttempts = 10, interval = 5000) {
+            // Initialize polling state for this representation
+            if (!pollingState[repIndex]) {
+                pollingState[repIndex] = { attempts: 0, intervalId: null };
+            }
+            
+            const state = pollingState[repIndex];
+            
+            const poll = async () => {
+                if (state.attempts >= maxAttempts) {
+                    console.log(`Stopped polling representation ${repIndex} after ${maxAttempts} attempts`);
+                    // Update UI to show polling stopped
+                    const card = $(`.representation-card[data-rep-index="${repIndex}"]`);
+                    if (card.length) {
+                        const contentArea = card.find('.rep-content-placeholder, .alert');
+                        contentArea.replaceWith(`
+                            <div class="alert alert-warning mb-0">
+                                <i class="bi bi-hourglass-split"></i> Still generating after ${maxAttempts} checks. Please refresh to check again.
+                            </div>
+                        `);
+                    }
+                    delete pollingState[repIndex];
+                    return;
+                }
+                
+                state.attempts++;
+                
+                try {
+                    const detailedRep = await getRepresentationDetails(repUrl);
+                    const status = detailedRep.status?.state || 'pending';
+                    
+                    // Update the card with current status (including attempt count)
+                    updateRepresentationCard(repIndex, detailedRep, repUrl, state.attempts);
+                    
+                    // If still pending and haven't reached max attempts, continue polling
+                    if (status === 'pending' && state.attempts < maxAttempts) {
+                        state.intervalId = setTimeout(poll, interval);
+                    } else {
+                        console.log(`Polling complete for representation ${repIndex}. Final status: ${status}`);
+                        delete pollingState[repIndex];
+                    }
+                } catch (error) {
+                    console.error(`Error polling representation ${repIndex} (attempt ${state.attempts}):`, error);
+                    // Continue polling on error (might be temporary)
+                    if (state.attempts < maxAttempts) {
+                        state.intervalId = setTimeout(poll, interval);
+                    } else {
+                        delete pollingState[repIndex];
+                    }
+                }
+            };
+            
+            // Start polling after initial interval
+            state.intervalId = setTimeout(poll, interval);
+        }
+        
+        // Update representation card with detailed info
+        function updateRepresentationCard(repIndex, detailedRep, repUrl, attemptCount = 0) {
+            const card = $(`.representation-card[data-rep-index="${repIndex}"]`);
+            if (!card.length) return;
+            
+            const status = detailedRep.status?.state || 'pending';
+            const urlTemplate = detailedRep.content?.url_template || null;
+            
+            // Update status badges
+            const badgeClass = status === 'success' ? 'bg-success' : status === 'pending' ? 'bg-warning' : 'bg-danger';
+            card.find('.status-badge').text(status).removeClass('bg-success bg-warning bg-danger').addClass(badgeClass);
+            card.find('.card-body .badge').text(status).removeClass('bg-success bg-warning bg-danger').addClass(badgeClass);
+            
+            // Update card border
+            card.removeClass('success pending error').addClass(status === 'success' ? 'success' : status === 'pending' ? 'pending' : 'error');
+            
+            // Update content area (find within card-body)
+            const cardBody = card.find('.card-body');
+            const contentArea = cardBody.find('.rep-content-placeholder, .alert');
+            if (status === 'success' && urlTemplate) {
+                contentArea.replaceWith(`
+                    <div id="rep-content-${repIndex}" class="rep-content-placeholder">
+                        <button class="btn btn-sm btn-outline-primary load-content-btn" data-rep-index="${repIndex}" data-url-template="${urlTemplate}" data-rep-type="${detailedRep.representation || 'unknown'}">
+                            <i class="bi bi-download"></i> Load Content
+                        </button>
+                    </div>
+                `);
+            } else if (status === 'pending') {
+                contentArea.replaceWith(`
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-hourglass-split"></i> This representation is being generated. Checking again in 5 seconds... (${attemptCount}/10)
+                    </div>
+                `);
+            } else if (status === 'error') {
+                contentArea.replaceWith(`
+                    <div class="alert alert-danger mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Failed to generate this representation.
+                    </div>
+                `);
+            }
+        }
+        
+        // Render representation card
+        function renderRepresentation(rep, index, detailedRep = null) {
+            // Use detailed representation status if available
+            let status = 'pending';
+            let urlTemplate = null;
+            
+            if (detailedRep) {
+                status = detailedRep.status?.state || 'pending';
+                urlTemplate = detailedRep.content?.url_template || null;
+            } else if (rep.info && rep.info.url) {
+                // If we have info.url, we'll fetch details asynchronously
+                // For now, show as loading
+                status = 'loading';
+            } else if (rep.status) {
+                status = rep.status;
+            }
+            
+            const statusClass = status === 'success' ? 'success' : 
+                               status === 'pending' ? 'pending' : 
+                               status === 'error' ? 'error' : 
+                               status === 'loading' ? 'pending' : '';
+            
+            const contentType = rep.content?.type || 'N/A';
+            const repType = rep.representation || 'unknown';
+            
+            const collapseId = `rep-collapse-${index}`;
+            let cardHtml = `
+                <div class="card representation-card ${statusClass}" data-rep-index="${index}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-sm collapse-toggle-btn" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}" title="Collapse/Expand">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                            <div>
+                                <h6 class="mb-0">
+                                    <i class="bi bi-file-earmark"></i> ${repType}
+                                </h6>
+                                <small class="text-muted">${contentType}</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-${status === 'success' ? 'success' : status === 'pending' || status === 'loading' ? 'warning' : 'danger'} status-badge">
+                            ${status === 'loading' ? 'loading...' : status}
+                        </span>
+                    </div>
+                    <div class="collapse" id="${collapseId}">
+                        <div class="card-body">
+                        <div class="mb-2">
+                            <strong>Representation:</strong> <code>${repType}</code><br>
+                            <strong>Status:</strong> <span class="badge bg-${status === 'success' ? 'success' : status === 'pending' || status === 'loading' ? 'warning' : 'danger'}">${status === 'loading' ? 'loading...' : status}</span>
+                            ${rep.properties?.dimensions ? `<br><strong>Dimensions:</strong> ${rep.properties.dimensions}` : ''}
+                            ${rep.properties?.paged ? `<br><strong>Paged:</strong> ${rep.properties.paged}` : ''}
+                            ${rep.properties?.thumb ? `<br><strong>Thumbnail:</strong> ${rep.properties.thumb}` : ''}
+                        </div>
+            `;
+            
+            // Add content area if representation is ready
+            if (status === 'success' && urlTemplate) {
+                const contentId = `rep-content-${index}`;
+                cardHtml += `
+                    <div id="${contentId}" class="rep-content-placeholder">
+                        <button class="btn btn-sm btn-outline-primary load-content-btn" data-rep-index="${index}" data-url-template="${urlTemplate}" data-rep-type="${repType}">
+                            <i class="bi bi-download"></i> Load Content
+                        </button>
+                    </div>
+                `;
+            } else if (status === 'pending') {
+                cardHtml += `
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-hourglass-split"></i> This representation is being generated. Please try again later.
+                    </div>
+                `;
+            } else if (status === 'error') {
+                cardHtml += `
+                    <div class="alert alert-danger mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Failed to generate this representation.
+                    </div>
+                `;
+            } else if (status === 'loading') {
+                cardHtml += `
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-hourglass-split"></i> Checking representation status...
+                    </div>
+                `;
+            }
+            
+            cardHtml += `
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return cardHtml;
+        }
+        
+        // Load representation content
+        async function loadRepContent(repIndex, urlTemplate, repType) {
+            const contentDiv = $(`#rep-content-${repIndex}`);
+            contentDiv.html('<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading...</div>');
+            
+            try {
+                let content;
+                
+                if (isPdfRepresentation({ representation: repType })) {
+                    content = await loadPdfRepresentation(urlTemplate);
+                } else if (isTextRepresentation({ representation: repType }) || isMarkdownRepresentation({ representation: repType })) {
+                    content = await loadTextRepresentation(urlTemplate);
+                } else if (isImageRepresentation({ representation: repType })) {
+                    content = await loadImageRepresentation(urlTemplate);
+                } else {
+                    // Try as PDF first, then text, then image
+                    content = await loadPdfRepresentation(urlTemplate);
+                    if (content.type === 'error') {
+                        content = await loadTextRepresentation(urlTemplate);
+                        if (content.type === 'error') {
+                            content = await loadImageRepresentation(urlTemplate);
+                        }
+                    }
+                }
+                
+                if (content.type === 'pdf') {
+                    const pdfViewerId = `pdf-viewer-${repIndex}`;
+                    contentDiv.html(`
+                        <div class="rep-content-wrapper">
+                            <h6><i class="bi bi-file-pdf"></i> PDF:</h6>
+                            <div id="${pdfViewerId}"></div>
+                        </div>
+                    `);
+                    // Render PDF with PDF.js viewer
+                    await renderPdfWithViewer(content.data, pdfViewerId);
+                } else if (content.type === 'text') {
+                    const isMarkdown = isMarkdownRepresentation({ representation: repType });
+                    if (isMarkdown) {
+                        // Render markdown with tabs for MD and Raw Text
+                        if (typeof marked !== 'undefined') {
+                            // Configure marked options
+                            marked.setOptions({
+                                breaks: true,
+                                gfm: true,
+                                highlight: function(code, lang) {
+                                    if (lang && typeof hljs !== 'undefined') {
+                                        try {
+                                            return hljs.highlight(code, { language: lang }).value;
+                                        } catch (err) {
+                                            return hljs.highlightAuto(code).value;
+                                        }
+                                    }
+                                    return code;
+                                }
+                            });
+                            
+                            const renderedMarkdown = marked.parse(content.content);
+                            const rawTextContent = escapeHtml(content.content);
+                            const tabId = `markdown-tabs-${repIndex}`;
+                            
+                            contentDiv.html(`
+                                <div class="rep-content-wrapper">
+                                    <h6><i class="bi bi-markdown"></i> Markdown Content:</h6>
+                                    <div class="markdown-tabs">
+                                        <ul class="nav nav-tabs" role="tablist">
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link active" id="${tabId}-md-tab" data-bs-toggle="tab" data-bs-target="#${tabId}-md" type="button" role="tab" aria-controls="${tabId}-md" aria-selected="true">
+                                                    <i class="bi bi-markdown"></i> Markdown
+                                                </button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link" id="${tabId}-raw-tab" data-bs-toggle="tab" data-bs-target="#${tabId}-raw" type="button" role="tab" aria-controls="${tabId}-raw" aria-selected="false">
+                                                    <i class="bi bi-code"></i> Raw Text
+                                                </button>
+                                            </li>
+                                        </ul>
+                                        <div class="tab-content markdown-tab-content" id="${tabId}-content">
+                                            <div class="tab-pane fade show active" id="${tabId}-md" role="tabpanel" aria-labelledby="${tabId}-md-tab">
+                                                <div class="rep-markdown">${renderedMarkdown}</div>
+                                            </div>
+                                            <div class="tab-pane fade" id="${tabId}-raw" role="tabpanel" aria-labelledby="${tabId}-raw-tab">
+                                                <div class="rep-text">${rawTextContent}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `);
+                            
+                            // Highlight code blocks if highlight.js is available
+                            if (typeof hljs !== 'undefined') {
+                                contentDiv.find('pre code').each(function() {
+                                    hljs.highlightElement(this);
+                                });
+                            }
+                        } else {
+                            // Fallback if marked.js is not loaded
+                            contentDiv.html(`
+                                <div class="rep-content-wrapper">
+                                    <h6><i class="bi bi-markdown"></i> Markdown Content:</h6>
+                                    <div class="rep-text">${escapeHtml(content.content)}</div>
+                                </div>
+                            `);
+                        }
+                    } else {
+                        contentDiv.html(`
+                            <div class="rep-content-wrapper">
+                                <h6><i class="bi bi-file-text"></i> Text Content:</h6>
+                                <div class="rep-text">${escapeHtml(content.content)}</div>
+                            </div>
+                        `);
+                    }
+                } else if (content.type === 'image') {
+                    contentDiv.html(`
+                        <div class="rep-content-wrapper">
+                            <h6><i class="bi bi-image"></i> Image:</h6>
+                            <img src="${content.url}" class="rep-image" alt="Representation">
+                        </div>
+                    `);
+                } else if (content.type === 'pending') {
+                    contentDiv.html(`
+                        <div class="alert alert-warning">
+                            <i class="bi bi-hourglass-split"></i> ${content.message}
+                        </div>
+                    `);
+                } else {
+                    contentDiv.html(`
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Failed to load content: ${content.message}
+                        </div>
+                    `);
+                }
+            } catch (error) {
+                contentDiv.html(`
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Error: ${error.message}
+                    </div>
+                `);
+            }
+        }
+        
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Handle form submission
+        $('#fileForm').on('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileId = $('#fileId').val().trim();
+            if (!fileId) {
+                showError('Please enter a file ID');
+                return;
+            }
+            
+            $('#loadBtn').prop('disabled', true);
+            $('.loading-spinner').addClass('active');
+            $('#representationsList').empty();
+            $('#fileInfo').hide();
+            $('#errorAlert').hide();
+            
+            try {
+                const fileData = await getFileInfo(fileId);
+                
+                // Display file info
+                $('#fileName').text(fileData.name || 'N/A');
+                $('#fileType').text(fileData.type || 'N/A');
+                $('#fileIdDisplay').text(fileData.id);
+                $('#fileSize').text(formatFileSize(fileData.size));
+                
+                // Build and display file path
+                const filePath = buildFilePath(fileData.path_collection);
+                $('#filePath').text(filePath || '/');
+                
+                $('#fileInfo').show();
+                
+                // Display representations
+                let representations = fileData.representations?.entries || [];
+                
+                // Debug: log the representations structure
+                console.log('Representations data:', JSON.stringify(representations, null, 2));
+                
+                if (representations.length === 0) {
+                    $('#representationsList').html(`
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No representations available for this file.
+                        </div>
+                    `);
+                } else {
+                    // Sort representations: text-based first (extracted_text, markdown, pdf), then images
+                    representations.sort((a, b) => {
+                        const repA = a.representation || '';
+                        const repB = b.representation || '';
+                        
+                        // Text-based representations priority
+                        const textReps = ['extracted_text', 'markdown', 'pdf', 'text'];
+                        const isTextA = textReps.some(rep => repA.includes(rep));
+                        const isTextB = textReps.some(rep => repB.includes(rep));
+                        
+                        if (isTextA && !isTextB) return -1;
+                        if (!isTextA && isTextB) return 1;
+                        
+                        // If both are text or both are images, sort alphabetically
+                        return repA.localeCompare(repB);
+                    });
+                    
+                    // Render all representations initially (all collapsed by default)
+                    representations.forEach((rep, index) => {
+                        console.log(`Representation ${index}:`, rep);
+                        $('#representationsList').append(renderRepresentation(rep, index));
+                    });
+                    
+                    // Fetch detailed info for each representation that has info.url
+                    representations.forEach(async (rep, index) => {
+                        if (rep.info && rep.info.url) {
+                            try {
+                                const detailedRep = await getRepresentationDetails(rep.info.url);
+                                console.log(`Detailed representation ${index}:`, detailedRep);
+                                
+                                // Update the card with the real status
+                                updateRepresentationCard(index, detailedRep, rep.info.url);
+                                
+                                // If status is pending, start polling
+                                const status = detailedRep.status?.state || 'pending';
+                                if (status === 'pending') {
+                                    console.log(`Starting polling for representation ${index}`);
+                                    pollRepresentationDetails(rep.info.url, index, 10, 5000);
+                                }
+                            } catch (error) {
+                                console.error(`Error fetching representation details for ${index}:`, error);
+                                // Update to show error
+                                const card = $(`.representation-card[data-rep-index="${index}"]`);
+                                if (card.length) {
+                                    card.find('.status-badge').text('error').removeClass('bg-success bg-warning bg-danger').addClass('bg-danger');
+                                    card.find('.card-body .badge').text('error').removeClass('bg-success bg-warning bg-danger').addClass('bg-danger');
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Attach click handlers for load content buttons (use event delegation for dynamically added buttons)
+                    $(document).on('click', '.load-content-btn', function() {
+                        const repIndex = $(this).data('rep-index');
+                        const urlTemplate = $(this).data('url-template');
+                        const repType = $(this).data('rep-type');
+                        loadRepContent(repIndex, urlTemplate, repType);
+                        $(this).prop('disabled', true);
+                    });
+                }
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                $('#loadBtn').prop('disabled', false);
+                $('.loading-spinner').removeClass('active');
+            }
+        });
+        
+        // Paste button handler
+        $('#pasteBtn').on('click', async function() {
+            try {
+                const text = await navigator.clipboard.readText();
+                $('#fileId').val(text);
+            } catch (error) {
+                showError('Failed to read from clipboard');
+            }
+        });
+        
+        // Box Content Picker - create instance immediately like in the example
+        let filePicker = null;
+        
+        // Storage key for last folder
+        const LAST_FOLDER_KEY = 'boxPickerLastFolder';
+        
+        // Track current folder and root folder
+        let currentRootFolderId = '0';
+        let currentFolderId = '0';
+        
+        // Get last folder from localStorage
+        function getLastFolder() {
+            try {
+                const lastFolder = localStorage.getItem(LAST_FOLDER_KEY);
+                return lastFolder || '0'; // Default to root folder '0'
+            } catch (e) {
+                console.warn('Could not access localStorage:', e);
+                return '0';
+            }
+        }
+        
+        // Save last folder to localStorage
+        function saveLastFolder(folderId) {
+            try {
+                localStorage.setItem(LAST_FOLDER_KEY, folderId);
+                currentFolderId = folderId;
+            } catch (e) {
+                console.warn('Could not save to localStorage:', e);
+            }
+        }
+        
+        // Get current folder from breadcrumb using root folder and breadcrumb structure
+        function getCurrentFolderFromBreadcrumb(pickerContainer, rootFolderId) {
+            try {
+                // Look for breadcrumb elements
+                const breadcrumb = pickerContainer.querySelector('.bcp-breadcrumb') || 
+                                 pickerContainer.querySelector('[class*="breadcrumb"]') ||
+                                 pickerContainer.querySelector('[role="navigation"]');
+                
+                if (breadcrumb) {
+                    // Try to find the last breadcrumb item (current folder)
+                    const breadcrumbItems = breadcrumb.querySelectorAll('a, button, [data-id], [data-box-id], [data-resin-target]');
+                    
+                    if (breadcrumbItems.length > 0) {
+                        // Get the last breadcrumb item which represents the current folder
+                        const lastItem = breadcrumbItems[breadcrumbItems.length - 1];
+                        
+                        // Try multiple ways to extract folder ID
+                        let folderId = lastItem.getAttribute('data-id') || 
+                                     lastItem.getAttribute('data-box-id') ||
+                                     lastItem.getAttribute('data-resin-target')?.match(/folders\/(\d+)/)?.[1] ||
+                                     lastItem.getAttribute('href')?.match(/folders\/(\d+)/)?.[1];
+                        
+                        // If no folder ID found, check if we're at root
+                        if (!folderId) {
+                            // Check if breadcrumb text indicates root
+                            const breadcrumbText = breadcrumb.textContent || breadcrumb.innerText;
+                            if (breadcrumbText.includes('All Files') || breadcrumbText.trim() === '') {
+                                folderId = rootFolderId || '0';
+                            }
+                        }
+                        
+                        return folderId || rootFolderId;
+                    }
+                }
+                
+                // Fallback: return root folder if breadcrumb not found
+                return rootFolderId || '0';
+            } catch (e) {
+                console.warn('Could not read breadcrumb:', e);
+                return rootFolderId || '0';
+            }
+        }
+        
+        function initializeBoxPicker() {
+            const accessToken = getAccessToken();
+            if (!accessToken) {
+                showError('Access token not available. Please wait for authentication to complete.');
+                return;
+            }
+            
+            // Check if Box is available
+            if (!window.Box || !window.Box.FilePicker) {
+                showError('Box UI Elements library not loaded. Please refresh the page.');
+                return;
+            }
+            
+            // Initialize picker if not already initialized (matching the example pattern)
+            if (!filePicker) {
+                try {
+                    filePicker = new Box.FilePicker();
+                    
+                    // Listen for file selection (add listeners before showing, like in example)
+                    filePicker.addListener('choose', function(items) {
+                        if (items && items.length > 0) {
+                            const selectedFile = items[0];
+                            if (selectedFile.type === 'file') {
+                                // Get current folder from breadcrumb using root folder
+                                const pickerContainer = document.querySelector('#boxPickerContainer');
+                                if (pickerContainer) {
+                                    const currentFolder = getCurrentFolderFromBreadcrumb(pickerContainer, '0');
+                                    if (currentFolder && currentFolder !== '0') {
+                                        saveLastFolder(currentFolder);
+                                    } else if (selectedFile.parent && selectedFile.parent.id) {
+                                        // Fallback to parent folder from file object
+                                        saveLastFolder(selectedFile.parent.id);
+                                    }
+                                } else if (selectedFile.parent && selectedFile.parent.id) {
+                                    // Fallback to parent folder from file object
+                                    saveLastFolder(selectedFile.parent.id);
+                                }
+                                
+                                // Set the file ID in the input field
+                                $('#fileId').val(selectedFile.id);
+                                // Hide the picker and close modal
+                                filePicker.hide();
+                                const modal = bootstrap.Modal.getInstance(document.getElementById('boxPickerModal'));
+                                if (modal) {
+                                    modal.hide();
+                                }
+                                // Automatically load representations
+                                $('#fileForm').submit();
+                            } else {
+                                showError('Please select a file, not a folder.');
+                            }
+                        }
+                    });
+                    
+                    // Listen for cancel
+                    filePicker.addListener('cancel', function() {
+                        filePicker.hide();
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('boxPickerModal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error initializing Box FilePicker:', error);
+                    showError('Failed to initialize Box File Picker: ' + error.message);
+                }
+            }
+        }
+        
+        // Box picker button handler - show modal and initialize picker
+        $('#boxPickerModal').on('show.bs.modal', function() {
+            const accessToken = getAccessToken();
+            if (!accessToken) {
+                showError('Access token not available. Please wait for authentication to complete.');
+                const modal = bootstrap.Modal.getInstance(this);
+                if (modal) {
+                    modal.hide();
+                }
+                return;
+            }
+            
+            if (!window.Box || !window.Box.FilePicker) {
+                showError('Box UI Elements library not loaded. Please refresh the page.');
+                const modal = bootstrap.Modal.getInstance(this);
+                if (modal) {
+                    modal.hide();
+                }
+                return;
+            }
+            
+            // Initialize picker if not already initialized
+            if (!filePicker) {
+                initializeBoxPicker();
+            }
+            
+            if (filePicker) {
+                try {
+                    // Get the last folder from localStorage, or default to root folder '0'
+                    const currentFolderId = getLastFolder();
+                    currentRootFolderId = '0';
+                    
+                    // Configure picker options with rootFolderId and currentFolderId
+                    // According to Box UI Elements (from docgen-next-level):
+                    // - rootFolderId: The root of the navigation tree (defaults to '0')
+                    // - currentFolderId: The folder where the picker should start (optional)
+                    // Parameters: show(rootFolderId, token, options)
+                    const options = {
+                        container: '#boxPickerContainer',
+                        maxSelectable: 1,
+                        canSetShareAccess: false,
+                        canCreateNewFolder: false,
+                        canUpload: false,
+                        rootFolderId: '0'
+                    };
+                    
+                    // Only set currentFolderId if it's different from root
+                    if (currentFolderId && currentFolderId !== '0') {
+                        options.currentFolderId = currentFolderId;
+                    }
+                    
+                    // Show the picker - first parameter is rootFolderId, options contain both rootFolderId and currentFolderId
+                    filePicker.show('0', accessToken, options);
+                } catch (error) {
+                    console.error('Error showing Box FilePicker:', error);
+                    showError('Failed to show Box File Picker: ' + error.message);
+                    const modal = bootstrap.Modal.getInstance(this);
+                    if (modal) {
+                        modal.hide();
+                    }
+                }
+            } else {
+                showError('Box File Picker failed to initialize. Please refresh the page.');
+                const modal = bootstrap.Modal.getInstance(this);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+        });
+        
+        // Clean up picker when modal is hidden
+        $('#boxPickerModal').on('hidden.bs.modal', function() {
+            if (filePicker) {
+                filePicker.hide();
+            }
+            // Clear the container
+            $('#boxPickerContainer').empty();
+        });
+        
+        // Handle collapse toggle icon rotation
+        $(document).on('shown.bs.collapse hidden.bs.collapse', '.collapse', function(e) {
+            const collapseId = $(this).attr('id');
+            const toggleBtn = $(`[data-bs-target="#${collapseId}"]`);
+            const icon = toggleBtn.find('i');
+            
+            if (e.type === 'shown') {
+                // Just expanded - show down chevron
+                icon.removeClass('bi-chevron-right').addClass('bi-chevron-down');
+                toggleBtn.attr('aria-expanded', 'true');
+            } else {
+                // Just collapsed - show right chevron
+                icon.removeClass('bi-chevron-down').addClass('bi-chevron-right');
+                toggleBtn.attr('aria-expanded', 'false');
+            }
+        });
+        
+        // Authenticate and get token on page load (Box 3rd party integration pattern)
+        $(document).ready(function() {
+            const params = new URLSearchParams(window.location.search);
+            const authCode = params.get('auth');
+            const id = params.get('id');
+            const clientId = params.get('clientId');
+            
+            // Fallback: Check for token in query string (for dev purposes)
+            const queryToken = params.get('token') || params.get('access_token');
+            
+            // If no auth params but token is in query string, use it directly
+            if ((!authCode || !id || !clientId) && queryToken) {
+                token = queryToken;
+                $('#loader').removeClass('show');
+                $('.container').show();
+                setTimeout(function() {
+                    initializeBoxPicker();
+                }, 100);
+                return;
+            }
+            
+            // If no auth params and no token, show error
+            if (!authCode || !id || !clientId) {
+                showError('Missing authentication parameters. Required: auth, id, clientId (or token for dev)');
+                $('#loader').removeClass('show');
+                $('.container').show();
+                return;
+            }
+            
+            // Show loading state (matching indexer/index.html pattern)
+            $('#loader').addClass('show');
+            $('.container').hide();
+            
+            // Get token from Box 3rd party integration endpoint
+            $.ajax({
+                method: 'get',
+                url: 'https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator',
+                data: { 
+                    authCode: authCode, 
+                    id: id, 
+                    clientId: clientId 
+                },
+                crossDomain: true,
+                cache: false,
+                success: function(response) {
+                    token = response.token;
+                    if (!token) {
+                        // Fallback: Try query string token if available
+                        if (queryToken) {
+                            token = queryToken;
+                        } else {
+                            showError('Failed to get access token from authentication service.');
+                            $('#loader').removeClass('show');
+                            $('.container').show();
+                            return;
+                        }
+                    }
+                    
+                    // Hide loading state
+                    $('#loader').removeClass('show');
+                    $('.container').show();
+                    
+                    // Initialize picker when page loads (Box library should be loaded by now)
+                    // Give it a small delay to ensure Box is available
+                    setTimeout(function() {
+                        initializeBoxPicker();
+                    }, 100);
+                },
+                error: function(xhr, status, error) {
+                    // Fallback: Try query string token if available
+                    if (queryToken) {
+                        token = queryToken;
+                        $('#loader').removeClass('show');
+                        $('.container').show();
+                        setTimeout(function() {
+                            initializeBoxPicker();
+                        }, 100);
+                    } else {
+                        showError('Failed to authenticate: ' + (error || 'Unknown error') + '. For dev, you can use ?token=YOUR_TOKEN');
+                        $('#loader').removeClass('show');
+                        $('.container').show();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
