@@ -433,9 +433,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
   var versionLimit = 5; // Default to showing 5 versions
   
   $(document).ready(function(){
-    // Load Box UI Elements Preview library
-    loadBoxPreviewLibrary();
-
+    
       $.ajax({
       method: 'get',
           url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
@@ -754,23 +752,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     $('#previewModalLabel').text('Preview: ' + (version.name || 'Version ' + version.versionNumber));
     
     // Wait for Box Preview library to load
-    if (!boxPreviewLoaded || !window.Box || !window.Box.ContentPreview) {
-      var checkInterval = setInterval(function() {
-        if (boxPreviewLoaded && window.Box && window.Box.ContentPreview) {
-          clearInterval(checkInterval);
-          initializeBoxPreview(version, versionIndex);
-        }
-      }, 100);
-      
-      // Timeout after 10 seconds
-      setTimeout(function() {
-        clearInterval(checkInterval);
-        if (!boxPreviewLoaded || !window.Box || !window.Box.ContentPreview) {
-          alert('Box Preview library is still loading. Please try again in a moment.');
-        }
-      }, 10000);
-      return;
-    }
+    
     
     initializeBoxPreview(version, versionIndex);
   }
@@ -834,7 +816,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
       }
       
       // Create new preview instance
-      boxPreviewInstance = new window.Box.ContentPreview();
+      boxPreviewInstance = new Box.ContentPreview();
       
       // Show preview with version-specific options
       boxPreviewInstance.show(fileId, accessToken, {
