@@ -72,7 +72,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     transition: height 0.35s ease;
   }
   
-  .version-limit-selector {
+  .time-filter-selector {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -81,7 +81,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     background-color: #f8f9fa;
   }
   
-  .version-limit-selector label {
+  .time-filter-selector label {
     margin: 0;
     font-size: 0.875rem;
     font-weight: 500;
@@ -89,10 +89,10 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     white-space: nowrap;
   }
   
-  .version-limit-selector select {
+  .time-filter-selector select {
     flex: 0 0 auto;
     width: auto;
-    min-width: 80px;
+    min-width: 140px;
     padding: 4px 8px;
     font-size: 0.875rem;
     border: 1px solid #ced4da;
@@ -104,6 +104,57 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     max-height: 600px;
     overflow-y: auto;
     padding-right: 10px;
+    position: relative;
+  }
+  
+  .version-timeline-wrapper {
+    display: flex;
+    position: relative;
+    min-height: 100%;
+    overflow: visible;
+  }
+  
+  .version-timeline-line-element {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+    background: transparent;
+  }
+  
+  .version-timeline-line-element.horizontal {
+    height: 2px;
+    background: #6c757d;
+  }
+  
+  .version-timeline-line-element.vertical {
+    width: 2px;
+    background: #6c757d;
+  }
+  
+  .version-timeline-line-element.crossing {
+    background: #dc3545;
+  }
+  
+  .version-timeline-line-element.crossing.horizontal {
+    height: 3px;
+  }
+  
+  .version-timeline-line-element.crossing.vertical {
+    width: 3px;
+  }
+  
+  .version-column {
+    flex: 1;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .version-column.left {
+    padding-right: 20px;
+  }
+  
+  .version-column.right {
+    padding-left: 20px;
   }
   
   .version-list-container::-webkit-scrollbar {
@@ -127,14 +178,33 @@ License URL: http://creativecommons.org/licenses/by/3.0/
   .version-card {
     border: 2px solid #e9ecef;
     border-radius: 6px;
-    padding: 12px 15px;
-    margin-bottom: 10px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    background: white;
     position: relative;
     pointer-events: auto;
-    z-index: 1;
+    z-index: 2;
+    max-width: 90%;
+    width: fit-content;
+    min-height: 50px;
+  }
+  
+  .version-column.left .version-card {
+    margin-left: auto;
+    margin-right: 0;
+    background: #e7f3ff; /* Light blue */
+  }
+  
+  .version-column.right .version-card {
+    margin-left: 0;
+    margin-right: auto;
+    background: #e7f5e7; /* Light green */
+  }
+  
+  /* Add top padding to align versions properly */
+  .version-card[data-version-order] {
+    margin-top: 0;
   }
   
   .version-card:hover {
@@ -167,25 +237,48 @@ License URL: http://creativecommons.org/licenses/by/3.0/
   
   .version-info {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 2px;
     flex: 1;
+  }
+  
+  .version-number-date {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.2;
   }
   
   .version-number {
     font-weight: 600;
     color: #0d6efd;
-    font-size: 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .version-date {
+    font-size: 0.75rem;
+    color: #6c757d;
+  }
+  
+  .version-user {
+    font-size: 0.75rem;
+    color: #495057;
+    line-height: 1.2;
+  }
+  
+  .version-user-name {
+    font-weight: 500;
+  }
+  
+  .version-user-email {
+    color: #6c757d;
+    font-size: 0.7rem;
   }
   
   .version-actions {
     display: flex;
     gap: 8px;
-  }
-  
-  .version-date {
-    font-size: 0.875rem;
-    color: #6c757d;
+    align-items: flex-start;
   }
   
   .btn-preview {
@@ -201,6 +294,26 @@ License URL: http://creativecommons.org/licenses/by/3.0/
   .btn-preview:hover {
     background: #f8f9fa;
     color: #0d6efd;
+  }
+  
+  .btn-expand {
+    padding: 4px 8px;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    margin-left: 4px;
+  }
+  
+  .btn-expand:hover {
+    background: #f8f9fa;
+    color: #0d6efd;
+  }
+  
+  .version-card.collapsed-group {
+    border-style: dashed;
   }
   
   .compare-button-container {
@@ -430,10 +543,10 @@ License URL: http://creativecommons.org/licenses/by/3.0/
   var boxPreviewInstance = null;
   var boxPreviewLoaded = false;
   var currentPreviewVersionIndex = -1;
-  var versionLimit = 5; // Default to showing 5 versions
+  var timeFilterDays = 7; // Default to showing last 7 days
   
   $(document).ready(function(){
-    
+
       $.ajax({
       method: 'get',
           url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
@@ -507,112 +620,172 @@ License URL: http://creativecommons.org/licenses/by/3.0/
   
   function loadVersions(fileInfo) {
     console.log("**Loading versions for file:** " + JSON.stringify(fileInfo));
-    var url = "https://api.box.com/2.0/files/" + fileId + "/versions?fields=id,name,created_at,modified_at,size";
+    var url = "https://api.box.com/2.0/files/" + fileId + "/versions?fields=id,name,created_at,modified_at,size,modified_by";
     
     // Display file name
     var fileName = fileInfo.name || 'File Versions';
     $("#fileNameDisplay").text(fileName);
     $("#fileNameDisplay").data('original-name', fileName);
     
-    // Add current version to versions array
-    var currentVersion = {
-      id: fileId,
-      name: fileInfo.name,
-      versionNumber: 0,
-      created_at: fileInfo.modified_at,
-      modified_at: fileInfo.modified_at,
-      extension: fileExt,
-      isCurrent: true
-    };
-    versionsData.push(currentVersion);
-
+    // Get current file info with modified_by for current version
      $.ajax({
-      url: url,
+      url: 'https://api.box.com/2.0/files/' + fileId + '?fields=id,name,modified_at,modified_by',
       headers: {"Authorization": "Bearer " + accessToken},
       type: 'get',
-      data: {},
+      success: function(fileResponse) {
+        // Add current version to versions array
+        var currentVersion = {
+          id: fileId,
+          name: fileInfo.name,
+          versionNumber: 0,
+          created_at: fileInfo.modified_at,
+          modified_at: fileInfo.modified_at,
+          extension: fileExt,
+          isCurrent: true,
+          modified_by: fileResponse.modified_by || null
+        };
+        versionsData.push(currentVersion);
+        
+        // Now fetch version history
+     $.ajax({
+      url: url,
+          headers: {"Authorization": "Bearer " + accessToken},
+      type: 'get',
+          data: {},
       success: function(response) {
-        console.log("**Fetched versions:** " + response.entries.length);
-        
-        // Process versions (they come in reverse chronological order)
-        var totalVersions = response.entries.length;
-        var versionNum = totalVersions;
-        
+            console.log("**Fetched versions:** " + response.entries.length);
+            
+            // Process versions (they come in reverse chronological order)
+            var totalVersions = response.entries.length;
+            var versionNum = totalVersions;
+            
           $.each(response.entries, function(k, data) {
-          var extension = data.name ? data.name.substr((data.name.lastIndexOf('.') + 1)) : fileExt;
-          var versionInfo = {
-            id: data.id,
-            name: data.name,
-            versionNumber: versionNum,
-            created_at: data.created_at,
-            modified_at: data.modified_at || data.created_at,
-            extension: extension,
-            isCurrent: false
-          };
-          versionsData.push(versionInfo);
-          versionNum--;
+              var extension = data.name ? data.name.substr((data.name.lastIndexOf('.') + 1)) : fileExt;
+              var versionInfo = {
+                id: data.id,
+                name: data.name,
+                versionNumber: versionNum,
+                created_at: data.created_at,
+                modified_at: data.modified_at || data.created_at,
+                extension: extension,
+                isCurrent: false,
+                modified_by: data.modified_by || null
+              };
+              versionsData.push(versionInfo);
+              versionNum--;
+            });
+            
+            // Update current version number
+            currentVersion.versionNumber = totalVersions + 1;
+            
+            // Sort by version number descending (newest first)
+            versionsData.sort(function(a, b) {
+              return b.versionNumber - a.versionNumber;
+            });
+            
+        // Populate time filter dropdown
+        populateTimeFilterDropdown();
+        
+        // Apply time filter
+        applyTimeFilter();
+          },
+          error: function(xhr, status, error) {
+            console.log("**Error fetching versions:** " + JSON.stringify(xhr));
+            $(".version-list-container").html('<div class="empty-state">Failed to load versions. Please try again.</div>');
+          }
         });
-        
-        // Update current version number
-        currentVersion.versionNumber = totalVersions + 1;
-        
-        // Sort by version number descending (newest first)
-        versionsData.sort(function(a, b) {
-          return b.versionNumber - a.versionNumber;
-        });
-        
-        // Populate version limit dropdown
-        populateVersionLimitDropdown(versionsData.length);
-        
-        // Apply version limit
-        applyVersionLimit();
       },
-      error: function(xhr, status, error) {
-        console.log("**Error fetching versions:** " + JSON.stringify(xhr));
-        $(".version-list-container").html('<div class="empty-state">Failed to load versions. Please try again.</div>');
+      error: function(xhr) {
+        console.log("**Error fetching current file info:** " + JSON.stringify(xhr));
+        // Continue anyway with null created_by
+        var currentVersion = {
+          id: fileId,
+          name: fileInfo.name,
+          versionNumber: 0,
+          created_at: fileInfo.modified_at,
+          modified_at: fileInfo.modified_at,
+          extension: fileExt,
+          isCurrent: true,
+          modified_by: null
+        };
+        versionsData.push(currentVersion);
       }
     });
   }
   
-  function populateVersionLimitDropdown(totalVersions) {
-    var dropdown = $('#versionLimitSelect');
+  function populateTimeFilterDropdown() {
+    var dropdown = $('#timeFilterSelect');
     dropdown.empty();
     
-    // Generate options: 5, 10, 15, etc. up to total versions (rounded up to nearest 5)
-    var maxLimit = Math.ceil(totalVersions / 5) * 5;
-    if (maxLimit < totalVersions) {
-      maxLimit = totalVersions;
-    }
+    // Time-based options
+    var timeOptions = [
+      { value: 7, text: 'Last 7 days' },
+      { value: 30, text: 'Last 30 days' },
+      { value: 90, text: 'Last 90 days' },
+      { value: 0, text: 'All versions' }
+    ];
     
-    for (var i = 5; i <= maxLimit; i += 5) {
-      var option = $('<option/>')
-        .val(i)
-        .text(i);
+    $.each(timeOptions, function(index, option) {
+      var optionElement = $('<option/>')
+        .val(option.value)
+        .text(option.text);
       
-      if (i === versionLimit) {
-        option.prop('selected', true);
+      if (option.value === timeFilterDays) {
+        optionElement.prop('selected', true);
       }
       
-      dropdown.append(option);
-    }
-    
-    // If total versions is less than 5, add it as an option
-    if (totalVersions < 5 && totalVersions > 0) {
-      var totalOption = $('<option/>')
-        .val(totalVersions)
-        .text(totalVersions);
-      if (totalVersions === versionLimit) {
-        totalOption.prop('selected', true);
-      }
-      dropdown.prepend(totalOption);
-    }
+      dropdown.append(optionElement);
+    });
   }
   
-  function applyVersionLimit() {
-    // Limit versions based on current limit setting
-    var displayVersions = versionsData.slice(0, versionLimit);
+  function applyTimeFilter() {
+    // Filter versions based on time filter
+    var displayVersions;
+    
+    if (timeFilterDays === 0) {
+      // Show all versions
+      displayVersions = versionsData.slice();
+    } else {
+      // Filter by date
+      var cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - timeFilterDays);
+      
+      displayVersions = versionsData.filter(function(version) {
+        var versionDate = new Date(version.modified_at || version.created_at);
+        return versionDate >= cutoffDate;
+      });
+    }
+    
     renderVersions(displayVersions);
     updateCompareButton();
+  }
+  
+  function groupVersionsByUser(versions) {
+    // Group consecutive versions by the same user (same email)
+    var groups = [];
+    var currentGroup = null;
+    
+    $.each(versions, function(index, version) {
+      var userEmail = '';
+      if (version.modified_by) {
+        userEmail = version.modified_by.login || '';
+      }
+      
+      if (!currentGroup || currentGroup.userEmail !== userEmail) {
+        // Start a new group
+        currentGroup = {
+          userEmail: userEmail,
+          versions: [version],
+          startIndex: index
+        };
+        groups.push(currentGroup);
+      } else {
+        // Add to current group
+        currentGroup.versions.push(version);
+      }
+    });
+    
+    return groups;
   }
   
   function renderVersions(versions) {
@@ -624,24 +797,218 @@ License URL: http://creativecommons.org/licenses/by/3.0/
       return;
     }
     
-    $.each(versions, function(index, version) {
+    // Group consecutive versions by same user
+    var versionGroups = groupVersionsByUser(versions);
+    
+    // Create timeline wrapper
+    var timelineWrapper = $('<div/>').addClass('version-timeline-wrapper');
+    var leftColumn = $('<div/>').addClass('version-column left');
+    var rightColumn = $('<div/>').addClass('version-column right');
+    
+    timelineWrapper.append(leftColumn);
+    timelineWrapper.append(rightColumn);
+    
+    // Track positions for drawing lines - store all versions in order
+    var versionCards = [];
+    var previousIsBoxDemo = null;
+    var globalIndex = 0;
+    
+    // Render each group
+    $.each(versionGroups, function(groupIndex, group) {
+      var isCollapsed = group.versions.length > 1;
+      var displayVersions = isCollapsed ? [group.versions[0]] : group.versions;
+      
+      // First pass: create cards for this group
+      $.each(displayVersions, function(index, version) {
+      // Determine user email and domain
+      var userEmail = '';
+      var userName = 'Unknown User';
+      var isBoxDemo = false;
+      
+      if (version.modified_by) {
+        userName = version.modified_by.name || 'Unknown User';
+        userEmail = version.modified_by.login || '';
+        isBoxDemo = userEmail.toLowerCase().endsWith('@boxdemo.com');
+      }
+      
+      // Determine which column
+      var targetColumn = isBoxDemo ? leftColumn : rightColumn;
+      
+      // Create version card
       var versionCard = $('<div/>')
         .addClass('version-card')
         .attr('data-version-id', version.id)
-        .attr('data-version-ext', version.extension);
+        .attr('data-version-ext', version.extension)
+        .attr('data-is-boxdemo', isBoxDemo)
+        .attr('data-version-order', index);
       
       var versionHeader = $('<div/>').addClass('version-header');
       
       var versionInfo = $('<div/>').addClass('version-info');
+      
+      // Line 1: Version number and date together
+      var versionNumberDate = $('<div/>').addClass('version-number-date');
+      var versionText = 'Version ' + version.versionNumber;
+      if (isCollapsed && index === 0) {
+        // Show count for collapsed group
+        var oldestVersion = group.versions[group.versions.length - 1];
+        versionText += ' - ' + oldestVersion.versionNumber + ' (' + group.versions.length + ' versions)';
+      }
+      if (version.isCurrent) {
+        versionText += ' (Current)';
+      }
       var versionNumber = $('<span/>')
         .addClass('version-number')
-        .text('Version ' + version.versionNumber + (version.isCurrent ? ' (Current)' : ''));
-      versionInfo.append(versionNumber);
-      
+        .text(versionText);
       var versionDate = $('<span/>')
         .addClass('version-date')
         .text(formatDate(version.modified_at));
-      versionInfo.append(versionDate);
+      versionNumberDate.append(versionNumber);
+      versionNumberDate.append(versionDate);
+      versionInfo.append(versionNumberDate);
+      
+      // Line 2: User name and email
+      var versionUser = $('<div/>').addClass('version-user');
+      var userNameSpan = $('<span/>')
+        .addClass('version-user-name')
+        .text(userName);
+      versionUser.append(userNameSpan);
+      
+      if (userEmail) {
+        var emailSpan = $('<span/>')
+          .addClass('version-user-email')
+          .text(' • ' + userEmail);
+        versionUser.append(emailSpan);
+      }
+      versionInfo.append(versionUser);
+      
+      var versionActions = $('<div/>').addClass('version-actions');
+      
+      var previewBtn = $('<button/>')
+        .addClass('btn-preview')
+        .attr('type', 'button')
+        .attr('title', 'Preview version')
+        .html('<i class="bi bi-eye"></i>')
+        .click(function(e) {
+          e.stopPropagation();
+          var versionIndex = versionsData.findIndex(function(v) { return v.id === version.id; });
+          previewVersion(version, versionIndex);
+        });
+      versionActions.append(previewBtn);
+      
+      // Add expand/collapse button for collapsed groups
+      if (isCollapsed && index === 0) {
+        versionCard.addClass('collapsed-group');
+        versionCard.attr('data-group-id', 'group-' + groupIndex);
+        versionCard.attr('data-group-versions', JSON.stringify(group.versions.map(function(v) { return v.id; })));
+        
+        var expandBtn = $('<button/>')
+          .addClass('btn-expand')
+          .attr('type', 'button')
+          .attr('title', 'Expand to show all ' + group.versions.length + ' versions')
+          .html('<i class="bi bi-chevron-down"></i>')
+          .click(function(e) {
+            e.stopPropagation();
+            expandGroup(versionCard, group);
+          });
+        versionActions.append(expandBtn);
+      }
+      
+      versionHeader.append(versionInfo);
+      versionHeader.append(versionActions);
+      
+      versionCard.append(versionHeader);
+      
+      versionCard.click(function() {
+        // When collapsed, select the newest version (first in group)
+        var versionToSelect = isCollapsed ? group.versions[0] : version;
+        toggleVersionSelection(versionToSelect.id, versionToSelect.extension);
+      });
+      
+      // Only add padding when versions cross sides (different domains)
+      if (globalIndex > 0 && previousIsBoxDemo !== null && previousIsBoxDemo !== isBoxDemo) {
+        // Versions cross sides - add padding to show progression
+        versionCard.css('margin-top', '20px');
+      }
+      
+      // Store previous state for next iteration
+      previousIsBoxDemo = isBoxDemo;
+      
+      // Store card info for line drawing (use first version of group for positioning)
+      versionCards.push({
+        card: versionCard,
+        isBoxDemo: isBoxDemo,
+        index: globalIndex,
+        column: targetColumn,
+        group: isCollapsed ? group : null
+      });
+      
+      targetColumn.append(versionCard);
+      globalIndex++;
+      }); // End of displayVersions loop
+    }); // End of versionGroups loop
+    
+    container.append(timelineWrapper);
+    
+    // Draw connecting lines after cards are rendered
+    setTimeout(function() {
+      drawVersionTimelineLines(versionCards);
+    }, 200);
+  }
+  
+  function expandGroup(collapsedCard, group) {
+    // Create expanded versions
+    var expandedCards = [];
+    var isBoxDemo = collapsedCard.attr('data-is-boxdemo') === 'true';
+    
+    // Create cards for all versions in the group (skip first as it's already shown)
+    for (var i = 1; i < group.versions.length; i++) {
+      var version = group.versions[i];
+      
+      // Get user info
+      var userEmail = '';
+      var userName = 'Unknown User';
+      if (version.modified_by) {
+        userName = version.modified_by.name || 'Unknown User';
+        userEmail = version.modified_by.login || '';
+      }
+      
+      // Create version card
+      var versionCard = $('<div/>')
+        .addClass('version-card')
+        .attr('data-version-id', version.id)
+        .attr('data-version-ext', version.extension)
+        .attr('data-is-boxdemo', isBoxDemo);
+      
+      var versionHeader = $('<div/>').addClass('version-header');
+      var versionInfo = $('<div/>').addClass('version-info');
+      
+      // Line 1: Version number and date
+      var versionNumberDate = $('<div/>').addClass('version-number-date');
+      var versionNumber = $('<span/>')
+        .addClass('version-number')
+        .text('Version ' + version.versionNumber + (version.isCurrent ? ' (Current)' : ''));
+      var versionDate = $('<span/>')
+        .addClass('version-date')
+        .text(formatDate(version.modified_at));
+      versionNumberDate.append(versionNumber);
+      versionNumberDate.append(versionDate);
+      versionInfo.append(versionNumberDate);
+      
+      // Line 2: User name and email
+      var versionUser = $('<div/>').addClass('version-user');
+      var userNameSpan = $('<span/>')
+        .addClass('version-user-name')
+        .text(userName);
+      versionUser.append(userNameSpan);
+      
+      if (userEmail) {
+        var emailSpan = $('<span/>')
+          .addClass('version-user-email')
+          .text(' • ' + userEmail);
+        versionUser.append(emailSpan);
+      }
+      versionInfo.append(versionUser);
       
       var versionActions = $('<div/>').addClass('version-actions');
       
@@ -659,15 +1026,211 @@ License URL: http://creativecommons.org/licenses/by/3.0/
       
       versionHeader.append(versionInfo);
       versionHeader.append(versionActions);
-      
       versionCard.append(versionHeader);
       
       versionCard.click(function() {
         toggleVersionSelection(version.id, version.extension);
       });
       
-      container.append(versionCard);
+      expandedCards.push(versionCard);
+    }
+    
+    // Insert expanded cards after the collapsed card
+    $.each(expandedCards, function(idx, card) {
+      collapsedCard.after(card);
     });
+    
+    // Change expand button to collapse button
+    var expandBtn = collapsedCard.find('.btn-expand');
+    expandBtn.html('<i class="bi bi-chevron-up"></i>')
+      .attr('title', 'Collapse group')
+      .off('click')
+      .click(function(e) {
+        e.stopPropagation();
+        collapseGroup(collapsedCard, expandedCards, group);
+      });
+    
+    collapsedCard.removeClass('collapsed-group');
+    collapsedCard.addClass('expanded-group');
+    
+    // Update version number to show just the first version
+    var versionNumberSpan = collapsedCard.find('.version-number');
+    var firstVersion = group.versions[0];
+    versionNumberSpan.text('Version ' + firstVersion.versionNumber + (firstVersion.isCurrent ? ' (Current)' : ''));
+    
+    // Redraw lines
+    setTimeout(function() {
+      var allCards = [];
+      $('.version-card').each(function() {
+        var card = $(this);
+        allCards.push({
+          card: card,
+          isBoxDemo: card.attr('data-is-boxdemo') === 'true',
+          index: card.index(),
+          column: card.parent()
+        });
+      });
+      drawVersionTimelineLines(allCards);
+    }, 100);
+  }
+  
+  function collapseGroup(collapsedCard, expandedCards, group) {
+    // Remove expanded cards
+    $.each(expandedCards, function(idx, card) {
+      card.remove();
+    });
+    
+    // Change collapse button back to expand button
+    var expandBtn = collapsedCard.find('.btn-expand');
+    expandBtn.html('<i class="bi bi-chevron-down"></i>')
+      .attr('title', 'Expand to show all ' + group.versions.length + ' versions')
+      .off('click')
+      .click(function(e) {
+        e.stopPropagation();
+        expandGroup(collapsedCard, group);
+      });
+    
+    collapsedCard.removeClass('expanded-group');
+    collapsedCard.addClass('collapsed-group');
+    
+    // Update version number to show range
+    var firstVersion = group.versions[0];
+    var lastVersion = group.versions[group.versions.length - 1];
+    var versionNumberSpan = collapsedCard.find('.version-number');
+    versionNumberSpan.text('Version ' + firstVersion.versionNumber + ' - ' + lastVersion.versionNumber + 
+      ' (' + group.versions.length + ' versions)' + 
+      (firstVersion.isCurrent ? ' (Current)' : ''));
+    
+    // Redraw lines
+    setTimeout(function() {
+      var allCards = [];
+      $('.version-card').each(function() {
+        var card = $(this);
+        allCards.push({
+          card: card,
+          isBoxDemo: card.attr('data-is-boxdemo') === 'true',
+          index: card.index(),
+          column: card.parent()
+        });
+      });
+      drawVersionTimelineLines(allCards);
+    }, 100);
+  }
+  
+  function drawVersionTimelineLines(versionCards) {
+    // Remove existing line elements
+    $('.version-timeline-line-element').remove();
+    
+    if (versionCards.length < 2) {
+      return; // Need at least 2 versions to draw lines
+    }
+    
+    var wrapper = $('.version-timeline-wrapper');
+    
+    if (wrapper.length === 0) {
+      return;
+    }
+    
+    var wrapperWidth = wrapper.width();
+    var wrapperOffset = wrapper.offset();
+    var centerX = wrapperWidth / 2;
+    
+    // Draw line to first version card
+    if (versionCards.length > 0) {
+      var firstCard = versionCards[0].card;
+      var firstCardOffset = firstCard.offset();
+      if (firstCardOffset && wrapperOffset) {
+        var firstTop = (firstCardOffset.top - wrapperOffset.top) + firstCard.outerHeight() / 2;
+        var firstX;
+        if (versionCards[0].isBoxDemo) {
+          firstX = (firstCardOffset.left - wrapperOffset.left) + firstCard.outerWidth();
+        } else {
+          firstX = firstCardOffset.left - wrapperOffset.left;
+        }
+        
+        var firstHorizontal = $('<div/>')
+          .addClass('version-timeline-line-element horizontal crossing')
+          .css({
+            'left': Math.min(centerX, firstX) + 'px',
+            'top': (firstTop - 1) + 'px',
+            'width': Math.abs(centerX - firstX) + 'px'
+          });
+        wrapper.append(firstHorizontal);
+      }
+    }
+    
+    // Draw lines connecting consecutive versions (22->21->20->19 etc.)
+    for (var i = 0; i < versionCards.length - 1; i++) {
+      var current = versionCards[i];
+      var next = versionCards[i + 1];
+      
+      var currentCard = current.card;
+      var nextCard = next.card;
+      
+      if (currentCard.length && nextCard.length) {
+        // Get positions relative to document
+        var currentCardOffset = currentCard.offset();
+        var nextCardOffset = nextCard.offset();
+        
+        if (!currentCardOffset || !nextCardOffset || !wrapperOffset) {
+          continue;
+        }
+        
+        // Calculate positions relative to wrapper
+        var currentTop = (currentCardOffset.top - wrapperOffset.top) + currentCard.outerHeight() / 2;
+        var nextTop = (nextCardOffset.top - wrapperOffset.top) + nextCard.outerHeight() / 2;
+        
+        // Calculate start and end X positions relative to wrapper
+        var startX, endX;
+        
+        if (current.isBoxDemo) {
+          // Left side - line starts from right edge of card
+          startX = (currentCardOffset.left - wrapperOffset.left) + currentCard.outerWidth();
+        } else {
+          // Right side - line starts from left edge of card
+          startX = currentCardOffset.left - wrapperOffset.left;
+        }
+        
+        if (next.isBoxDemo) {
+          // Left side - line ends at right edge of card
+          endX = (nextCardOffset.left - wrapperOffset.left) + nextCard.outerWidth();
+        } else {
+          // Right side - line ends at left edge of card
+          endX = nextCardOffset.left - wrapperOffset.left;
+        }
+        
+        // Always draw red lines connecting versions
+        // Draw vertical line connecting consecutive versions down the center
+        var verticalLine = $('<div/>')
+          .addClass('version-timeline-line-element vertical crossing')
+          .css({
+            'left': (centerX - 1) + 'px',
+            'top': currentTop + 'px',
+            'height': (nextTop - currentTop) + 'px'
+          });
+        wrapper.append(verticalLine);
+        
+        // Draw horizontal line from center to current card
+        var horizontalFromCurrent = $('<div/>')
+          .addClass('version-timeline-line-element horizontal crossing')
+          .css({
+            'left': Math.min(centerX, startX) + 'px',
+            'top': (currentTop - 1) + 'px',
+            'width': Math.abs(centerX - startX) + 'px'
+          });
+        wrapper.append(horizontalFromCurrent);
+        
+        // Draw horizontal line from center to next card
+        var horizontalToNext = $('<div/>')
+          .addClass('version-timeline-line-element horizontal crossing')
+          .css({
+            'left': Math.min(centerX, endX) + 'px',
+            'top': (nextTop - 1) + 'px',
+            'width': Math.abs(centerX - endX) + 'px'
+          });
+        wrapper.append(horizontalToNext);
+      }
+    }
   }
   
   function toggleVersionSelection(versionId, extension) {
@@ -1013,10 +1576,10 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     updateHeaderWithComparison();
   });
   
-  // Handle version limit dropdown change
-  $(document).on('change', '#versionLimitSelect', function() {
-    versionLimit = parseInt($(this).val(), 10);
-    applyVersionLimit();
+  // Handle time filter dropdown change
+  $(document).on('change', '#timeFilterSelect', function() {
+    timeFilterDays = parseInt($(this).val(), 10);
+    applyTimeFilter();
   });
 </script>
 
@@ -1030,12 +1593,15 @@ License URL: http://creativecommons.org/licenses/by/3.0/
       </div>
       
       <div class="collapse show version-selector-collapse" id="versionSelectorCollapse">
-        <div class="version-limit-selector">
-          <label for="versionLimitSelect">Show versions:</label>
-          <select id="versionLimitSelect" class="form-select form-select-sm">
-            <option value="5" selected>5</option>
+        <div class="time-filter-selector">
+          <label for="timeFilterSelect">Show versions:</label>
+          <select id="timeFilterSelect" class="form-select form-select-sm">
+            <option value="7" selected>Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="0">All versions</option>
           </select>
-        </div>
+            </div>
         <div class="version-list-container">
           <!-- Versions will be rendered here -->
         </div>
@@ -1045,15 +1611,15 @@ License URL: http://creativecommons.org/licenses/by/3.0/
             <i class="bi bi-arrow-left-right"></i> Compare Selected Versions
           </button>
           <small class="text-muted d-block mt-2">Select exactly 2 versions to compare</small>
+          </div>
         </div>
-      </div>
     </div>
     
     <div class="comparison-viewer">
       <iframe id="compareFrame" src=""></iframe>
-            </div>
-        </div>
-  
+    </div>
+</div>
+
   <!-- Preview Modal -->
   <div class="modal fade preview-modal" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
     <div class="modal-dialog">
