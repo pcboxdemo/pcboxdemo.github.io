@@ -6,175 +6,1088 @@ License: Creative Commons Attribution 3.0 Unported
 License URL: http://creativecommons.org/licenses/by/3.0/
 -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Sample OAuth 2.0 third party page</title>
-<!-- for-mobile-apps -->
+<title>File Version Comparison</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
-<script
-  src="https://code.jquery.com/jquery-3.3.1.min.js"
-  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-  crossorigin="anonymous"></script>
-    <script>
+<!-- Bootstrap 5 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<!-- Box UI Elements Preview CSS -->
+<link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/17.1.0/en-US/preview.css">
 
+<style>
+  body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  .main-container {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  .version-selector-panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .file-name-header {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 0;
+    padding: 15px;
+    border-bottom: 2px solid #e9ecef;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background-color 0.2s ease;
+  }
+  
+  .file-name-header:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .file-name-header .toggle-icon {
+    font-size: 1rem;
+    color: #6c757d;
+    transition: transform 0.3s ease;
+  }
+  
+  .file-name-header[aria-expanded="false"] .toggle-icon {
+    transform: rotate(-90deg);
+  }
+  
+  .version-selector-collapse {
+    transition: height 0.35s ease;
+  }
+  
+  .version-limit-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+  }
+  
+  .version-limit-selector label {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+    white-space: nowrap;
+  }
+  
+  .version-limit-selector select {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 80px;
+    padding: 4px 8px;
+    font-size: 0.875rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: white;
+  }
+  
+  .version-list-container {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 10px;
+  }
+  
+  .version-list-container::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .version-list-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  .version-list-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+  
+  .version-list-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  .version-card {
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    position: relative;
+    pointer-events: auto;
+    z-index: 1;
+  }
+  
+  .version-card:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+    transform: translateY(-1px);
+  }
+  
+  .version-card.selected {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+  }
+  
+  .version-card.selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #0d6efd;
+    border-radius: 6px 0 0 6px;
+  }
+  
+  .version-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .version-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+  
+  .version-number {
+    font-weight: 600;
+    color: #0d6efd;
+    font-size: 1rem;
+  }
+  
+  .version-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .version-date {
+    font-size: 0.875rem;
+    color: #6c757d;
+  }
+  
+  .btn-preview {
+    padding: 4px 8px;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-preview:hover {
+    background: #f8f9fa;
+    color: #0d6efd;
+  }
+  
+  .compare-button-container {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid #e9ecef;
+  }
+  
+  .btn-compare {
+    width: 100%;
+    padding: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  
+  .btn-compare:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  #loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    display: none;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #0d6efd;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .comparison-viewer {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-top: 20px;
+    display: none;
+  }
+  
+  #compareFrame {
+    width: 100%;
+    height: 800px;
+    border: none;
+    border-radius: 4px;
+  }
+  
+  .preview-modal:not(.show) {
+    display: none !important;
+  }
+  
+  /* Ensure modal backdrop doesn't block interactions when hidden */
+  .modal-backdrop {
+    z-index: 1040;
+  }
+  
+  .preview-modal {
+    z-index: 1055;
+  }
+  
+  .preview-modal.show {
+    z-index: 1055;
+  }
+  
+  .preview-modal .modal-dialog {
+    max-width: 98%;
+    width: 98%;
+    height: 95vh;
+    margin: 2.5vh auto;
+    z-index: 1056;
+    position: relative;
+  }
+  
+  .preview-modal .modal-content {
+    height: 100%;
+    z-index: 1057;
+    position: relative;
+  }
+  
+  .preview-modal .modal-body {
+    height: 100%;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .box-preview-container {
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+    position: relative;
+  }
+  
+  .preview-modal .btn-close-modal {
+    z-index: 1060 !important;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+  
+  .preview-nav-buttons {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1060;
+    display: flex;
+    gap: 10px;
+  }
+  
+  .preview-nav-buttons .btn-nav {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #dee2e6;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .preview-nav-buttons .btn-nav:hover {
+    background: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transform: scale(1.1);
+  }
+  
+  .preview-nav-buttons .btn-nav:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .preview-nav-buttons.prev {
+    left: 10px;
+  }
+  
+  .preview-nav-buttons.next {
+    right: 10px;
+  }
+  
+  .preview-version-indicator {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1060;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #495057;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .preview-modal .modal-header {
+    display: none;
+  }
+  
+  .preview-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  
+  .box-preview-container {
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+  }
+  
+  .selection-badge {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #0d6efd;
+    color: white;
+    text-align: center;
+    line-height: 24px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+  }
+</style>
 
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdn01.boxcdn.net/platform/elements/21.0.0/en-US/preview.js"></script>
+<script>
   var params = new URLSearchParams(window.location.search);
-  var clientId=params.get("clientId");
-  var accessToken;
-  var fileId=params.get('id');
-  var fileExt=params.get('ext');
+  var clientId = params.get("clientId");
+  var accessToken=params.get('token');
+  var fileId = params.get('id');
+  var fileExt = params.get('ext');
+  var selectedVersions = [];
+  var versionsData = [];
+  var currentFileVersionId = null;
+  var boxPreviewInstance = null;
+  var boxPreviewLoaded = false;
+  var currentPreviewVersionIndex = -1;
+  var versionLimit = 5; // Default to showing 5 versions
+  
   $(document).ready(function(){
+    // Load Box UI Elements Preview library
+    loadBoxPreviewLibrary();
 
       $.ajax({
-          method : 'get',
-          //url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-node-tokengenerator",
+      method: 'get',
           url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
-          
-          data: {authCode:params.get('auth'),id:params.get('id'),clientId:params.get('clientId')},
+      data: {authCode: params.get('auth'), id: params.get('id'), clientId: params.get('clientId')},
           crossDomain: true,
-          timeout:120000,
+      timeout: 120000,
           cache: false,
           beforeSend: function() {
               $('#loader').show();
-
            },
            complete: function(){
               $('#loader').hide();
-
           },
-          success : function(response){
-            console.log("Success:" + JSON.stringify(response));
+      success: function(response){
+        console.log("**Success:** " + JSON.stringify(response));
             accessToken = response.token;
-            getFileName(accessToken,fileId).then(function(result) {
+        getFileName(accessToken, fileId).then(function(result) {
+          loadVersions(result);
+        });
+      },
+      error: function(err){
+        console.log("**Error:** " + JSON.stringify(err));
+        console.log("**Error message:** " + err.message);
+        getFileName(accessToken, fileId).then(function(result) {
               loadVersions(result);
             });
           }
-          ,
-          error : function(err){
-            console.log(JSON.stringify(err));
-            console.log("error:" + err.message);
-
-          }
       });
    });
-   async function getFileName(accessToken,fileId) {
+  
+
+  
+  async function getFileName(accessToken, fileId) {
     return $.ajax({
-      url: 'https://api.box.com/2.0/files/' + fileId + '?fields=id,name',
-      headers: {"Authorization":"Bearer " + accessToken},
+      url: 'https://api.box.com/2.0/files/' + fileId + '?fields=id,name,modified_at,file_version',
+      headers: {"Authorization": "Bearer " + accessToken},
       type: 'get',
-      data:{},
+      data: {},
       success: function(response) {
-        return response.name;
+        // Store current file version ID
+        if (response.file_version && response.file_version.id) {
+          currentFileVersionId = response.file_version.id;
+        }
+        return response;
       }
     });
    }
-   function loadVersions(name) {
-     console.log("loadVersions:"+JSON.stringify(name));
-     var url = "https://api.box.com/2.0/files/" + fileId + "/versions";
-
-     $(".fileChooser").append($('<div/>').addClass('checkbox').html('<label><input ext="' + fileExt +'" type="checkbox" value="' + fileId + '" >' + name.name + ' <o id="mainVersion"></o></label>'));
+  
+  function formatDate(dateString) {
+    if (!dateString) return 'Unknown date';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return diffMins + ' minute' + (diffMins > 1 ? 's' : '') + ' ago';
+    if (diffHours < 24) return diffHours + ' hour' + (diffHours > 1 ? 's' : '') + ' ago';
+    if (diffDays < 7) return diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ago';
+    
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+  
+  function loadVersions(fileInfo) {
+    console.log("**Loading versions for file:** " + JSON.stringify(fileInfo));
+    var url = "https://api.box.com/2.0/files/" + fileId + "/versions?fields=id,name,created_at,modified_at,size";
+    
+    // Display file name
+    var fileName = fileInfo.name || 'File Versions';
+    $("#fileNameDisplay").text(fileName);
+    $("#fileNameDisplay").data('original-name', fileName);
+    
+    // Add current version to versions array
+    var currentVersion = {
+      id: fileId,
+      name: fileInfo.name,
+      versionNumber: 0,
+      created_at: fileInfo.modified_at,
+      modified_at: fileInfo.modified_at,
+      extension: fileExt,
+      isCurrent: true
+    };
+    versionsData.push(currentVersion);
 
      $.ajax({
-      //url: 'https://box-heroku-token-generator.herokuapp.com/jwttokengenerator?',
       url: url,
-      headers: {"Authorization":"Bearer " + accessToken},
+      headers: {"Authorization": "Bearer " + accessToken},
       type: 'get',
-      data:{},
+      data: {},
       success: function(response) {
-        console.log("Fetched versions");
-        var i = response.entries.length;
+        console.log("**Fetched versions:** " + response.entries.length);
+        
+        // Process versions (they come in reverse chronological order)
+        var totalVersions = response.entries.length;
+        var versionNum = totalVersions;
+        
           $.each(response.entries, function(k, data) {
-            var extension = data.name.substr( (data.name.lastIndexOf('.') +1) );
-           $(".fileChooser").append($('<div/>').addClass('checkbox').attr('id',data.id).html('<label><input ext="' +extension +'" type="checkbox" value="' + data.id + '">' + data.name + '  (v' + i + ')</label>'));
-           i--;
-          });
-          $("#mainVersion").text("(v" + (response.entries.length+1) +") Current version ");
-         $(".fileChooser").append($('<button/>').addClass('btn btn-primary btn-sm').text('Compare'));
-         $(".btn").click(function(ev) {
-           $('#compareFrame').attr('src','');
-
-           var count=0;
-           var id1;
-           var id2;
-           var ext1;
-           var ext2;
-           $. each($("input[type='checkbox']:checked"), function(){
-             $("#loader").show();
-               if(count==0 ) {
-                 id1=$(this).val();
-                 ext1=$(this).attr('ext');
-
-               }
-               else if(count==1) {
-                 id2=$(this).val();
-                 ext2=$(this).attr('ext');
-               }
-               else if(count>=2) {
-                 $(this).prop( "checked", false );
-               }
-               count++;
-             });
-             compare(id1,id2,ext1,ext2);
-         });
+          var extension = data.name ? data.name.substr((data.name.lastIndexOf('.') + 1)) : fileExt;
+          var versionInfo = {
+            id: data.id,
+            name: data.name,
+            versionNumber: versionNum,
+            created_at: data.created_at,
+            modified_at: data.modified_at || data.created_at,
+            extension: extension,
+            isCurrent: false
+          };
+          versionsData.push(versionInfo);
+          versionNum--;
+        });
+        
+        // Update current version number
+        currentVersion.versionNumber = totalVersions + 1;
+        
+        // Sort by version number descending (newest first)
+        versionsData.sort(function(a, b) {
+          return b.versionNumber - a.versionNumber;
+        });
+        
+        // Populate version limit dropdown
+        populateVersionLimitDropdown(versionsData.length);
+        
+        // Apply version limit
+        applyVersionLimit();
       },
       error: function(xhr, status, error) {
-        console.log(xhr);
-
+        console.log("**Error fetching versions:** " + JSON.stringify(xhr));
+        $(".version-list-container").html('<div class="empty-state">Failed to load versions. Please try again.</div>');
+      }
+    });
+  }
+  
+  function populateVersionLimitDropdown(totalVersions) {
+    var dropdown = $('#versionLimitSelect');
+    dropdown.empty();
+    
+    // Generate options: 5, 10, 15, etc. up to total versions (rounded up to nearest 5)
+    var maxLimit = Math.ceil(totalVersions / 5) * 5;
+    if (maxLimit < totalVersions) {
+      maxLimit = totalVersions;
+    }
+    
+    for (var i = 5; i <= maxLimit; i += 5) {
+      var option = $('<option/>')
+        .val(i)
+        .text(i);
+      
+      if (i === versionLimit) {
+        option.prop('selected', true);
+      }
+      
+      dropdown.append(option);
+    }
+    
+    // If total versions is less than 5, add it as an option
+    if (totalVersions < 5 && totalVersions > 0) {
+      var totalOption = $('<option/>')
+        .val(totalVersions)
+        .text(totalVersions);
+      if (totalVersions === versionLimit) {
+        totalOption.prop('selected', true);
+      }
+      dropdown.prepend(totalOption);
+    }
+  }
+  
+  function applyVersionLimit() {
+    // Limit versions based on current limit setting
+    var displayVersions = versionsData.slice(0, versionLimit);
+    renderVersions(displayVersions);
+    updateCompareButton();
+  }
+  
+  function renderVersions(versions) {
+    var container = $(".version-list-container");
+    container.empty();
+    
+    if (versions.length === 0) {
+      container.html('<div class="empty-state">No versions available</div>');
+      return;
+    }
+    
+    $.each(versions, function(index, version) {
+      var versionCard = $('<div/>')
+        .addClass('version-card')
+        .attr('data-version-id', version.id)
+        .attr('data-version-ext', version.extension);
+      
+      var versionHeader = $('<div/>').addClass('version-header');
+      
+      var versionInfo = $('<div/>').addClass('version-info');
+      var versionNumber = $('<span/>')
+        .addClass('version-number')
+        .text('Version ' + version.versionNumber + (version.isCurrent ? ' (Current)' : ''));
+      versionInfo.append(versionNumber);
+      
+      var versionDate = $('<span/>')
+        .addClass('version-date')
+        .text(formatDate(version.modified_at));
+      versionInfo.append(versionDate);
+      
+      var versionActions = $('<div/>').addClass('version-actions');
+      
+      var previewBtn = $('<button/>')
+        .addClass('btn-preview')
+        .attr('type', 'button')
+        .attr('title', 'Preview version')
+        .html('<i class="bi bi-eye"></i>')
+        .click(function(e) {
+          e.stopPropagation();
+          var versionIndex = versionsData.findIndex(function(v) { return v.id === version.id; });
+          previewVersion(version, versionIndex);
+        });
+      versionActions.append(previewBtn);
+      
+      versionHeader.append(versionInfo);
+      versionHeader.append(versionActions);
+      
+      versionCard.append(versionHeader);
+      
+      versionCard.click(function() {
+        toggleVersionSelection(version.id, version.extension);
+      });
+      
+      container.append(versionCard);
+    });
+  }
+  
+  function toggleVersionSelection(versionId, extension) {
+    var index = selectedVersions.findIndex(function(v) { return v.id === versionId; });
+    
+    // Find the version data to get version number
+    var versionData = versionsData.find(function(v) { return v.id === versionId; });
+    var versionNumber = versionData ? versionData.versionNumber : null;
+    
+    if (index >= 0) {
+      // Deselect
+      selectedVersions.splice(index, 1);
+      $('.version-card[data-version-id="' + versionId + '"]').removeClass('selected');
+    } else {
+      // Select (with circular selection logic)
+      if (selectedVersions.length >= 2) {
+        // Remove first selection
+        var firstId = selectedVersions[0].id;
+        $('.version-card[data-version-id="' + firstId + '"]').removeClass('selected');
+        selectedVersions.shift();
+      }
+      
+      // Add new selection with version number
+      selectedVersions.push({ id: versionId, ext: extension, versionNumber: versionNumber });
+      $('.version-card[data-version-id="' + versionId + '"]').addClass('selected');
+    }
+    
+    updateCompareButton();
+    updateSelectionBadges();
+    updateHeaderWithComparison();
+  }
+  
+  function updateSelectionBadges() {
+    $('.version-card').each(function() {
+      var versionId = $(this).attr('data-version-id');
+      var index = selectedVersions.findIndex(function(v) { return v.id === versionId; });
+      
+      $(this).find('.selection-badge').remove();
+      
+      if (index >= 0) {
+        var badge = $('<span/>')
+          .addClass('selection-badge')
+          .text(index + 1);
+        $(this).find('.version-number').prepend(badge);
       }
      });
    }
-   function compare(id1,id2,ext1,ext2) {
-     var url='https://cvw2zdcqpc.execute-api.eu-west-2.amazonaws.com/default/box-document-compare?mainId=' + fileId + '&id1='+id1 + '&id2='+id2 + '&token=' + accessToken + "&ext1=" + ext1 + "&ext2=" + ext2;
-     console.log(url);
+  
+  function updateCompareButton() {
+    var btn = $('.btn-compare');
+    if (selectedVersions.length === 2) {
+      btn.prop('disabled', false);
+    } else {
+      btn.prop('disabled', true);
+    }
+  }
+  
+  function updateHeaderWithComparison() {
+    var fileNameDisplay = $("#fileNameDisplay");
+    var fileName = fileNameDisplay.data('original-name') || fileNameDisplay.text();
+    
+    // Store original name if not already stored
+    if (!fileNameDisplay.data('original-name')) {
+      fileNameDisplay.data('original-name', fileName);
+    }
+    
+    // Check if collapsed
+    var isCollapsed = !$('#versionSelectorCollapse').hasClass('show');
+    
+    if (isCollapsed && selectedVersions.length === 2) {
+      // Show comparison info when collapsed
+      var v1 = selectedVersions[0].versionNumber || '?';
+      var v2 = selectedVersions[1].versionNumber || '?';
+      fileNameDisplay.text(fileName + ' - Comparing Version ' + v1 + ' vs Version ' + v2);
+    } else {
+      // Show just the file name when expanded or no comparison
+      fileNameDisplay.text(fileName);
+    }
+  }
+  
+  function previewVersion(version, versionIndex) {
+    $('#previewModalLabel').text('Preview: ' + (version.name || 'Version ' + version.versionNumber));
+    
+    // Wait for Box Preview library to load
+    if (!boxPreviewLoaded || !window.Box || !window.Box.ContentPreview) {
+      var checkInterval = setInterval(function() {
+        if (boxPreviewLoaded && window.Box && window.Box.ContentPreview) {
+          clearInterval(checkInterval);
+          initializeBoxPreview(version, versionIndex);
+        }
+      }, 100);
+      
+      // Timeout after 10 seconds
+      setTimeout(function() {
+        clearInterval(checkInterval);
+        if (!boxPreviewLoaded || !window.Box || !window.Box.ContentPreview) {
+          alert('Box Preview library is still loading. Please try again in a moment.');
+        }
+      }, 10000);
+      return;
+    }
+    
+    initializeBoxPreview(version, versionIndex);
+  }
+  
+  function initializeBoxPreview(version, versionIndex) {
+    try {
+      // Store current version index
+      if (versionIndex !== undefined) {
+        currentPreviewVersionIndex = versionIndex;
+      } else {
+        // Find index if not provided
+        currentPreviewVersionIndex = versionsData.findIndex(function(v) { return v.id === version.id; });
+      }
+      
+      // Clean up previous preview instance
+      if (boxPreviewInstance) {
+        try {
+          boxPreviewInstance.hide();
+        } catch (e) {
+          console.log("**Error hiding previous preview:** " + e.message);
+        }
+        boxPreviewInstance = null;
+      }
+      
+      // Clear the preview container
+      $('#boxPreviewContainer').empty();
+      
+      // Show the modal first
+      var previewModalElement = document.getElementById('previewModal');
+      var previewModal = new bootstrap.Modal(previewModalElement, {
+        backdrop: true,
+        keyboard: true,
+        focus: true
+      });
+      previewModal.show();
+      
+      // Ensure backdrop is clickable to close
+      $(previewModalElement).on('click', function(e) {
+        if (e.target === previewModalElement) {
+          previewModal.hide();
+        }
+      });
+      
+      // Add navigation buttons if multiple versions
+      if (versionsData.length > 1) {
+        addVersionNavigationButtons();
+      }
+      
+      // Prepare file options for version-specific preview
+      var fileOptions = {};
+      
+      if (version.isCurrent) {
+        // For current version, use file ID directly
+        // No special fileOptions needed
+      } else {
+        // For older versions, specify the version ID
+        fileOptions[fileId] = {
+          fileVersionId: version.id,
+          currentFileVersionId: currentFileVersionId
+        };
+      }
+      
+      // Create new preview instance
+      boxPreviewInstance = new window.Box.ContentPreview();
+      
+      // Show preview with version-specific options
+      boxPreviewInstance.show(fileId, accessToken, {
+        container: '#boxPreviewContainer',
+        hasHeader: true,
+        showDownload: true,
+        showAnnotations: true,
+        fileOptions: Object.keys(fileOptions).length > 0 ? fileOptions : undefined
+      });
+      
+      // Update version indicator
+      updateVersionIndicator(version);
+      
+      console.log("**Box Preview initialized for version:** " + version.versionNumber + 
+        (version.isCurrent ? " (current)" : " (version ID: " + version.id + ")"));
+      
+    } catch (error) {
+      console.log("**Error initializing Box Preview:** " + JSON.stringify(error));
+      alert('Unable to load preview. The file may not support preview or there was an error accessing it.');
+    }
+  }
+  
+  function addVersionNavigationButtons() {
+    // Remove existing buttons if any
+    $('.preview-nav-buttons').remove();
+    $('.preview-version-indicator').remove();
+    
+    // Add previous button
+    var prevBtn = $('<button/>')
+      .addClass('btn-nav preview-nav-buttons prev')
+      .attr('type', 'button')
+      .html('<i class="bi bi-chevron-left"></i>')
+      .click(function() {
+        navigateToVersion(-1);
+      });
+    
+    // Add next button
+    var nextBtn = $('<button/>')
+      .addClass('btn-nav preview-nav-buttons next')
+      .attr('type', 'button')
+      .html('<i class="bi bi-chevron-right"></i>')
+      .click(function() {
+        navigateToVersion(1);
+      });
+    
+    $('.preview-modal .modal-body').append(prevBtn);
+    $('.preview-modal .modal-body').append(nextBtn);
+    
+    updateNavigationButtons();
+  }
+  
+  function updateNavigationButtons() {
+    var prevBtn = $('.preview-nav-buttons.prev');
+    var nextBtn = $('.preview-nav-buttons.next');
+    
+    // Disable prev if at first version
+    prevBtn.prop('disabled', currentPreviewVersionIndex <= 0);
+    
+    // Disable next if at last version
+    nextBtn.prop('disabled', currentPreviewVersionIndex >= versionsData.length - 1);
+  }
+  
+  function updateVersionIndicator(version) {
+    // Remove existing indicator
+    $('.preview-version-indicator').remove();
+    
+    // Add version indicator
+    var indicator = $('<div/>')
+      .addClass('preview-version-indicator')
+      .text('Version ' + version.versionNumber + (version.isCurrent ? ' (Current)' : '') + 
+            ' (' + (currentPreviewVersionIndex + 1) + ' of ' + versionsData.length + ')');
+    
+    $('.preview-modal .modal-body').append(indicator);
+  }
+  
+  function navigateToVersion(direction) {
+    var newIndex = currentPreviewVersionIndex + direction;
+    
+    if (newIndex < 0 || newIndex >= versionsData.length) {
+      return;
+    }
+    
+    var newVersion = versionsData[newIndex];
+    if (newVersion) {
+      initializeBoxPreview(newVersion, newIndex);
+    }
+  }
+  
+  // Clean up preview when modal is closed
+  $(document).on('hidden.bs.modal', '#previewModal', function() {
+    if (boxPreviewInstance) {
+      try {
+        boxPreviewInstance.hide();
+      } catch (e) {
+        console.log("**Error cleaning up preview:** " + e.message);
+      }
+      boxPreviewInstance = null;
+      $('#boxPreviewContainer').empty();
+    }
+    
+    // Remove navigation buttons and indicator
+    $('.preview-nav-buttons').remove();
+    $('.preview-version-indicator').remove();
+    currentPreviewVersionIndex = -1;
+    
+    // Ensure backdrop is removed
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+    $('body').css('padding-right', '');
+    $('body').css('overflow', '');
+  });
+  
+  // Keyboard navigation for versions
+  $(document).on('keydown', function(e) {
+    if ($('#previewModal').hasClass('show') && versionsData.length > 1) {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigateToVersion(-1);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        navigateToVersion(1);
+      }
+    }
+  });
+  
+  // Also handle ESC key to close modal
+  $(document).on('keydown', function(e) {
+    if (e.key === 'Escape' && $('#previewModal').hasClass('show')) {
+      var previewModal = bootstrap.Modal.getInstance(document.getElementById('previewModal'));
+      if (previewModal) {
+        previewModal.hide();
+      }
+    }
+  });
+  
+  function compare() {
+    if (selectedVersions.length !== 2) {
+      return;
+    }
+    
+    var id1 = selectedVersions[0].id;
+    var id2 = selectedVersions[1].id;
+    var ext1 = selectedVersions[0].ext;
+    var ext2 = selectedVersions[1].ext;
+    
+    $('#compareFrame').attr('src', '');
+    $('#loader').show();
+    $('.comparison-viewer').hide();
+    
+    var url = 'https://cvw2zdcqpc.execute-api.eu-west-2.amazonaws.com/default/box-document-compare?mainId=' + fileId + '&id1=' + id1 + '&id2=' + id2 + '&token=' + accessToken + '&ext1=' + ext1 + '&ext2=' + ext2;
+    console.log("**Compare URL:** " + url);
+    
      $.ajax({
-     //  //url: 'http://0.0.0.0:8000',
        url: url,
        headers: {},
        type: 'get',
-       data:{},
+      data: {},
        success: function(response) {
          $("#loader").hide();
-         //src="https://api.draftable.com/v1/comparisons/viewer/SxAoLy-test/fPIkDfnM";
-         src=response.url;
-         $("#dialog").show();
-         $('#compareFrame').attr('src',src);
-
-
+        var src = response.url;
+        $('.comparison-viewer').show();
+        $('#compareFrame').attr('src', src);
+        
+        // Auto-collapse version selector when comparison loads
+        var collapseElement = document.getElementById('versionSelectorCollapse');
+        if (collapseElement) {
+          var bsCollapse = bootstrap.Collapse.getInstance(collapseElement);
+          if (!bsCollapse) {
+            bsCollapse = new bootstrap.Collapse(collapseElement, { toggle: false });
+          }
+          bsCollapse.hide();
+          
+          // Update header after collapse animation completes
+          setTimeout(function() {
+            updateHeaderWithComparison();
+          }, 350);
+        }
        },
        error: function(xhr) {
          $("#loader").hide();
-         $("#dialog").show();
-         $("#dialog").append($("<div/>").text("An error occurred processing the compare"));
+        $('.comparison-viewer').show();
+        $('.comparison-viewer').html('<div class="alert alert-danger">An error occurred processing the comparison. Please try again.</div>');
        }
      });
    }
 
+  // Initialize compare button
+  $(document).on('click', '.btn-compare', function() {
+    compare();
+  });
+  
+  // Update header when collapse state changes
+  $('#versionSelectorCollapse').on('shown.bs.collapse hidden.bs.collapse', function() {
+    updateHeaderWithComparison();
+  });
+  
+  // Handle version limit dropdown change
+  $(document).on('change', '#versionLimitSelect', function() {
+    versionLimit = parseInt($(this).val(), 10);
+    applyVersionLimit();
+  });
 </script>
 
 </head>
-<body style="height:1000px;overflow-x:hidden;">
-  <div class="container">
-    <div class="row">
-        <div class="col-md-2">
-            <div class="fileChooser">
-              <div id="fileName"></div>
-
+<body>
+  <div class="main-container">
+    <div class="version-selector-panel">
+      <div class="file-name-header" data-bs-toggle="collapse" data-bs-target="#versionSelectorCollapse" aria-expanded="true" aria-controls="versionSelectorCollapse">
+        <span id="fileNameDisplay">Loading...</span>
+        <i class="bi bi-chevron-down toggle-icon"></i>
+      </div>
+      
+      <div class="collapse show version-selector-collapse" id="versionSelectorCollapse">
+        <div class="version-limit-selector">
+          <label for="versionLimitSelect">Show versions:</label>
+          <select id="versionLimitSelect" class="form-select form-select-sm">
+            <option value="5" selected>5</option>
+          </select>
+        </div>
+        <div class="version-list-container">
+          <!-- Versions will be rendered here -->
+        </div>
+        
+        <div class="compare-button-container">
+          <button class="btn btn-primary btn-compare" disabled>
+            <i class="bi bi-arrow-left-right"></i> Compare Selected Versions
+          </button>
+          <small class="text-muted d-block mt-2">Select exactly 2 versions to compare</small>
+        </div>
+      </div>
+    </div>
+    
+    <div class="comparison-viewer">
+      <iframe id="compareFrame" src=""></iframe>
             </div>
         </div>
-        <div class="col-md-12">
-          <img src='../Template/img/ajax-loader_t.gif' id='loader'/>
-
-          <div id="dialog" style="display:none;height:1000px;overflow-x:hidden;left:100px !important;flow: left">
-              <iframe id="compareFrame" src="" height="95%" width="85%" frameborder=0></iframe>
+  
+  <!-- Preview Modal -->
+  <div class="modal fade preview-modal" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div id="boxPreviewContainer" class="box-preview-container"></div>
+          <button type="button" class="btn btn-sm btn-secondary btn-close-modal" data-bs-dismiss="modal" aria-label="Close">
+            <i class="bi bi-x-lg"></i>
+          </button>
           </div>
         </div>
     </div>
 </div>
 
-
-
+  <div id='loader'>
+    <div class="spinner"></div>
+  </div>
 </body>
 </html>
