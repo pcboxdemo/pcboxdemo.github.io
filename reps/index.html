@@ -784,6 +784,31 @@
             }
         }
         
+        // Extract dimensions from representation type or properties
+        function getDimensions(rep, detailedRep = null) {
+            // Try detailedRep properties first
+            if (detailedRep?.properties?.dimensions) {
+                return detailedRep.properties.dimensions;
+            }
+            
+            // Try rep properties
+            if (rep?.properties?.dimensions) {
+                return rep.properties.dimensions;
+            }
+            
+            // Try to extract from representation type name (e.g., jpg_1024x1024, png_paged_1024x1024)
+            const repType = detailedRep?.representation || rep?.representation || '';
+            if (repType) {
+                // Match patterns like: _1024x1024, _32x32, etc.
+                const dimensionMatch = repType.match(/_(\d+x\d+)/);
+                if (dimensionMatch) {
+                    return dimensionMatch[1];
+                }
+            }
+            
+            return null;
+        }
+        
         // Determine if representation is image or text based
         function isImageRepresentation(rep) {
             const contentType = rep.content?.type || '';
@@ -900,6 +925,21 @@
             const status = detailedRep.status?.state || 'pending';
             const urlTemplate = detailedRep.content?.url_template || null;
             const errorCode = detailedRep.status?.code || null;
+            const repType = detailedRep.representation || 'unknown';
+            
+            // Get dimensions for image representations
+            const dimensions = getDimensions(null, detailedRep);
+            const isImage = isImageRepresentation({ representation: repType });
+            const dimensionsText = (isImage && dimensions) ? ` (${dimensions})` : '';
+            
+            // Update title bar with dimensions if available
+            const titleElement = card.find('.card-header h6.mb-0');
+            if (titleElement.length && dimensionsText) {
+                // Remove existing dimensions if present and add new ones
+                const currentText = titleElement.html();
+                const textWithoutDimensions = currentText.replace(/\s*\(\d+x\d+\)/g, '');
+                titleElement.html(textWithoutDimensions + dimensionsText);
+            }
             
             // Format status text with error code if available
             let statusText = status;
@@ -919,6 +959,19 @@
                 // Check if error code already displayed, if not add it
                 if (!statusInfo.find('strong:contains("Error Code")').length) {
                     statusInfo.append(`<br><strong>Error Code:</strong> <code>${errorCode}</code>`);
+                }
+            }
+            
+            // Update dimensions in card body if available
+            if (dimensions && statusInfo.length) {
+                // Check if dimensions already displayed, if not add/update it
+                const dimensionsElement = statusInfo.find('strong:contains("Dimensions")');
+                if (dimensionsElement.length) {
+                    // Update existing dimensions
+                    dimensionsElement.next().text(dimensions);
+                } else {
+                    // Add dimensions if not present
+                    statusInfo.append(`<br><strong>Dimensions:</strong> ${dimensions}`);
                 }
             }
             
@@ -982,6 +1035,11 @@
             const contentType = rep.content?.type || 'N/A';
             const repType = rep.representation || 'unknown';
             
+            // Get dimensions for image representations
+            const dimensions = getDimensions(rep, detailedRep);
+            const isImage = isImageRepresentation(rep);
+            const dimensionsText = (isImage && dimensions) ? ` (${dimensions})` : '';
+            
             // Format status text with error code if available
             let statusText = status === 'loading' ? 'loading...' : status;
             if (status === 'error' && errorCode) {
@@ -998,7 +1056,7 @@
                             </button>
                             <div>
                                 <h6 class="mb-0">
-                                    <i class="bi bi-file-earmark"></i> ${repType}
+                                    <i class="bi bi-file-earmark"></i> ${repType}${dimensionsText}
                                 </h6>
                                 <small class="text-muted">${contentType}</small>
                             </div>
