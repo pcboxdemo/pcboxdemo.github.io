@@ -438,7 +438,9 @@
                         </div>
                         <div class="col-md-6">
                             <strong>ID:</strong> <code id="fileIdDisplay"></code><br>
-                            <strong>Size:</strong> <span id="fileSize"></span>
+                            <strong>Size:</strong> <span id="fileSize"></span><br>
+                            <strong>Created:</strong> <span id="fileCreated"></span><br>
+                            <strong>Created By:</strong> <span id="fileCreatedBy"></span>
                         </div>
                     </div>
                 </div>
@@ -544,7 +546,7 @@
                 throw new Error('Access token not available. Please wait for authentication to complete.');
             }
             
-            const response = await fetch(`${BOX_API_BASE}/files/${fileId}?fields=name,type,size,representations,path_collection`, {
+            const response = await fetch(`${BOX_API_BASE}/files/${fileId}?fields=name,type,size,representations,path_collection,created_at,created_by`, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
@@ -809,6 +811,141 @@
             return null;
         }
         
+        // Get file type category based on Box Content Preview categories (singular form)
+        // Returns specific names for common file types, generic categories for others
+        function getFileTypeCategory(repType, contentType) {
+            if (!repType) repType = '';
+            if (!contentType) contentType = '';
+            
+            const repTypeLower = repType.toLowerCase();
+            const contentTypeLower = contentType.toLowerCase();
+            
+            // Check for specific common file types first
+            
+            // PDF
+            if (repTypeLower === 'pdf' || repTypeLower.includes('.pdf') || contentTypeLower.includes('pdf')) {
+                return 'PDF Document';
+            }
+            
+            // Microsoft Word
+            if (repTypeLower === 'doc' || repTypeLower === 'docx' || repTypeLower.includes('.doc') || contentTypeLower.includes('word')) {
+                return 'Word Document';
+            }
+            
+            // Microsoft Excel
+            if (repTypeLower === 'xls' || repTypeLower === 'xlsx' || repTypeLower === 'xlsb' || repTypeLower === 'xlsm' || 
+                repTypeLower.includes('.xls') || contentTypeLower.includes('spreadsheet') || contentTypeLower.includes('excel')) {
+                return 'Excel Spreadsheet';
+            }
+            
+            // Microsoft PowerPoint
+            if (repTypeLower === 'ppt' || repTypeLower === 'pptx' || repTypeLower.includes('.ppt') || contentTypeLower.includes('presentation')) {
+                return 'PowerPoint Presentation';
+            }
+            
+            // HTML
+            if (repTypeLower === 'html' || repTypeLower === 'htm' || repTypeLower.includes('.html') || repTypeLower.includes('.htm') || contentTypeLower.includes('html')) {
+                return 'HTML Document';
+            }
+            
+            // CSV
+            if (repTypeLower === 'csv' || repTypeLower.includes('.csv') || contentTypeLower.includes('csv')) {
+                return 'CSV Spreadsheet';
+            }
+            
+            // Text files
+            if (repTypeLower === 'txt' || repTypeLower.includes('.txt') || 
+                repTypeLower === 'extracted_text' || repTypeLower === 'text' ||
+                (contentTypeLower.includes('text/plain') && !contentTypeLower.includes('html'))) {
+                return 'Text Document';
+            }
+            
+            // Markdown
+            if (repTypeLower === 'md' || repTypeLower === 'markdown' || repTypeLower.includes('.md') || contentTypeLower.includes('markdown')) {
+                return 'Markdown Document';
+            }
+            
+            // JSON
+            if (repTypeLower === 'json' || repTypeLower.includes('.json') || contentTypeLower.includes('json')) {
+                return 'JSON Document';
+            }
+            
+            // XML
+            if (repTypeLower === 'xml' || repTypeLower.includes('.xml') || contentTypeLower.includes('xml')) {
+                return 'XML Document';
+            }
+            
+            // Images - check for specific image types
+            if (repTypeLower === 'jpg' || repTypeLower === 'jpeg' || repTypeLower.includes('.jpg') || repTypeLower.includes('.jpeg')) {
+                return 'JPEG Image';
+            }
+            if (repTypeLower === 'png' || repTypeLower.includes('.png')) {
+                return 'PNG Image';
+            }
+            if (repTypeLower === 'gif' || repTypeLower.includes('.gif')) {
+                return 'GIF Image';
+            }
+            if (repTypeLower === 'svg' || repTypeLower.includes('.svg')) {
+                return 'SVG Image';
+            }
+            
+            // Generic categories for less common types
+            
+            // Text-Based Document (fallback for other document types)
+            const textExtensions = ['as', 'as3', 'asm', 'bat', 'c', 'cc', 'cmake', 'cpp', 'cs', 'css', 'cxx', 'diff', 'erb', 'gdoc', 'groovy', 'gsheet', 'h', 'haml', 'hh', 'java', 'js', 'less', 'log', 'm', 'make', 'ml', 'mm', 'msg', 'ods', 'odt', 'pages', 'php', 'pl', 'properties', 'py', 'rb', 'rst', 'rtf', 'sass', 'scala', 'scm', 'script', 'sh', 'sml', 'sql', 'vi', 'vim', 'webdoc', 'wpd', 'xhtml', 'xsd', 'xsl', 'xbd', 'xdw', 'yaml'];
+            if (textExtensions.some(ext => repTypeLower.includes(ext)) || 
+                contentTypeLower.includes('text') ||
+                contentTypeLower.includes('document')) {
+                return 'Text-Based Document';
+            }
+            
+            // Presentation (fallback for other presentation types)
+            const presentationExtensions = ['gslide', 'gslides', 'key', 'odp'];
+            if (presentationExtensions.some(ext => repTypeLower.includes(ext))) {
+                return 'Presentation';
+            }
+            
+            // Image (fallback for other image types)
+            const imageExtensions = ['ai', 'bmp', 'cr2', 'crw', 'dng', 'eps', 'heic', 'indd', 'indml', 'indt', 'inx', 'nef', 'ps', 'psd', 'raf', 'raw', 'svs', 'tga', 'tif', 'tiff', 'webp'];
+            if (imageExtensions.some(ext => repTypeLower.includes(ext)) || 
+                contentTypeLower.includes('image')) {
+                return 'Image';
+            }
+            
+            // Audio File
+            const audioExtensions = ['aac', 'aif', 'aifc', 'aiff', 'amr', 'au', 'flac', 'm4a', 'mp3', 'ogg', 'ra', 'wav', 'wma'];
+            if (audioExtensions.some(ext => repTypeLower.includes(ext)) || contentTypeLower.includes('audio')) {
+                return 'Audio File';
+            }
+            
+            // Video File
+            const videoExtensions = ['3g2', '3gp', 'avi', 'm2v', 'm2ts', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'qt', 'ts', 'wmv'];
+            if (videoExtensions.some(ext => repTypeLower.includes(ext)) || contentTypeLower.includes('video')) {
+                return 'Video File';
+            }
+            
+            // Flash/Mobile Video File
+            const flashExtensions = ['flv', 'swf'];
+            if (flashExtensions.some(ext => repTypeLower.includes(ext))) {
+                return 'Flash/Mobile Video File';
+            }
+            
+            // Compressed File
+            const compressedExtensions = ['zip'];
+            if (compressedExtensions.some(ext => repTypeLower.includes(ext)) || contentTypeLower.includes('zip') || contentTypeLower.includes('compressed')) {
+                return 'Compressed File';
+            }
+            
+            // 3D File
+            const threeDExtensions = ['3ds', 'box3d', 'dae', 'dwg', 'fbx', 'obj', 'ply', 'stl'];
+            if (threeDExtensions.some(ext => repTypeLower.includes(ext))) {
+                return '3D File';
+            }
+            
+            // Default fallback
+            return null;
+        }
+        
         // Determine if representation is image or text based
         function isImageRepresentation(rep) {
             const contentType = rep.content?.type || '';
@@ -941,21 +1078,6 @@
                 titleElement.html(textWithoutDimensions + dimensionsText);
             }
             
-            // Update content type in header if available
-            const contentType = detailedRep.content?.type || null;
-            if (contentType) {
-                const headerSmall = card.find('.card-header small.text-muted');
-                if (headerSmall.length) {
-                    headerSmall.text(contentType);
-                } else {
-                    // Add content type if it doesn't exist
-                    const headerDiv = card.find('.card-header .d-flex.align-items-center > div');
-                    if (headerDiv.length) {
-                        headerDiv.append(`<small class="text-muted">${contentType}</small>`);
-                    }
-                }
-            }
-            
             // Format status text with error code if available
             let statusText = status;
             if (status === 'error' && errorCode) {
@@ -1072,7 +1194,7 @@
                                status === 'error' ? 'error' : 
                                status === 'loading' ? 'pending' : '';
             
-            const contentType = rep.content?.type || 'N/A';
+            const contentType = rep.content?.type || '';
             const repType = rep.representation || 'unknown';
             
             // Get dimensions for image representations
@@ -1098,7 +1220,6 @@
                                 <h6 class="mb-0">
                                     <i class="bi bi-file-earmark"></i> ${repType}${dimensionsText}
                                 </h6>
-                                ${contentType !== 'N/A' ? `<small class="text-muted">${contentType}</small>` : ''}
                             </div>
                         </div>
                         <div class="d-flex align-items-center gap-2">
@@ -1525,9 +1646,40 @@
                 
                 // Display file info
                 $('#fileName').text(fileData.name || 'N/A');
-                $('#fileType').text(fileData.type || 'N/A');
+                
+                // Get file extension from filename
+                const fileName = fileData.name || '';
+                const fileExtension = fileName.split('.').pop()?.toLowerCase() || '';
+                
+                // Get file type category based on extension
+                const fileTypeCategory = getFileTypeCategory(fileExtension, fileData.type || '');
+                $('#fileType').text(fileTypeCategory || fileData.type || 'N/A');
+                
                 $('#fileIdDisplay').text(fileData.id);
                 $('#fileSize').text(formatFileSize(fileData.size));
+                
+                // Display created date
+                if (fileData.created_at) {
+                    const createdDate = new Date(fileData.created_at);
+                    const formattedDate = createdDate.toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    $('#fileCreated').text(formattedDate);
+                } else {
+                    $('#fileCreated').text('N/A');
+                }
+                
+                // Display created by
+                if (fileData.created_by) {
+                    const createdByName = fileData.created_by.name || fileData.created_by.login || fileData.created_by.email || 'Unknown';
+                    $('#fileCreatedBy').text(createdByName);
+                } else {
+                    $('#fileCreatedBy').text('N/A');
+                }
                 
                 // Display parent folder name
                 const parentFolderName = getParentFolderName(fileData);
