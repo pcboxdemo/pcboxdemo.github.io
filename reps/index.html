@@ -888,17 +888,33 @@
             
             const status = detailedRep.status?.state || 'pending';
             const urlTemplate = detailedRep.content?.url_template || null;
+            const errorCode = detailedRep.status?.code || null;
+            
+            // Format status text with error code if available
+            let statusText = status;
+            if (status === 'error' && errorCode) {
+                statusText = `error: ${errorCode}`;
+            }
             
             // Update status badges
             const badgeClass = status === 'success' ? 'bg-success' : status === 'pending' ? 'bg-warning' : 'bg-danger';
-            card.find('.status-badge').text(status).removeClass('bg-success bg-warning bg-danger').addClass(badgeClass);
-            card.find('.card-body .badge').text(status).removeClass('bg-success bg-warning bg-danger').addClass(badgeClass);
+            card.find('.status-badge').text(statusText).attr('title', errorCode || '').removeClass('bg-success bg-warning bg-danger').addClass(badgeClass);
+            card.find('.card-body .badge').text(statusText).attr('title', errorCode || '').removeClass('bg-success bg-warning bg-danger').addClass(badgeClass);
+            
+            // Update error code display in card body if present
+            const cardBody = card.find('.card-body');
+            const statusInfo = cardBody.find('.mb-2');
+            if (status === 'error' && errorCode) {
+                // Check if error code already displayed, if not add it
+                if (!statusInfo.find('strong:contains("Error Code")').length) {
+                    statusInfo.append(`<br><strong>Error Code:</strong> <code>${errorCode}</code>`);
+                }
+            }
             
             // Update card border
             card.removeClass('success pending error').addClass(status === 'success' ? 'success' : status === 'pending' ? 'pending' : 'error');
             
             // Update content area (find within card-body)
-            const cardBody = card.find('.card-body');
             const contentArea = cardBody.find('.rep-content-placeholder, .alert');
             if (status === 'success' && urlTemplate) {
                 // Check if representation is paged (from properties or from the representation type name)
@@ -919,9 +935,10 @@
                     </div>
                 `);
             } else if (status === 'error') {
+                const errorMessage = errorCode ? `Failed to generate this representation. Error: ${errorCode}` : 'Failed to generate this representation.';
                 contentArea.replaceWith(`
                     <div class="alert alert-danger mb-0">
-                        <i class="bi bi-exclamation-triangle"></i> Failed to generate this representation.
+                        <i class="bi bi-exclamation-triangle"></i> ${errorMessage}
                     </div>
                 `);
             }
@@ -932,10 +949,12 @@
             // Use detailed representation status if available
             let status = 'pending';
             let urlTemplate = null;
+            let errorCode = null;
             
             if (detailedRep) {
                 status = detailedRep.status?.state || 'pending';
                 urlTemplate = detailedRep.content?.url_template || null;
+                errorCode = detailedRep.status?.code || null;
             } else if (rep.info && rep.info.url) {
                 // If we have info.url, we'll fetch details asynchronously
                 // For now, show as loading
@@ -952,6 +971,12 @@
             const contentType = rep.content?.type || 'N/A';
             const repType = rep.representation || 'unknown';
             
+            // Format status text with error code if available
+            let statusText = status === 'loading' ? 'loading...' : status;
+            if (status === 'error' && errorCode) {
+                statusText = `error: ${errorCode}`;
+            }
+            
             const collapseId = `rep-collapse-${index}`;
             let cardHtml = `
                 <div class="card representation-card ${statusClass}" data-rep-index="${index}">
@@ -967,15 +992,16 @@
                                 <small class="text-muted">${contentType}</small>
                             </div>
                         </div>
-                        <span class="badge bg-${status === 'success' ? 'success' : status === 'pending' || status === 'loading' ? 'warning' : 'danger'} status-badge">
-                            ${status === 'loading' ? 'loading...' : status}
+                        <span class="badge bg-${status === 'success' ? 'success' : status === 'pending' || status === 'loading' ? 'warning' : 'danger'} status-badge" title="${errorCode ? errorCode : ''}">
+                            ${statusText}
                         </span>
                     </div>
                     <div class="collapse" id="${collapseId}">
                         <div class="card-body">
                         <div class="mb-2">
                             <strong>Representation:</strong> <code>${repType}</code><br>
-                            <strong>Status:</strong> <span class="badge bg-${status === 'success' ? 'success' : status === 'pending' || status === 'loading' ? 'warning' : 'danger'}">${status === 'loading' ? 'loading...' : status}</span>
+                            <strong>Status:</strong> <span class="badge bg-${status === 'success' ? 'success' : status === 'pending' || status === 'loading' ? 'warning' : 'danger'}" title="${errorCode ? errorCode : ''}">${statusText}</span>
+                            ${errorCode ? `<br><strong>Error Code:</strong> <code>${errorCode}</code>` : ''}
                             ${rep.properties?.dimensions ? `<br><strong>Dimensions:</strong> ${rep.properties.dimensions}` : ''}
                             ${rep.properties?.paged ? `<br><strong>Paged:</strong> ${rep.properties.paged}` : ''}
                             ${rep.properties?.thumb ? `<br><strong>Thumbnail:</strong> ${rep.properties.thumb}` : ''}
@@ -1003,9 +1029,11 @@
                     </div>
                 `;
             } else if (status === 'error') {
+                // Use errorCode already extracted at the top of the function
+                const errorMessage = errorCode ? `Failed to generate this representation. Error: ${errorCode}` : 'Failed to generate this representation.';
                 cardHtml += `
                     <div class="alert alert-danger mb-0">
-                        <i class="bi bi-exclamation-triangle"></i> Failed to generate this representation.
+                        <i class="bi bi-exclamation-triangle"></i> ${errorMessage}
                     </div>
                 `;
             } else if (status === 'loading') {
