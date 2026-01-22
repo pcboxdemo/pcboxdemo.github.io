@@ -952,6 +952,31 @@
             card.find('.status-badge').text(statusText).attr('title', errorCode || '').removeClass('bg-success bg-warning bg-danger').addClass(badgeClass);
             card.find('.card-body .badge').text(statusText).attr('title', errorCode || '').removeClass('bg-success bg-warning bg-danger').addClass(badgeClass);
             
+            // Update download button if status is success and urlTemplate is available
+            const headerActions = card.find('.card-header .d-flex.align-items-center.gap-2');
+            if (status === 'success' && urlTemplate && headerActions.length) {
+                // Check if download button already exists
+                if (!headerActions.find('.download-rep-btn').length) {
+                    const isPaged = detailedRep.properties?.paged === true || 
+                                   detailedRep.properties?.paged === 'true' ||
+                                   (repType && repType.includes('_paged_'));
+                    const downloadBtn = $(`
+                        <button class="btn btn-sm btn-outline-success download-rep-btn" 
+                                data-rep-index="${repIndex}" 
+                                data-url-template="${urlTemplate}" 
+                                data-rep-type="${repType}" 
+                                data-is-paged="${isPaged}"
+                                title="Download representation">
+                            <i class="bi bi-download"></i>
+                        </button>
+                    `);
+                    headerActions.find('.status-badge').before(downloadBtn);
+                }
+            } else if (status !== 'success') {
+                // Remove download button if status is not success
+                headerActions.find('.download-rep-btn').remove();
+            }
+            
             // Update error code display in card body if present
             const cardBody = card.find('.card-body');
             const statusInfo = cardBody.find('.mb-2');
@@ -1061,9 +1086,21 @@
                                 <small class="text-muted">${contentType}</small>
                             </div>
                         </div>
-                        <span class="badge bg-${status === 'success' ? 'success' : status === 'pending' || status === 'loading' ? 'warning' : 'danger'} status-badge" title="${errorCode ? errorCode : ''}">
-                            ${statusText}
-                        </span>
+                        <div class="d-flex align-items-center gap-2">
+                            ${status === 'success' && urlTemplate ? `
+                                <button class="btn btn-sm btn-outline-success download-rep-btn" 
+                                        data-rep-index="${index}" 
+                                        data-url-template="${urlTemplate}" 
+                                        data-rep-type="${repType}" 
+                                        data-is-paged="${rep.properties?.paged === true || rep.properties?.paged === 'true' || (repType && repType.includes('_paged_'))}"
+                                        title="Download representation">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                            ` : ''}
+                            <span class="badge bg-${status === 'success' ? 'success' : status === 'pending' || status === 'loading' ? 'warning' : 'danger'} status-badge" title="${errorCode ? errorCode : ''}">
+                                ${statusText}
+                            </span>
+                        </div>
                     </div>
                     <div class="collapse" id="${collapseId}">
                         <div class="card-body">
@@ -1286,6 +1323,14 @@
                                 <button class="btn btn-sm btn-outline-secondary load-page-btn" data-rep-index="${repIndex}" data-url-template="${urlTemplate}" data-rep-type="${repType}" data-page="${content.pageNumber + 1}">
                                     <i class="bi bi-chevron-right"></i> Next
                                 </button>
+                                <button class="btn btn-sm btn-outline-success download-page-btn" 
+                                        data-rep-index="${repIndex}" 
+                                        data-url-template="${urlTemplate}" 
+                                        data-rep-type="${repType}" 
+                                        data-page="${content.pageNumber}"
+                                        title="Download this page">
+                                    <i class="bi bi-download"></i> Download Page
+                                </button>
                                 <span class="text-muted ms-2" id="page-status-${repIndex}"></span>
                             </div>
                         `;
@@ -1293,6 +1338,12 @@
                     
                     imageHtml += `</div>`;
                     contentDiv.html(imageHtml);
+                    
+                    // Store current page number on the card for paginated images
+                    if (content.isPaged) {
+                        const card = $(`.representation-card[data-rep-index="${repIndex}"]`);
+                        card.attr('data-current-page', content.pageNumber);
+                    }
                     
                     // If this is page 1 of a paginated image, try to discover how many pages exist
                     if (content.isPaged && content.pageNumber === 1) {
@@ -1337,6 +1388,90 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+        
+        // Download representation
+        async function downloadRepresentationFile(repIndex, urlTemplate, repType, isPaged = false, pageNumber = 1) {
+            try {
+                const accessToken = getAccessToken();
+                if (!accessToken) {
+                    showError('Access token not available.');
+                    return;
+                }
+                
+                // Build asset path for paginated images
+                const assetPath = buildAssetPath(repType, isPaged, pageNumber);
+                const url = urlTemplate.replace('{+asset_path}', assetPath);
+                
+                // Fetch the representation
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to download: ${response.status}`);
+                }
+                
+                // Get the blob
+                const blob = await response.blob();
+                
+                // Determine file extension and MIME type
+                // Check text/markdown representations first before calling getFileExtensionFromRepType
+                let extension;
+                let mimeType = blob.type;
+                
+                if (repType === 'extracted_text' || repType === 'text') {
+                    extension = 'txt';
+                    mimeType = 'text/plain';
+                } else if (repType === 'markdown') {
+                    extension = 'md';
+                    mimeType = 'text/markdown';
+                } else if (repType === 'pdf') {
+                    extension = 'pdf';
+                    mimeType = 'application/pdf';
+                } else {
+                    // For image representations, use getFileExtensionFromRepType
+                    extension = getFileExtensionFromRepType(repType);
+                    
+                    // Set default MIME types if not provided
+                    if (!mimeType || mimeType === 'application/octet-stream') {
+                        if (extension === 'jpg' || extension === 'jpeg') {
+                            mimeType = 'image/jpeg';
+                        } else if (extension === 'png') {
+                            mimeType = 'image/png';
+                        } else if (extension === 'pdf') {
+                            mimeType = 'application/pdf';
+                        } else if (extension === 'gif') {
+                            mimeType = 'image/gif';
+                        }
+                    }
+                }
+                
+                // Create filename
+                let filename = `${repType}`;
+                if (isPaged && pageNumber > 1) {
+                    filename += `_page${pageNumber}`;
+                }
+                filename += `.${extension}`;
+                
+                // Create download link
+                const downloadUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Clean up the object URL after a delay
+                setTimeout(() => URL.revokeObjectURL(downloadUrl), 100);
+                
+            } catch (error) {
+                console.error('Error downloading representation:', error);
+                showError(`Failed to download representation: ${error.message}`);
+            }
         }
         
         // Handle form submission
@@ -1456,11 +1591,54 @@
                         if (pageNumber > 0) {
                             $btn.prop('disabled', true);
                             loadRepContent(repIndex, urlTemplate, repType, isPaged, pageNumber).then(() => {
+                                // Update current page attribute on the card
+                                const card = $(`.representation-card[data-rep-index="${repIndex}"]`);
+                                card.attr('data-current-page', pageNumber);
                                 $btn.prop('disabled', false);
                             }).catch(() => {
                                 $btn.prop('disabled', false);
                             });
                         }
+                    });
+                    
+                    // Attach click handlers for download buttons (header download button)
+                    $(document).on('click', '.download-rep-btn', function() {
+                        const $btn = $(this);
+                        const repIndex = $btn.data('rep-index');
+                        const urlTemplate = $btn.data('url-template');
+                        const repType = $btn.data('rep-type');
+                        const isPaged = $btn.data('is-paged') === true || $btn.data('is-paged') === 'true';
+                        
+                        // For paginated images, check if a page is currently loaded
+                        // If so, download that page; otherwise download page 1
+                        let pageNumber = 1;
+                        if (isPaged) {
+                            const card = $(`.representation-card[data-rep-index="${repIndex}"]`);
+                            const currentPageAttr = card.attr('data-current-page');
+                            if (currentPageAttr) {
+                                pageNumber = parseInt(currentPageAttr, 10);
+                            }
+                        }
+                        
+                        $btn.prop('disabled', true);
+                        downloadRepresentationFile(repIndex, urlTemplate, repType, isPaged, pageNumber).finally(() => {
+                            $btn.prop('disabled', false);
+                        });
+                    });
+                    
+                    // Attach click handlers for page-specific download buttons
+                    $(document).on('click', '.download-page-btn', function() {
+                        const $btn = $(this);
+                        const repIndex = $btn.data('rep-index');
+                        const urlTemplate = $btn.data('url-template');
+                        const repType = $btn.data('rep-type');
+                        const pageNumber = $btn.data('page');
+                        const isPaged = true; // Page buttons only exist for paginated images
+                        
+                        $btn.prop('disabled', true);
+                        downloadRepresentationFile(repIndex, urlTemplate, repType, isPaged, pageNumber).finally(() => {
+                            $btn.prop('disabled', false);
+                        });
                     });
                 }
             } catch (error) {
