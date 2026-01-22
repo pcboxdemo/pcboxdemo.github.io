@@ -941,6 +941,21 @@
                 titleElement.html(textWithoutDimensions + dimensionsText);
             }
             
+            // Update content type in header if available
+            const contentType = detailedRep.content?.type || null;
+            if (contentType) {
+                const headerSmall = card.find('.card-header small.text-muted');
+                if (headerSmall.length) {
+                    headerSmall.text(contentType);
+                } else {
+                    // Add content type if it doesn't exist
+                    const headerDiv = card.find('.card-header .d-flex.align-items-center > div');
+                    if (headerDiv.length) {
+                        headerDiv.append(`<small class="text-muted">${contentType}</small>`);
+                    }
+                }
+            }
+            
             // Format status text with error code if available
             let statusText = status;
             if (status === 'error' && errorCode) {
@@ -1083,7 +1098,7 @@
                                 <h6 class="mb-0">
                                     <i class="bi bi-file-earmark"></i> ${repType}${dimensionsText}
                                 </h6>
-                                <small class="text-muted">${contentType}</small>
+                                ${contentType !== 'N/A' ? `<small class="text-muted">${contentType}</small>` : ''}
                             </div>
                         </div>
                         <div class="d-flex align-items-center gap-2">
