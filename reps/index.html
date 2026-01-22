@@ -1230,6 +1230,21 @@
                     // Render PDF with PDF.js viewer
                     await renderPdfWithViewer(content.data, pdfViewerId);
                 } else if (content.type === 'text') {
+                    // Count characters in the text content
+                    const charCount = content.content ? content.content.length : 0;
+                    
+                    // Update header with character count
+                    const card = $(`.representation-card[data-rep-index="${repIndex}"]`);
+                    const headerTitle = card.find('.card-header h6.mb-0');
+                    if (headerTitle.length) {
+                        const currentText = headerTitle.html();
+                        // Remove existing character count if present
+                        const textWithoutCount = currentText.replace(/\s*\([\d,]+ chars\)/g, '');
+                        // Format number with commas
+                        const formattedCount = charCount.toLocaleString();
+                        headerTitle.html(textWithoutCount + ` <small class="text-muted">(${formattedCount} chars)</small>`);
+                    }
+                    
                     const isMarkdown = isMarkdownRepresentation({ representation: repType });
                     if (isMarkdown) {
                         // Render markdown with tabs for MD and Raw Text
