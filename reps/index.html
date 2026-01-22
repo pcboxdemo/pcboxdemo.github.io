@@ -434,7 +434,7 @@
                         <div class="col-md-6">
                             <strong>Name:</strong> <span id="fileName"></span><br>
                             <strong>Type:</strong> <span id="fileType"></span><br>
-                            <strong>Path:</strong> <code id="filePath" style="word-break: break-all;"></code>
+                            <strong>Parent Folder:</strong> <span id="parentFolderName">N/A</span>
                         </div>
                         <div class="col-md-6">
                             <strong>ID:</strong> <code id="fileIdDisplay"></code><br>
@@ -513,17 +513,28 @@
             setTimeout(() => $('#errorAlert').fadeOut(), 5000);
         }
         
-        // Build file path from path_collection
-        function buildFilePath(pathCollection) {
-            if (!pathCollection || !pathCollection.entries || pathCollection.entries.length === 0) {
-                return '/';
+        // Get parent folder name from file data (from path_collection)
+        function getParentFolderName(fileData) {
+            // Extract parent folder name from path_collection (last entry)
+            if (fileData.path_collection && fileData.path_collection.entries && fileData.path_collection.entries.length > 0) {
+                const entries = fileData.path_collection.entries;
+                const lastEntry = entries[entries.length - 1];
+                if (lastEntry && lastEntry.name) {
+                    return lastEntry.name;
+                }
             }
             
-            // Skip the first entry (usually "All Files" with id "0")
-            const pathEntries = pathCollection.entries.slice(1);
-            const pathParts = pathEntries.map(entry => entry.name || 'Unknown');
+            // Fallback: check parent field if path_collection is not available
+            if (fileData.parent) {
+                if (fileData.parent.name) {
+                    return fileData.parent.name;
+                }
+                if (fileData.parent.id === '0') {
+                    return 'Root Folder';
+                }
+            }
             
-            return '/' + pathParts.join('/');
+            return 'Root Folder';
         }
         
         // Get file info
@@ -1295,9 +1306,9 @@
                 $('#fileIdDisplay').text(fileData.id);
                 $('#fileSize').text(formatFileSize(fileData.size));
                 
-                // Build and display file path
-                const filePath = buildFilePath(fileData.path_collection);
-                $('#filePath').text(filePath || '/');
+                // Display parent folder name
+                const parentFolderName = getParentFolderName(fileData);
+                $('#parentFolderName').text(parentFolderName);
                 
                 $('#fileInfo').show();
                 
