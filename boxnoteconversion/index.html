@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box Note to Word Converter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+        }
+        .card {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: none;
+        }
+        .loader-container {
+            text-align: center;
+            padding: 40px;
+        }
+        .loader {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 20px;
+        }
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Box Note to Word Converter</h3>
+            </div>
+            <div class="card-body">
+                <div id="loadingState" class="loader-container">
+                    <img src="../interceptor/ajax-loader.gif" class="loader" alt="Loading..."/>
+                    <p id="loadingText">Getting access token...</p>
+                </div>
+                
+                <div id="fileInfo" class="file-info" style="display: none;">
+                    <strong>File:</strong> <span id="fileName"></span>
+                </div>
+                
+                <div id="statusMessage" class="status-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var params = new URLSearchParams(window.location.search);
+        var clientId = params.get("clientId");
+        var authCode = params.get('auth');
+        var fileId = params.get('id');
+        var accessToken = params.get('token'); // Fallback if token is already in URL
+        
+        // Heroku app URL
+        const herokuAppUrl = 'https://boxnote2docx-converter-be95ff413189.herokuapp.com';
+        
+        $(document).ready(function() {
+            // Check if we have required parameters
+            if (!fileId) {
+                showError('Missing required parameter: id');
+                return;
+            }
+            
+            // If we already have a token, use it directly
+            if (accessToken) {
+                $('#loadingText').text('Converting Box Note to Word document...');
+                fetchFileName(accessToken, fileId).then(function(fileName) {
+                    if (fileName) {
+                        $('#fileName').text(fileName);
+                        $('#fileInfo').show();
+                    }
+                    convertFile(fileId, accessToken);
+                }).catch(function(error) {
+                    console.error('Error fetching file name:', error);
+                    convertFile(fileId, accessToken);
+                });
+                return;
+            }
+            
+            // Otherwise, exchange auth code for token
+            if (!authCode) {
+                showError('Missing required parameter: auth (authorization code)');
+                return;
+            }
+            
+            if (!clientId) {
+                showError('Missing required parameter: clientId');
+                return;
+            }
+            
+            // Exchange auth code for token via Lambda
+            $('#loadingText').text('Getting access token...');
+            $.ajax({
+                method: 'get',
+                url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+                data: {
+                    authCode: authCode,
+                    id: fileId,
+                    clientId: clientId
+                },
+                crossDomain: true,
+                timeout: 120000,
+                cache: false,
+                success: function(response) {
+                    console.log("**Token Success:** " + JSON.stringify(response));
+                    accessToken = response.token;
+                    
+                    if (!accessToken) {
+                        showError('Failed to get access token from server');
+                        return;
+                    }
+                    
+                    // Now fetch file name and convert
+                    $('#loadingText').text('Converting Box Note to Word document...');
+                    fetchFileName(accessToken, fileId).then(function(fileName) {
+                        if (fileName) {
+                            $('#fileName').text(fileName);
+                            $('#fileInfo').show();
+                        }
+                        convertFile(fileId, accessToken);
+                    }).catch(function(error) {
+                        console.error('Error fetching file name:', error);
+                        // Still try to convert even if we can't get the name
+                        convertFile(fileId, accessToken);
+                    });
+                },
+                error: function(err) {
+                    console.log("**Token Error:** " + JSON.stringify(err));
+                    console.log("**Error message:** " + err.message);
+                    
+                    // If token exchange fails but we have a token param, try using it
+                    if (accessToken) {
+                        $('#loadingText').text('Converting Box Note to Word document...');
+                        convertFile(fileId, accessToken);
+                    } else {
+                        showError('Failed to get access token: ' + (err.message || 'Unknown error'));
+                    }
+                }
+            });
+        });
+        
+        function fetchFileName(fileId, token) {
+            return $.ajax({
+                url: 'https://api.box.com/2.0/files/' + fileId + '?fields=id,name',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                type: 'GET'
+            }).then(function(response) {
+                return response.name;
+            });
+        }
+        
+        function convertFile(fileId, token) {
+            // Show loading state
+            $('#loadingState').show();
+            $('#loadingText').text('Converting Box Note to Word document...');
+            $('#statusMessage').hide().removeClass('success error info');
+            
+            // Make API call to convert
+            $.ajax({
+                url: herokuAppUrl + '/convert',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    boxId: fileId,
+                    boxToken: token
+                }),
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                timeout: 120000, // 2 minute timeout for large files
+                success: function(data, textStatus, xhr) {
+                    $('#loadingState').hide();
+                    
+                    // Get filename from Content-Disposition header or use default
+                    let filename = 'converted.docx';
+                    const contentDisposition = xhr.getResponseHeader('Content-Disposition');
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+                        if (filenameMatch) {
+                            filename = filenameMatch[1];
+                        }
+                    }
+                    
+                    // Create download link and trigger download
+                    const url = window.URL.createObjectURL(data);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    // Show success message
+                    $('#statusMessage')
+                        .addClass('success')
+                        .html('<strong>Success!</strong> File converted and downloaded: <strong>' + filename + '</strong>')
+                        .show();
+                },
+                error: function(xhr, status, error) {
+                    $('#loadingState').hide();
+                    
+                    let errorMessage = 'Conversion failed. ';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMessage += xhr.responseJSON.error;
+                    } else if (xhr.status === 0 || status === 'timeout') {
+                        errorMessage += 'Request timed out or unable to connect to server.';
+                    } else if (xhr.status === 404) {
+                        errorMessage += 'Service not found. Please check the Heroku app URL.';
+                    } else {
+                        errorMessage += 'Error: ' + (error || xhr.statusText || 'Unknown error');
+                    }
+                    
+                    $('#statusMessage')
+                        .addClass('error')
+                        .html('<strong>Error:</strong> ' + errorMessage)
+                        .show();
+                    
+                    console.error('Conversion error:', xhr);
+                }
+            });
+        }
+        
+        function showError(message) {
+            $('#loadingState').hide();
+            $('#statusMessage')
+                .addClass('error')
+                .html('<strong>Error:</strong> ' + message)
+                .show();
+        }
+    </script>
+</body>
+</html>
