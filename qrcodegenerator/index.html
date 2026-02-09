@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>QR Code Generator</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
+    <script>
+        // Extract URL parameters
+        var params = new URLSearchParams(window.location.search);
+        var clientId = params.get("clientId");
+        var authCode = params.get('auth');
+        var fileId = params.get('id');
+        var fileExt = params.get('ext');
+        var accessToken = params.get('token'); // Fallback if token is already in URL
+        
+        // Store QR code data for buttons
+        var qrCodeBlob = null;
+        var qrCodeDataUrl = null;
+        var qrCodeFileName = null;
+        var qrCodeParentFolderId = null;
+        var qrCodeToken = null;
+        
+        
+        $(document).ready(function(){
+            // Check if we have required parameters
+            if (!fileId) {
+                showError('Missing required parameter: id');
+                return;
+            }
+            
+            // If we already have a token, use it directly (for local dev)
+            if (accessToken) {
+                console.log("**Using token from URL (local dev mode)**");
+                $('#loader').show();
+                initializeApplication(accessToken, fileId);
+                $('#loader').hide();
+                return;
+            }
+            
+            // Exchange authorization code for access token
+            $.ajax({
+                method: 'get',
+                url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+                data: {
+                    authCode: authCode,
+                    id: fileId,
+                    clientId: clientId
+                },
+                crossDomain: true,
+                timeout: 120000,
+                cache: false,
+                beforeSend: function() {
+                    $('#loader').show();
+                },
+                complete: function(){
+                    $('#loader').hide();
+                },
+                success: function(response){
+                    console.log("**Success:** " + JSON.stringify(response));
+                    accessToken = response.token;
+                    initializeApplication(accessToken, fileId);
+                },
+                error: function(err){
+                    console.log("**Error:** " + JSON.stringify(err));
+                    console.log("**Error message:** " + err.message);
+                    if (accessToken) {
+                        initializeApplication(accessToken, fileId);
+                    } else {
+                        showError("Failed to authenticate. Please try again.");
+                    }
+                }
+            });
+        });
+        
+        // Function to initialize your application
+        function initializeApplication(token, resourceId) {
+            console.log("**Initializing application with token**");
+            if (!resourceId) {
+                showError("No file ID provided. Please access this integration from a Box file.");
+                return;
+            }
+            
+            $('#app-content').show();
+            $('#status-message').html('<div class="alert alert-info">Checking for shared link...</div>');
+            
+            // Step 1: Check if file has shared link
+            checkOrCreateSharedLink(token, resourceId);
+        }
+        
+        // Step 1: Check if file has shared link, create if not
+        function checkOrCreateSharedLink(token, fileId) {
+            // Store fileId globally for use in skills card
+            window.currentFileId = fileId;
+            
+            $.ajax({
+                url: 'https://api.box.com/2.0/files/' + fileId + '?fields=id,name,shared_link,parent',
+                headers: {"Authorization": "Bearer " + token},
+                type: 'get',
+                success: function(response) {
+                    console.log("**File info retrieved:** " + JSON.stringify(response));
+                    var sharedLinkUrl = null;
+                    var parentFolderId = response.parent.id;
+                    var fileName = response.name;
+                    
+                    if (response.shared_link && response.shared_link.url) {
+                        sharedLinkUrl = response.shared_link.url;
+                        console.log("**Shared link exists:** " + sharedLinkUrl);
+                        console.log("**Shared link URL will be encoded in QR code:** " + sharedLinkUrl);
+                        $('#status-message').html('<div class="alert alert-success">Shared link found: <a href="' + sharedLinkUrl + '" target="_blank">' + sharedLinkUrl + '</a><br>Generating QR code...</div>');
+                        setTimeout(function() {
+                            generateQRCode(sharedLinkUrl, token, parentFolderId, fileName);
+                        }, 100);
+                    } else {
+                        console.log("**No shared link found, creating one...**");
+                        $('#status-message').html('<div class="alert alert-info">Creating shared link...</div>');
+                        createSharedLink(token, fileId, parentFolderId, fileName);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log("**Error fetching file info:** " + JSON.stringify(xhr));
+                    showError("Failed to retrieve file information. Error: " + (xhr.responseJSON ? xhr.responseJSON.message : error));
+                }
+            });
+        }
+        
+        // Step 2: Create shared link if it doesn't exist
+        function createSharedLink(token, fileId, parentFolderId, fileName) {
+            $.ajax({
+                url: 'https://api.box.com/2.0/files/' + fileId,
+                headers: {
+                    "Authorization": "Bearer " + token,
+                    "Content-Type": "application/json"
+                },
+                type: 'put',
+                data: JSON.stringify({
+                    "shared_link": {
+                        "access": "open"
+                    }
+                }),
+                success: function(response) {
+                    console.log("**Shared link created:** " + JSON.stringify(response));
+                    var sharedLinkUrl = response.shared_link.url;
+                    $('#status-message').html('<div class="alert alert-success">Shared link created. Generating QR code...</div>');
+                    generateQRCode(sharedLinkUrl, token, parentFolderId, fileName);
+                },
+                error: function(xhr, status, error) {
+                    console.log("**Error creating shared link:** " + JSON.stringify(xhr));
+                    showError("Failed to create shared link. Error: " + (xhr.responseJSON ? xhr.responseJSON.message : error));
+                }
+            });
+        }
+        
+        // Step 3: Generate QR code for shared link
+        function generateQRCode(sharedLinkUrl, token, parentFolderId, fileName) {
+            console.log("**generateQRCode called with URL:** " + sharedLinkUrl);
+            console.log("**QRCode will encode this URL:** " + sharedLinkUrl);
+            
+            // Ensure we have a valid URL
+            if (!sharedLinkUrl || !sharedLinkUrl.startsWith('http')) {
+                console.log("**Invalid shared link URL format:** " + sharedLinkUrl);
+                showError("Invalid shared link URL. Expected URL starting with http/https.");
+                return;
+            }
+            
+            // Try to use QRCode library - check multiple possible ways it might be exposed
+            var qrLib = null;
+            if (typeof QRCode !== 'undefined' && QRCode.toDataURL) {
+                qrLib = QRCode;
+                console.log("**Using QRCode from global scope**");
+            } else if (typeof window.QRCode !== 'undefined' && window.QRCode.toDataURL) {
+                qrLib = window.QRCode;
+                console.log("**Using QRCode from window.QRCode**");
+            }
+            
+            if (qrLib) {
+                // Generate QR code as data URL - encoding the shared link URL
+                console.log("**Generating QR code with library for URL:** " + sharedLinkUrl);
+                qrLib.toDataURL(sharedLinkUrl, {
+                    width: 400,
+                    margin: 2,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    }
+                }, function(err, qrDataUrl) {
+                    if (err) {
+                        console.log("**Error generating QR code:** " + JSON.stringify(err));
+                        showError("Failed to generate QR code: " + (err.message || err));
+                        return;
+                    }
+                    
+                    console.log("**QR code generated successfully for URL:** " + sharedLinkUrl);
+                    $('#status-message').html('<div class="alert alert-success">QR code generated successfully!</div>');
+                    
+                    // Store QR code data for buttons
+                    qrCodeDataUrl = qrDataUrl;
+                    qrCodeBlob = dataURLtoBlob(qrDataUrl);
+                    qrCodeFileName = fileName;
+                    qrCodeParentFolderId = parentFolderId;
+                    qrCodeToken = token;
+                    
+                    // Display QR code preview with clickable link and action buttons
+                    $('#qr-preview').html(
+                        '<img id="qr-code-image" src="' + qrDataUrl + '" alt="QR Code" class="img-fluid mb-3" style="max-width: 300px; cursor: pointer;" onclick="window.open(\'' + sharedLinkUrl + '\', \'_blank\')" title="Click to open shared link">' +
+                        '<p class="small text-muted mb-3">QR code contains: <a href="' + sharedLinkUrl + '" target="_blank">' + sharedLinkUrl + '</a></p>' +
+                        '<div class="action-buttons">' +
+                        '<button type="button" class="btn btn-primary me-2" onclick="saveQRCodeToBox()">' +
+                        '<i class="bi bi-cloud-upload"></i> Save to Box</button>' +
+                        '<button type="button" class="btn btn-success me-2" onclick="downloadQRCode()">' +
+                        '<i class="bi bi-download"></i> Download</button>' +
+                        '<button type="button" class="btn btn-info" onclick="printQRCode()">' +
+                        '<i class="bi bi-printer"></i> Print</button>' +
+                        '</div>'
+                    );
+                });
+            } else {
+                // Fallback: Use canvas-based QR code generation
+                console.log("**QRCode library not found, using API fallback**");
+                generateQRCodeCanvas(sharedLinkUrl, token, parentFolderId, fileName);
+            }
+        }
+        
+        // Fallback QR code generation using canvas (simpler approach)
+        function generateQRCodeCanvas(sharedLinkUrl, token, parentFolderId, fileName) {
+            // Ensure we have a valid URL
+            if (!sharedLinkUrl || !sharedLinkUrl.startsWith('http')) {
+                console.log("**Invalid shared link URL format:** " + sharedLinkUrl);
+                showError("Invalid shared link URL. Expected URL starting with http/https.");
+                return;
+            }
+            
+            // Use a simple API-based QR code generator as fallback
+            var qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(sharedLinkUrl);
+            
+            console.log("**Using API fallback for QR code generation**");
+            console.log("**QR code API URL:** " + qrApiUrl);
+            console.log("**Shared link URL being encoded:** " + sharedLinkUrl);
+            $('#status-message').html('<div class="alert alert-info">Generating QR code via API...</div>');
+            
+            // Fetch QR code image from API
+            fetch(qrApiUrl)
+                .then(function(response) {
+                    return response.blob();
+                })
+                .then(function(blob) {
+                    console.log("**QR code generated via API successfully for URL:** " + sharedLinkUrl);
+                    $('#status-message').html('<div class="alert alert-success">QR code generated successfully!</div>');
+                    
+                    // Store QR code data for buttons
+                    qrCodeBlob = blob;
+                    var objectUrl = URL.createObjectURL(blob);
+                    qrCodeDataUrl = objectUrl;
+                    qrCodeFileName = fileName;
+                    qrCodeParentFolderId = parentFolderId;
+                    qrCodeToken = token;
+                    
+                    // Display QR code preview with clickable link and action buttons
+                    $('#qr-preview').html(
+                        '<img id="qr-code-image" src="' + objectUrl + '" alt="QR Code" class="img-fluid mb-3" style="max-width: 300px; cursor: pointer;" onclick="window.open(\'' + sharedLinkUrl + '\', \'_blank\')" title="Click to open shared link">' +
+                        '<p class="small text-muted mb-3">QR code contains: <a href="' + sharedLinkUrl + '" target="_blank">' + sharedLinkUrl + '</a></p>' +
+                        '<div class="action-buttons">' +
+                        '<button type="button" class="btn btn-primary me-2" onclick="saveQRCodeToBox()">' +
+                        '<i class="bi bi-cloud-upload"></i> Save to Box</button>' +
+                        '<button type="button" class="btn btn-success me-2" onclick="downloadQRCode()">' +
+                        '<i class="bi bi-download"></i> Download</button>' +
+                        '<button type="button" class="btn btn-info" onclick="printQRCode()">' +
+                        '<i class="bi bi-printer"></i> Print</button>' +
+                        '</div>'
+                    );
+                })
+                .catch(function(error) {
+                    console.log("**Error generating QR code via API:** " + error);
+                    showError("Failed to generate QR code. Please try again.");
+                });
+        }
+        
+        // Helper: Convert data URL to blob
+        function dataURLtoBlob(dataurl) {
+            var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+            while(n--){
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], {type:mime});
+        }
+        
+        // Step 4: Upload QR code PNG to Box in the same folder
+        function uploadQRCodeToBox(blob, token, parentFolderId, fileName) {
+            // Generate filename: original_filename_QRCode.png
+            var baseFileName = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+            var qrFileName = baseFileName + '_QRCode.png';
+            
+            // Try to upload, handle conflict if file exists
+            attemptUpload(blob, token, parentFolderId, qrFileName, false);
+        }
+        
+        // Attempt upload, update existing file if conflict
+        function attemptUpload(blob, token, parentFolderId, qrFileName, isUpdate) {
+            var formData = new FormData();
+            
+            if (isUpdate) {
+                // Update existing file - need to get file ID first
+                console.log("**File exists, will update instead of create**");
+                // We'll handle this in the error handler
+                return;
+            }
+            
+            formData.append('attributes', JSON.stringify({
+                name: qrFileName,
+                parent: { id: parentFolderId }
+            }));
+            formData.append('file', blob, qrFileName);
+            
+            // Upload file
+            $.ajax({
+                url: 'https://upload.box.com/api/2.0/files/content',
+                headers: {
+                    "Authorization": "Bearer " + token
+                },
+                type: 'post',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    console.log("**QR code uploaded successfully:** " + JSON.stringify(response));
+                    var uploadedFileId = response.entries[0].id;
+                    var uploadedFileName = response.entries[0].name;
+                    
+                    $('#status-message').html(
+                        '<div class="alert alert-success">' +
+                        '<strong>Success:</strong> QR code saved to Box!<br>' +
+                        'File: <strong>' + uploadedFileName + '</strong>' +
+                        '</div>'
+                    );
+                    
+                    // Show link to open in Box
+                    $('#download-link').html(
+                        '<a href="https://app.box.com/file/' + uploadedFileId + '" target="_blank" class="btn btn-outline-primary btn-sm">' +
+                        '<i class="bi bi-box-arrow-up-right"></i> Open in Box</a>'
+                    );
+                    
+                },
+                error: function(xhr, status, error) {
+                    console.log("**Upload error:** " + JSON.stringify(xhr));
+                    
+                    // Handle conflict - file already exists
+                    if (xhr.status === 409 && xhr.responseJSON && xhr.responseJSON.code === 'item_name_in_use') {
+                        var existingFileId = xhr.responseJSON.context_info.conflicts.id;
+                        console.log("**File exists with ID:** " + existingFileId + ", updating instead...");
+                        $('#status-message').html('<div class="alert alert-info">File already exists. Updating existing QR code...</div>');
+                        
+                        // Update existing file
+                        updateExistingFile(blob, token, existingFileId, qrFileName);
+                    } else {
+                        showError("Failed to upload QR code. Error: " + (xhr.responseJSON ? JSON.stringify(xhr.responseJSON) : error));
+                    }
+                }
+            });
+        }
+        
+        // Update existing file with new QR code
+        function updateExistingFile(blob, token, qrFileId, fileName) {
+            // First, get upload URL for new version
+            $.ajax({
+                url: 'https://upload.box.com/api/2.0/files/' + qrFileId + '/content',
+                headers: {
+                    "Authorization": "Bearer " + token
+                },
+                type: 'options',
+                success: function() {
+                    var formData = new FormData();
+                    formData.append('file', blob, fileName);
+                    
+                    // Upload new version
+                    $.ajax({
+                        url: 'https://upload.box.com/api/2.0/files/' + qrFileId + '/content',
+                        headers: {
+                            "Authorization": "Bearer " + token
+                        },
+                        type: 'post',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            console.log("**QR code updated successfully:** " + JSON.stringify(response));
+                            var uploadedFileId = response.entries[0].id;
+                            var uploadedFileName = response.entries[0].name;
+                            
+                            $('#status-message').html(
+                                '<div class="alert alert-success">' +
+                                '<h5>**Success:** QR code generated and updated!</h5>' +
+                                '<p>File: <strong>' + uploadedFileName + '</strong></p>' +
+                                '<p>File ID: ' + uploadedFileId + '</p>' +
+                                '</div>'
+                            );
+                            
+                            // Show download link
+                            $('#download-link').html(
+                                '<a href="https://app.box.com/file/' + uploadedFileId + '" target="_blank" class="btn btn-primary">' +
+                                '<i class="bi bi-box-arrow-up-right"></i> Open in Box</a>'
+                            );
+                            
+                        },
+                        error: function(xhr, status, error) {
+                            console.log("**Error updating QR code:** " + JSON.stringify(xhr));
+                            showError("Failed to update QR code. Error: " + (xhr.responseJSON ? JSON.stringify(xhr.responseJSON) : error));
+                        }
+                    });
+                },
+                error: function(xhr) {
+                    // Try direct upload for new version
+                    var formData = new FormData();
+                    formData.append('file', blob, fileName);
+                    
+                    $.ajax({
+                        url: 'https://upload.box.com/api/2.0/files/' + qrFileId + '/content',
+                        headers: {
+                            "Authorization": "Bearer " + token
+                        },
+                        type: 'post',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            console.log("**QR code updated successfully:** " + JSON.stringify(response));
+                            var uploadedFileId = response.entries[0].id;
+                            var uploadedFileName = response.entries[0].name;
+                            
+                            $('#status-message').html(
+                                '<div class="alert alert-success">' +
+                                '<strong>Success:</strong> QR code updated in Box!<br>' +
+                                'File: <strong>' + uploadedFileName + '</strong>' +
+                                '</div>'
+                            );
+                            
+                            $('#download-link').html(
+                                '<a href="https://app.box.com/file/' + uploadedFileId + '" target="_blank" class="btn btn-outline-primary btn-sm">' +
+                                '<i class="bi bi-box-arrow-up-right"></i> Open in Box</a>'
+                            );
+                            
+                        },
+                        error: function(xhr, status, error) {
+                            console.log("**Error updating QR code:** " + JSON.stringify(xhr));
+                            showError("Failed to update QR code. Error: " + (xhr.responseJSON ? JSON.stringify(xhr.responseJSON) : error));
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Save QR code to Box
+        function saveQRCodeToBox() {
+            if (!qrCodeBlob || !qrCodeToken || !qrCodeParentFolderId || !qrCodeFileName) {
+                showError("QR code data not available. Please generate the QR code first.");
+                return;
+            }
+            
+            $('#status-message').html('<div class="alert alert-info">Uploading QR code to Box...</div>');
+            uploadQRCodeToBox(qrCodeBlob, qrCodeToken, qrCodeParentFolderId, qrCodeFileName);
+        }
+        
+        // Download QR code
+        function downloadQRCode() {
+            if (!qrCodeBlob || !qrCodeFileName) {
+                showError("QR code data not available. Please generate the QR code first.");
+                return;
+            }
+            
+            var baseFileName = qrCodeFileName.substring(0, qrCodeFileName.lastIndexOf('.')) || qrCodeFileName;
+            var qrFileName = baseFileName + '_QRCode.png';
+            
+            // Create download link
+            var url = qrCodeDataUrl;
+            if (qrCodeBlob instanceof Blob) {
+                url = URL.createObjectURL(qrCodeBlob);
+            }
+            
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = qrFileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up object URL if we created one
+            if (qrCodeBlob instanceof Blob && qrCodeDataUrl.startsWith('blob:')) {
+                setTimeout(function() {
+                    URL.revokeObjectURL(url);
+                }, 100);
+            }
+            
+            console.log("**QR code downloaded:** " + qrFileName);
+        }
+        
+        // Print QR code
+        function printQRCode() {
+            if (!qrCodeDataUrl) {
+                showError("QR code data not available. Please generate the QR code first.");
+                return;
+            }
+            
+            var documentName = qrCodeFileName || 'Document';
+            // Remove file extension for display
+            var displayName = documentName.substring(0, documentName.lastIndexOf('.')) || documentName;
+            
+            var printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>QR Code - ' + displayName + '</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write('body { text-align: center; padding: 40px 20px; font-family: Arial, sans-serif; }');
+            printWindow.document.write('h1 { margin-bottom: 30px; font-size: 24px; color: #333; }');
+            printWindow.document.write('img { max-width: 100%; height: auto; display: block; margin: 0 auto; }');
+            printWindow.document.write('@media print { body { padding: 20px; } }');
+            printWindow.document.write('</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write('<h1>' + displayName + '</h1>');
+            printWindow.document.write('<img src="' + qrCodeDataUrl + '" alt="QR Code">');
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            
+            setTimeout(function() {
+                printWindow.print();
+            }, 250);
+            
+            console.log("**Printing QR code for:** " + displayName);
+        }
+        
+        // Function to show error message
+        function showError(message) {
+            $('#status-message').html('<div class="alert alert-danger" role="alert">' + message + '</div>');
+        }
+    </script>
+</head>
+<body>
+    <div class="container mt-4">
+        <div id="app-content" style="display: none;">
+            <h1 class="mb-4"><i class="bi bi-qr-code"></i> QR Code Generator</h1>
+            <div id="status-message"></div>
+            <div id="qr-preview" class="text-center my-4"></div>
+            <div id="download-link" class="text-center mt-3"></div>
+        </div>
+    </div>
+    
+    <div id='loader'>
+        <div class="spinner"></div>
+    </div>
+    
+    <style>
+        #loader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .action-buttons {
+            margin-top: 15px;
+        }
+        
+        .action-buttons .btn {
+            min-width: 140px;
+        }
+    </style>
+</body>
+</html>
