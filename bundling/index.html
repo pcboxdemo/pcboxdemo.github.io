@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Box Bundling</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'>
+  <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  
+  <!-- Box UI Elements -->
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/25.2.0/en-US/picker.css" />
+  <script src="https://cdn01.boxcdn.net/platform/elements/25.2.0/en-US/picker.js"></script>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 0;
+      background-color: #f5f5f5;
+      margin: 0;
+    }
+    .box-header {
+      background-color: #0061ff;
+      color: white;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .box-header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 500;
+    }
+    .box-header-options {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .box-header-options label {
+      margin: 0;
+      font-weight: normal;
+    }
+    .box-header-options .btn {
+      margin-left: 5px;
+    }
+    .container-main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px 20px 20px;
+    }
+    .container-main {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .section-header:hover {
+      background-color: #f5f5f5;
+      border-radius: 3px;
+      padding: 5px;
+      margin: -5px;
+    }
+    .section-content {
+      display: block;
+    }
+    .section-content.collapsed {
+      display: none;
+    }
+    .section-toggle {
+      margin-right: 10px;
+      font-weight: bold;
+      color: #666;
+    }
+    .section-name {
+      font-weight: bold;
+      font-size: 16px;
+      border: none;
+      background: transparent;
+      padding: 5px;
+      width: 300px;
+    }
+    .file-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .file-item {
+      padding: 10px;
+      border: 1px solid #eee;
+      margin-bottom: 5px;
+      border-radius: 3px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: move;
+    }
+    .file-item:hover {
+      background-color: #f9f9f9;
+    }
+    .file-info {
+      flex: 1;
+    }
+    .file-name-input {
+      border: none;
+      background: transparent;
+      padding: 2px 5px;
+      width: 200px;
+    }
+    .file-date-input {
+      border: none;
+      background: transparent;
+      padding: 2px 5px;
+      width: 100px;
+    }
+    .btn-remove {
+      color: #d9534f;
+      cursor: pointer;
+      padding: 5px 10px;
+    }
+    .btn-remove:hover {
+      color: #c9302c;
+    }
+    #loader {
+      text-align: center;
+      padding: 50px;
+      display: none;
+    }
+    .options-panel {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    #boxPickerContainer, #boxFolderPickerContainer {
+      width: 100%;
+      height: 500px;
+    }
+    .selected-folder {
+      margin-top: 10px;
+      padding: 10px;
+      background: #e7f3ff;
+      border-radius: 3px;
+    }
+    .message-area {
+      display: inline-block;
+      margin-left: 15px;
+      padding: 8px 15px;
+      border-radius: 4px;
+      font-size: 14px;
+      max-width: 500px;
+      cursor: pointer;
+    }
+    .message-area:hover {
+      opacity: 0.8;
+    }
+    .message-area.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .message-area.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .message-area.info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .message-area.hidden {
+      display: none;
+    }
+  </style>
+  
+  <script>
+    var token;
+    var contentPicker = null;
+    var folderPicker = null;
+    var currentSectionId = null;
+    var sections = [];
+    var sectionCounter = 0;
+    var targetFolderId = '309201374306';  // Default folder ID
+    // Use production backend on GitHub Pages, local for development
+    var backendUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:8081'
+        : 'https://box-bundling-service-b3cba948c376.herokuapp.com';
+    var clientId = 'YOUR_CLIENT_ID_HERE';  // Placeholder - will be provided
+    
+    function showMessage(message, type) {
+      var messageArea = $("#messageArea");
+      messageArea.removeClass('hidden success error info');
+      messageArea.addClass(type);
+      messageArea.text(message);
+      messageArea.show();
+      
+      // Auto-hide success messages after 5 seconds
+      if (type === 'success') {
+        setTimeout(function() {
+          messageArea.addClass('hidden');
+        }, 5000);
+      }
+    }
+    
+    function hideMessage() {
+      $("#messageArea").addClass('hidden');
+    }
+    
+    $(document).ready(function() {
+      // Allow clicking message area to dismiss
+      $(document).on('click', '#messageArea', function() {
+        hideMessage();
+      });
+      var params = new URLSearchParams(window.location.search);
+      var code = params.get('auth') || params.get('code');
+      var ptoken = params.get('token');
+      var backendUrlParam = params.get('backendUrl');
+      var urlClientId = params.get('clientId');
+      
+      // Use clientId from URL if provided, otherwise use placeholder
+      if (urlClientId) {
+        clientId = urlClientId;
+      }
+      
+      if (backendUrlParam) {
+        backendUrl = backendUrlParam;
+      }
+      
+      if (ptoken) {
+        // Dev mode - direct token
+        token = ptoken;
+        initializeApp();
+      } else if (code) {
+        // OAuth flow - exchange code for token
+        var boxId = sessionStorage.getItem("id");
+        $.ajax({
+          method: 'get',
+          url: "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator",
+          data: {
+            authCode: code,
+            id: boxId,
+            clientId: clientId
+          },
+          crossDomain: true,
+          cache: false,
+          success: function(response) {
+            console.log("Token received:", response);
+            token = response.token;
+            initializeApp();
+          },
+          error: function(err) {
+            console.log("Error: " + JSON.stringify(err));
+            console.log("Error message: " + err.message);
+            $("#loader").text("Authentication failed: " + (err.responseText || err.message));
+          }
+        });
+      } else {
+        $("#loader").text("No authentication token provided. Use ?token=YOUR_TOKEN for dev mode.");
+      }
+      
+      // Add initial section
+      addSection();
+    });
+    
+    function initializeApp() {
+      $("#loader").hide();
+      $(".container-main").show();
+      
+      // Set default folder ID if not already set in localStorage
+      if (!localStorage.getItem('boxFolderPickerLastFolder')) {
+        localStorage.setItem('boxFolderPickerLastFolder', targetFolderId);
+      }
+      
+      // Set default folder ID in input field
+      $("#targetFolderIdInput").val(targetFolderId);
+    }
+    
+    function addSection() {
+      sectionCounter++;
+      var sectionId = "section-" + sectionCounter;
+      var section = {
+        id: sectionId,
+        name: "Section " + sectionCounter,
+        files: [],
+        expanded: true
+      };
+      sections.push(section);
+      
+      var sectionHtml = '<div class="section-card" id="' + sectionId + '">' +
+        '<div class="section-header" onclick="toggleSection(\'' + sectionId + '\')">' +
+        '<span><span class="section-toggle">▼</span><input type="text" class="section-name" value="' + section.name + '" data-section-id="' + sectionId + '" onclick="event.stopPropagation()">' +
+        '</span>' +
+        '<button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); removeSection(\'' + sectionId + '\')">Remove Section</button>' +
+        '</div>' +
+        '<div class="section-content" id="content-' + sectionId + '">' +
+        '<button class="btn btn-sm btn-primary" onclick="openFilePicker(\'' + sectionId + '\')">Add Files</button>' +
+        '<ul class="file-list" id="files-' + sectionId + '"></ul>' +
+        '</div>' +
+        '</div>';
+      
+      $("#sections-container").append(sectionHtml);
+      
+      $(".section-name").off('change').on('change', function() {
+        var sid = $(this).data('section-id');
+        var s = sections.find(s => s.id === sid);
+        if (s) {
+          s.name = $(this).val();
+        }
+      });
+    }
+    
+    function toggleSection(sectionId) {
+      var section = sections.find(s => s.id === sectionId);
+      if (section) {
+        section.expanded = !section.expanded;
+        var content = $("#content-" + sectionId);
+        var toggle = $("#" + sectionId + " .section-toggle");
+        if (section.expanded) {
+          content.removeClass('collapsed');
+          toggle.text('▼');
+        } else {
+          content.addClass('collapsed');
+          toggle.text('▶');
+        }
+      }
+    }
+    
+    function removeSection(sectionId) {
+      sections = sections.filter(s => s.id !== sectionId);
+      $("#" + sectionId).remove();
+    }
+    
+    function openFilePicker(sectionId) {
+      currentSectionId = sectionId;
+      
+      // Clear cache and hide existing picker
+      if (contentPicker) {
+        try {
+          if (typeof contentPicker.clearCache === 'function') {
+            contentPicker.clearCache();
+          }
+          if (typeof contentPicker.hide === 'function') {
+            contentPicker.hide();
+          }
+        } catch(e) {
+          console.log("Error clearing/hiding picker: " + e);
+        }
+        contentPicker = null;
+      }
+      
+      // Clear container
+      $("#boxPickerContainer").empty();
+      
+      // Remove existing handlers
+      $("#filePickerModal").off('shown.bs.modal.filePicker');
+      
+      $("#filePickerModal").modal('show');
+      
+      $("#filePickerModal").on('shown.bs.modal.filePicker', function() {
+        // Create new picker instance
+        contentPicker = new Box.ContentPicker();
+        
+        contentPicker.addListener('choose', function(items) {
+          var section = sections.find(s => s.id === sectionId);
+          if (!section) return;
+          
+          items.forEach(function(item) {
+            // Store folder for next time
+            if (item.parent && item.parent.id) {
+              localStorage.setItem('boxPickerLastFolder', item.parent.id);
+            }
+            
+            // Get creation date from file, default to today if not available
+            var fileDate = new Date().toISOString().split('T')[0];
+            if (item.created_at) {
+              try {
+                var createdDate = new Date(item.created_at);
+                fileDate = createdDate.toISOString().split('T')[0];
+              } catch(e) {
+                console.log("Error parsing creation date: " + e);
+              }
+            } else if (item.createdAt) {
+              try {
+                var createdDate = new Date(item.createdAt);
+                fileDate = createdDate.toISOString().split('T')[0];
+              } catch(e) {
+                console.log("Error parsing creation date: " + e);
+              }
+            }
+            
+            var fileItem = {
+              fileId: item.id,
+              fileName: item.name,
+              date: fileDate,
+              pageCount: 0
+            };
+            section.files.push(fileItem);
+            addFileToSection(sectionId, fileItem);
+          });
+          
+          $("#filePickerModal").modal('hide');
+        });
+        
+        contentPicker.addListener('cancel', function() {
+          $("#filePickerModal").modal('hide');
+        });
+        
+        contentPicker.addListener('navigate', function(folder) {
+          if (folder && folder.id) {
+            localStorage.setItem('boxPickerLastFolder', folder.id);
+          }
+        });
+        
+        var lastFolderId = localStorage.getItem('boxPickerLastFolder') || '0';
+        
+        contentPicker.show('0', token, {
+          container: '#boxPickerContainer',
+          rootFolderId: '0',
+          currentFolderId: lastFolderId,
+          maxSelectable: 50,
+          canSetShareAccess: false,
+          sortBy: 'date',
+          sortDirection: 'DESC'
+        });
+      });
+    }
+    
+    function addFileToSection(sectionId, fileItem) {
+      // Remove .pdf extension for display
+      var displayName = fileItem.fileName;
+      if (displayName.toLowerCase().endsWith('.pdf')) {
+        displayName = displayName.substring(0, displayName.length - 4);
+      }
+      
+      var fileHtml = '<li class="file-item" data-file-id="' + fileItem.fileId + '">' +
+        '<div class="file-info">' +
+        '<input type="text" class="file-name-input" value="' + displayName + '" data-file-id="' + fileItem.fileId + '">' +
+        '<input type="date" class="file-date-input" value="' + fileItem.date + '" data-file-id="' + fileItem.fileId + '">' +
+        '</div>' +
+        '<span class="btn-remove" onclick="removeFile(\'' + sectionId + '\', \'' + fileItem.fileId + '\')">Remove</span>' +
+        '</li>';
+      
+      $("#files-" + sectionId).append(fileHtml);
+      
+      $(".file-name-input").off('change').on('change', function() {
+        var fid = $(this).data('file-id');
+        var editedName = $(this).val();
+        // Store the edited name (user may or may not include .pdf)
+        updateFileProperty(sectionId, fid, 'fileName', editedName);
+      });
+      
+      // Also handle input event for real-time updates
+      $(".file-name-input").off('input').on('input', function() {
+        var fid = $(this).data('file-id');
+        var editedName = $(this).val();
+        updateFileProperty(sectionId, fid, 'fileName', editedName);
+      });
+      
+      $(".file-date-input").off('change').on('change', function() {
+        var fid = $(this).data('file-id');
+        updateFileProperty(sectionId, fid, 'date', $(this).val());
+      });
+      
+      $("#files-" + sectionId).sortable({
+        update: function(event, ui) {
+          reorderFiles(sectionId);
+        }
+      });
+    }
+    
+    function updateFileProperty(sectionId, fileId, property, value) {
+      var section = sections.find(s => s.id === sectionId);
+      if (section) {
+        var file = section.files.find(f => f.fileId === fileId);
+        if (file) {
+          file[property] = value;
+          console.log("Updated file property: " + property + " = " + value + " for fileId: " + fileId);
+        }
+      }
+    }
+    
+    function removeFile(sectionId, fileId) {
+      var section = sections.find(s => s.id === sectionId);
+      if (section) {
+        section.files = section.files.filter(f => f.fileId !== fileId);
+        $(".file-item[data-file-id='" + fileId + "']").remove();
+      }
+    }
+    
+    function reorderFiles(sectionId) {
+      var section = sections.find(s => s.id === sectionId);
+      if (!section) return;
+      
+      var newOrder = [];
+      $("#files-" + sectionId + " .file-item").each(function() {
+        var fileId = $(this).data('file-id');
+        var file = section.files.find(f => f.fileId === fileId);
+        if (file) {
+          newOrder.push(file);
+        }
+      });
+      section.files = newOrder;
+    }
+    
+    
+    function openFolderPicker() {
+      // Clean up existing picker
+      if (folderPicker && typeof folderPicker.destroy === 'function') {
+        try {
+          folderPicker.destroy();
+        } catch(e) {
+          console.log("Error destroying folder picker: " + e);
+        }
+      }
+      folderPicker = null;
+      $("#boxFolderPickerContainer").empty();
+      
+      // Remove any existing handlers to prevent duplicates
+      $("#folderPickerModal").off('shown.bs.modal.folderPicker');
+      
+      $("#folderPickerModal").modal('show');
+      
+      $("#folderPickerModal").on('shown.bs.modal.folderPicker', function() {
+        // Double-check container is empty
+        $("#boxFolderPickerContainer").empty();
+        
+        folderPicker = new Box.ContentPicker();
+        
+        folderPicker.addListener('choose', function(items) {
+          var item = items[0];
+          // Check if it's a folder (type === 'folder')
+          if (item.type === 'folder' || item.type === 'file') {
+            // If file selected, use its parent folder
+            if (item.type === 'file' && item.parent) {
+              targetFolderId = item.parent.id;
+              localStorage.setItem('boxFolderPickerLastFolder', item.parent.id);
+              $("#targetFolderName").text("Folder: " + (item.parent.name || item.parent.id)).show();
+            } else {
+              targetFolderId = item.id;
+              localStorage.setItem('boxFolderPickerLastFolder', item.id);
+              $("#targetFolderName").text("Folder: " + item.name).show();
+            }
+            $("#targetFolderIdInput").val(targetFolderId);
+            $("#folderPickerModal").modal('hide');
+          }
+        });
+        
+        folderPicker.addListener('cancel', function() {
+          $("#folderPickerModal").modal('hide');
+        });
+        
+        folderPicker.addListener('navigate', function(folder) {
+          if (folder && folder.id) {
+            localStorage.setItem('boxFolderPickerLastFolder', folder.id);
+          }
+        });
+        
+        var lastFolderId = localStorage.getItem('boxFolderPickerLastFolder') || targetFolderId || '0';
+        
+        folderPicker.show('0', token, {
+          container: '#boxFolderPickerContainer',
+          rootFolderId: '0',
+          currentFolderId: lastFolderId,
+          maxSelectable: 1,
+          canSetShareAccess: false,
+          sortBy: 'date',
+          sortDirection: 'DESC'
+        });
+      });
+    }
+    
+    function generateBundle() {
+      // Check if there's at least one section with at least one file
+      var totalFiles = 0;
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].files) {
+          totalFiles += sections[i].files.length;
+        }
+      }
+      
+      console.log("Total sections: " + sections.length + ", Total files: " + totalFiles);
+      console.log("Sections data:", JSON.stringify(sections, null, 2));
+      
+      // Clear any previous messages
+      hideMessage();
+      
+      if (totalFiles === 0) {
+        showMessage("Please add at least one file to a section.", 'error');
+        return;
+      }
+      
+      // Folder selection is required
+      var folderId = targetFolderId || $("#targetFolderIdInput").val();
+      if (!folderId || folderId.trim() === '') {
+        showMessage("Please select a target folder or enter a folder ID.", 'error');
+        return;
+      }
+      
+      // Build request by reading current values from input fields
+      var request = {
+        token: token,
+        sections: sections.map(function(s) {
+          return {
+            id: s.id,
+            name: s.name,
+            files: s.files.map(function(f) {
+              // Read current values from input fields
+              var nameInput = $(".file-name-input[data-file-id='" + f.fileId + "']");
+              var dateInput = $(".file-date-input[data-file-id='" + f.fileId + "']");
+              
+              var currentFileName = nameInput.length > 0 ? nameInput.val() : f.fileName;
+              var currentDate = dateInput.length > 0 ? dateInput.val() : f.date;
+              
+              console.log("File " + f.fileId + " - Original: " + f.fileName + ", Current from input: " + currentFileName);
+              
+              // Update the sections array with current values
+              f.fileName = currentFileName;
+              f.date = currentDate;
+              
+              return {
+                fileId: f.fileId,
+                fileName: currentFileName,
+                date: currentDate
+              };
+            })
+          };
+        }),
+        includeIndex: true,
+        indexNumberingStyle: "numeric",
+        targetFolderId: folderId,
+        uploadToBox: true  // Always upload to Box
+      };
+      
+      console.log("Request payload:", JSON.stringify(request, null, 2));
+      console.log("Target Folder ID being sent: " + folderId);
+      
+      // Clear previous messages and show generating status
+      hideMessage();
+      showMessage("Generating bundle...", 'info');
+      $("#generateBtn").prop('disabled', true).text('Generating...');
+      
+      var ajaxOptions = {
+        method: 'POST',
+        url: backendUrl + '/api/bundle/generate',
+        contentType: 'application/json',
+        data: JSON.stringify(request)
+      };
+      
+      ajaxOptions.success = function(data, status, xhr) {
+          // Backend always returns JSON when uploading to Box
+          var response = typeof data === 'string' ? JSON.parse(data) : data;
+          var successMsg = "Bundle uploaded successfully! File ID: " + response.fileId + " | URL: " + response.fileUrl;
+          showMessage(successMsg, 'success');
+          $("#generateBtn").prop('disabled', false).text('Generate Bundle');
+        };
+      
+      ajaxOptions.error = function(xhr, status, error) {
+          var errorMsg = "Error generating bundle";
+          if (xhr.responseText) {
+            try {
+              var errorJson = JSON.parse(xhr.responseText);
+              errorMsg = errorJson.message || errorMsg;
+            } catch(e) {
+              errorMsg = xhr.responseText.substring(0, 200); // Limit length
+            }
+          }
+          showMessage(errorMsg, 'error');
+          $("#generateBtn").prop('disabled', false).text('Generate Bundle');
+        };
+      
+      $.ajax(ajaxOptions);
+    }
+    
+    $("#filePickerModal").on('hidden.bs.modal', function() {
+      // Clear cache and hide picker
+      if (contentPicker) {
+        try {
+          if (typeof contentPicker.clearCache === 'function') {
+            contentPicker.clearCache();
+          }
+          if (typeof contentPicker.hide === 'function') {
+            contentPicker.hide();
+          }
+        } catch(e) {
+          console.log("Error clearing/hiding picker: " + e);
+        }
+        contentPicker = null;
+      }
+      // Clear container
+      $("#boxPickerContainer").empty();
+      // Remove handler
+      $("#filePickerModal").off('shown.bs.modal.filePicker');
+    });
+    
+    $("#folderPickerModal").on('hidden.bs.modal', function() {
+      if (folderPicker && typeof folderPicker.destroy === 'function') {
+        try {
+          folderPicker.destroy();
+        } catch(e) {
+          console.log("Error destroying folder picker: " + e);
+        }
+      }
+      folderPicker = null;
+      $("#boxFolderPickerContainer").empty();
+      // Remove handler when modal is hidden to prevent accumulation
+      $("#folderPickerModal").off('shown.bs.modal.folderPicker');
+    });
+    
+  </script>
+</head>
+
+<body>
+  <div id="loader">
+    <h3>Loading...</h3>
+  </div>
+  
+  <div class="box-header">
+    <h1>Box Bundling</h1>
+    <div class="box-header-options">
+      <label style="font-weight: bold;">Target Folder (Required):</label>
+      <button class="btn btn-sm btn-light" onclick="openFolderPicker()">Select Target Folder</button>
+      <input type="text" id="targetFolderIdInput" class="form-control" style="width: 200px; display: inline-block; padding: 5px;" placeholder="Or enter Folder ID" required>
+      <div id="targetFolderName" style="display:none; margin-left: 10px;"></div>
+    </div>
+  </div>
+  
+  <div class="container-main" style="display:none;">
+    
+    <div class="section-card">
+      <div class="section-header" onclick="toggleSection('index-section')">
+        <span><span class="section-toggle">▼</span><strong>Index</strong></span>
+      </div>
+      <div class="section-content" id="content-index-section">
+        <p style="color: #666; margin: 10px 0;">Index page will be automatically generated</p>
+      </div>
+    </div>
+    
+    <div id="sections-container"></div>
+    
+    <div style="margin-top: 20px;">
+      <button class="btn btn-success" onclick="addSection()">Add Section</button>
+      <button class="btn btn-primary btn-lg" id="generateBtn" onclick="generateBundle()" style="margin-left: 10px;">Generate Bundle</button>
+      <div id="messageArea" class="message-area hidden"></div>
+    </div>
+  </div>
+  
+  <!-- File Picker Modal -->
+  <div class="modal fade" id="filePickerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Select Files</h4>
+        </div>
+        <div class="modal-body">
+          <div id="boxPickerContainer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Folder Picker Modal -->
+  <div class="modal fade" id="folderPickerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Select Target Folder</h4>
+        </div>
+        <div class="modal-body">
+          <div id="boxFolderPickerContainer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+</body>
+</html>
