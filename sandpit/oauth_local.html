@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Box OAuth Local Test</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        pre { background: #f4f4f4; padding: 1rem; overflow: auto; font-size: 12px; }
+        .section { margin: 1.5rem 0; }
+        .section h2 { font-size: 1rem; margin-bottom: 0.5rem; }
+        .error { color: #c00; }
+        .muted { color: #666; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <h1>Box OAuth Local Test</h1>
+    <p class="muted">Open this page, click the link below to sign in with Box; on success Box redirects here with a <code>code</code>, then this page exchanges it for a token and fetches current user (including enterprise). Set your app redirect URI in the Box dev console to this page URL (e.g. http://localhost:8000/sandpit/oauth_local.html).</p>
+
+    <div id="out"></div>
+
+    <script>
+        (function () {
+            var clientId = "25755vastgyr190ycwoc8tg89hyc43yc";
+            var clientSecret = "1Jp5U83THcZNqpeddeADhQ37PJkbt7Nx";
+            var params = new URLSearchParams(window.location.search);
+            var code = params.get("code");
+            var out = document.getElementById("out");
+
+            function append(title, body, isError) {
+                var section = document.createElement("div");
+                section.className = "section";
+                var h2 = document.createElement("h2");
+                h2.textContent = title;
+                if (isError) h2.className = "error";
+                section.appendChild(h2);
+                var pre = document.createElement("pre");
+                pre.textContent = typeof body === "string" ? body : JSON.stringify(body, null, 2);
+                section.appendChild(pre);
+                out.appendChild(section);
+            }
+
+            if (!code) {
+                var redirectUri = window.location.origin + window.location.pathname;
+                var authUrl = "https://account.box.com/api/oauth2/authorize?client_id=25755vastgyr190ycwoc8tg89hyc43yc&response_type=code&redirect_uri=" + encodeURIComponent(redirectUri);
+                var p = document.createElement("p");
+                p.innerHTML = 'No code in URL. <a href="' + authUrl + '">Start OAuth (redirect to Box to sign in)</a>. After authorization Box will redirect back here with a code.';
+                out.appendChild(p);
+                return;
+            }
+
+            var redirectUri = window.location.origin + window.location.pathname;
+            var body = "grant_type=authorization_code&code=" + encodeURIComponent(code) +
+                "&client_id=" + encodeURIComponent(clientId) +
+                "&client_secret=" + encodeURIComponent(clientSecret) +
+                "&redirect_uri=" + encodeURIComponent(redirectUri);
+
+            fetch("https://api.box.com/oauth2/token", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: body
+            })
+            .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+            .then(function (result) {
+                if (!result.ok) {
+                    append("Token exchange failed", result.data, true);
+                    return;
+                }
+                var token = result.data.access_token;
+                append("Token response", { access_token: token ? token.substring(0, 30) + "..." : null, expires_in: result.data.expires_in, refresh_token: result.data.refresh_token ? "(present)" : null });
+
+                return fetch("https://api.box.com/2.0/users/me?fields=id,name,login,enterprise", {
+                    headers: { "Authorization": "Bearer " + token }
+                }).then(function (r) { return r.json(); });
+            })
+            .then(function (user) {
+                if (user && user.type === "user") {
+                    append("Current user (with enterprise)", user);
+                } else if (user && user.message) {
+                    append("User API error", user, true);
+                }
+            })
+            .catch(function (err) {
+                append("Error", err.message, true);
+            });
+        })();
+    </script>
+</body>
+</html>

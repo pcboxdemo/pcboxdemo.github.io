@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Box Bundling - OAuth</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      var params = new URLSearchParams(window.location.search);
+      var id = params.get("id");
+      var clientId = params.get("clientId") || "YOUR_CLIENT_ID_HERE";  // Placeholder
+      
+      // Store id in sessionStorage for later use
+      if (id) {
+        sessionStorage.setItem("id", id);
+      }
+      
+      // Build redirect URI
+      var redirectUri = encodeURIComponent(window.location.origin + window.location.pathname.replace('index_oauth.html', 'index.html') + '?clientId=' + clientId);
+      
+      // Redirect to Box OAuth
+      var authUrl = 'https://account.box.com/api/oauth2/authorize?' +
+        'client_id=' + clientId +
+        '&response_type=code' +
+        (id ? '&id=' + id : '') +
+        '&redirect_uri=' + redirectUri;
+      
+      window.location = authUrl;
+    });
+  </script>
+</head>
+
+<body>
+  <div>Redirecting to Box authentication...</div>
+</body>
+
+</html>
