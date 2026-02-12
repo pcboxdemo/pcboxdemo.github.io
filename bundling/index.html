@@ -116,6 +116,14 @@
     }
     .file-info {
       flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .file-icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
     }
     .file-name-input {
       border: none;
@@ -198,7 +206,7 @@
     var currentSectionId = null;
     var sections = [];
     var sectionCounter = 0;
-    var targetFolderId = '309201374306';  // Default folder ID
+    var targetFolderId = '';  // No default folder - user must select
     // Use production backend on GitHub Pages, local for development
     var backendUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:8081'
@@ -284,13 +292,13 @@
       $("#loader").hide();
       $(".container-main").show();
       
-      // Set default folder ID if not already set in localStorage
-      if (!localStorage.getItem('boxFolderPickerLastFolder')) {
-        localStorage.setItem('boxFolderPickerLastFolder', targetFolderId);
+      // No default folder - user must select one
+      // Check if there's a previously selected folder in localStorage
+      var lastFolder = localStorage.getItem('boxFolderPickerLastFolder');
+      if (lastFolder) {
+        targetFolderId = lastFolder;
+        $("#targetFolderIdInput").val(targetFolderId);
       }
-      
-      // Set default folder ID in input field
-      $("#targetFolderIdInput").val(targetFolderId);
     }
     
     function addSection() {
@@ -443,6 +451,40 @@
       });
     }
     
+    function getFileIcon(fileName) {
+      // Get file extension
+      var extension = fileName.split('.').pop().toLowerCase();
+      
+      // Map extensions to icon files
+      var iconMap = {
+        'pdf': 'pdf.svg',
+        'docx': 'docx.svg',
+        'doc': '_doc.svg',
+        'pptx': 'pptx.svg',
+        'ppt': 'ppt.svg',
+        'xlsx': 'xlsx.svg',
+        'xls': 'xls.svg',
+        'txt': 'txt.svg',
+        'csv': 'csv.svg',
+        'png': 'png.svg',
+        'jpg': 'jpg.svg',
+        'jpeg': 'jpeg.svg',
+        'gif': 'gif.svg',
+        'zip': 'zip.svg',
+        'xml': 'xml.svg',
+        'mp3': 'mp3.svg',
+        'mp4': 'mp4.svg',
+        'wav': 'wav.svg',
+        'flac': 'flac.svg',
+        'ps': 'ps.svg',
+        'log': 'log.svg',
+        'boxnote': 'boxnote.svg'
+      };
+      
+      var iconFile = iconMap[extension] || '_blankl.svg';
+      return 'https://pcboxdemo.github.io/indexer/iconsbox/' + iconFile;
+    }
+    
     function addFileToSection(sectionId, fileItem) {
       // Remove .pdf extension for display
       var displayName = fileItem.fileName;
@@ -450,8 +492,12 @@
         displayName = displayName.substring(0, displayName.length - 4);
       }
       
+      // Get icon for file type
+      var iconUrl = getFileIcon(fileItem.fileName);
+      
       var fileHtml = '<li class="file-item" data-file-id="' + fileItem.fileId + '">' +
         '<div class="file-info">' +
+        '<img src="' + iconUrl + '" class="file-icon" alt="' + fileItem.fileName.split('.').pop() + '">' +
         '<input type="text" class="file-name-input" value="' + displayName + '" data-file-id="' + fileItem.fileId + '">' +
         '<input type="date" class="file-date-input" value="' + fileItem.date + '" data-file-id="' + fileItem.fileId + '">' +
         '</div>' +
@@ -573,7 +619,7 @@
           }
         });
         
-        var lastFolderId = localStorage.getItem('boxFolderPickerLastFolder') || targetFolderId || '0';
+        var lastFolderId = localStorage.getItem('boxFolderPickerLastFolder') || '0';
         
         folderPicker.show('0', token, {
           container: '#boxFolderPickerContainer',
