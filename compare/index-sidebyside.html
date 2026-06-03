@@ -36,6 +36,12 @@ License URL: http://creativecommons.org/licenses/by/3.0/
 <script src="compare-foldout-sidebar.js"></script>
     <script>
   var TOKEN_GENERATOR_URL = "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator";
+  var DEFAULT_BOX_CLIENT_ID = "uie27c6xniopg9wrcxywucg58t2emgs7";
+  var OAUTH_KICKOFF_PAGE = "index-sidebyside-oauth.html";
+  var SESSION_TOKEN_KEY = "compareSideBySideToken";
+  var SESSION_FILE_ID_KEY = "compareSideBySideFileId";
+  var SESSION_FILE_EXT_KEY = "compareSideBySideFileExt";
+  var SESSION_CLIENT_ID_KEY = "compareSideBySideClientId";
   var params = new URLSearchParams(window.location.search);
   var clientId = null;
   var accessToken = null;
@@ -80,6 +86,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
       showAuthError("Missing file ID. Add <strong>id</strong> (Box file ID) to the query string.");
       return;
     }
+    logFilePermissionsForSidebar();
     $('#loader').show();
     getFileName(accessToken, fileId).then(function(result) {
       if (result && result.name && !fileExt) {
@@ -118,6 +125,8 @@ License URL: http://creativecommons.org/licenses/by/3.0/
           showAuthError("Token generator returned no access token.");
           return;
         }
+        persistSessionAuth();
+        cleanUrlAfterOAuth();
         beginAppSession();
       },
       error: function(err) {
@@ -134,10 +143,75 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     });
   }
 
+  function persistSessionAuth() {
+    if (accessToken) {
+      sessionStorage.setItem(SESSION_TOKEN_KEY, accessToken);
+    }
+    if (fileId) {
+      sessionStorage.setItem(SESSION_FILE_ID_KEY, fileId);
+    }
+    if (fileExt) {
+      sessionStorage.setItem(SESSION_FILE_EXT_KEY, fileExt);
+    }
+    if (clientId) {
+      sessionStorage.setItem(SESSION_CLIENT_ID_KEY, clientId);
+    }
+  }
+
+  function loadSessionAuth() {
+    if (!fileId) {
+      fileId = sessionStorage.getItem(SESSION_FILE_ID_KEY);
+    }
+    if (!fileExt) {
+      fileExt = sessionStorage.getItem(SESSION_FILE_EXT_KEY);
+    }
+    if (!clientId) {
+      clientId = sessionStorage.getItem(SESSION_CLIENT_ID_KEY) || DEFAULT_BOX_CLIENT_ID;
+    }
+    if (!accessToken) {
+      accessToken = sessionStorage.getItem(SESSION_TOKEN_KEY);
+    }
+  }
+
+  function cleanUrlAfterOAuth() {
+    var url = new URL(window.location.href);
+    url.searchParams.delete('auth');
+    url.searchParams.delete('code');
+    if (fileId) {
+      url.searchParams.set('id', fileId);
+    }
+    if (fileExt) {
+      url.searchParams.set('ext', fileExt);
+    }
+    if (clientId) {
+      url.searchParams.set('clientId', clientId);
+    }
+    window.history.replaceState({}, document.title, url.pathname + '?' + url.searchParams.toString());
+  }
+
+  function getOAuthKickoffUrl() {
+    var parts = [];
+    if (fileId) {
+      parts.push('id=' + encodeURIComponent(fileId));
+    }
+    if (fileExt) {
+      parts.push('ext=' + encodeURIComponent(fileExt));
+    }
+    if (clientId) {
+      parts.push('clientId=' + encodeURIComponent(clientId));
+    }
+    return OAUTH_KICKOFF_PAGE + (parts.length ? '?' + parts.join('&') : '');
+  }
+
+  function redirectToOAuthKickoff() {
+    console.log("**Auth:** Redirecting to Box OAuth kickoff");
+    window.location.href = getOAuthKickoffUrl();
+  }
+
   function initializeAuth() {
-    clientId = params.get("clientId");
-    fileId = params.get('id') || params.get('fileId');
-    fileExt = params.get('ext');
+    clientId = params.get("clientId") || sessionStorage.getItem(SESSION_CLIENT_ID_KEY) || DEFAULT_BOX_CLIENT_ID;
+    fileId = params.get('id') || params.get('fileId') || sessionStorage.getItem(SESSION_FILE_ID_KEY);
+    fileExt = params.get('ext') || sessionStorage.getItem(SESSION_FILE_EXT_KEY);
     var authCode = params.get('auth') || params.get('code');
     var queryToken = params.get('token') || params.get('access_token');
 
@@ -145,14 +219,28 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     if (queryToken && fileId && !authCode) {
       accessToken = queryToken;
       console.log("**Auth:** Using token from query string (local dev)");
+      persistSessionAuth();
       beginAppSession();
       return;
     }
 
-    // Production: Box integration OAuth callback (same route as compare/index.html)
-    if (authCode && clientId) {
-      console.log("**Auth:** Exchanging OAuth code via token generator");
+    // OAuth callback after Box authorize (same pattern as boxpdf/index.html)
+    if (authCode) {
+      if (!fileId) {
+        fileId = sessionStorage.getItem(SESSION_FILE_ID_KEY);
+      }
+      if (!clientId) {
+        clientId = sessionStorage.getItem(SESSION_CLIENT_ID_KEY) || DEFAULT_BOX_CLIENT_ID;
+      }
+      console.log("**Auth:** Exchanging OAuth code via token generator (full token)");
       exchangeOAuthToken(authCode);
+      return;
+    }
+
+    loadSessionAuth();
+    if (accessToken && fileId) {
+      console.log("**Auth:** Using stored session token");
+      beginAppSession();
       return;
     }
 
@@ -161,10 +249,14 @@ License URL: http://creativecommons.org/licenses/by/3.0/
       return;
     }
 
+    if (fileId) {
+      redirectToOAuthKickoff();
+      return;
+    }
+
     showAuthError(
-      "Missing authentication.<br><br>" +
-      "<strong>Production (from Box):</strong> <code>?auth=...&amp;clientId=...&amp;id=FILE_ID&amp;ext=pdf</code><br><br>" +
-      "<strong>Local testing:</strong> <code>?token=ACCESS_TOKEN&amp;id=FILE_ID&amp;ext=pdf</code>"
+      "Missing file ID. Open with <code>?id=FILE_ID&amp;ext=pdf</code> to sign in with Box, " +
+      "or use <code>?token=ACCESS_TOKEN&amp;id=FILE_ID</code> for local testing."
     );
   }
 
@@ -1288,24 +1380,87 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     return new BoxAnnotations();
   }
 
+  function normalizeBoxItemPermissions(permissions) {
+    if (!permissions || typeof permissions !== 'object') {
+      return;
+    }
+    if (!permissions.can_view_annotations &&
+        (permissions.can_view_annotations_all || permissions.can_view_annotations_self)) {
+      permissions.can_view_annotations = true;
+    }
+  }
+
+  function patchPermissionsInApiPayload(data) {
+    if (!data || typeof data !== 'object') {
+      return;
+    }
+    if (data.permissions) {
+      normalizeBoxItemPermissions(data.permissions);
+    }
+    if (Array.isArray(data.entries)) {
+      var i;
+      for (i = 0; i < data.entries.length; i++) {
+        if (data.entries[i] && data.entries[i].permissions) {
+          normalizeBoxItemPermissions(data.entries[i].permissions);
+        }
+      }
+    }
+  }
+
+  function sidebarResponseInterceptor(response) {
+    try {
+      if (response && response.data) {
+        patchPermissionsInApiPayload(response.data);
+      }
+    } catch (interceptorErr) {
+      console.log('Sidebar responseInterceptor: ' + (interceptorErr && interceptorErr.message ? interceptorErr.message : interceptorErr));
+    }
+    return response;
+  }
+
+  function shouldEnableSidebarActivityAnnotations() {
+    return params.get('sidebarAnnotations') !== '0';
+  }
+
+  function logFilePermissionsForSidebar() {
+    if (!accessToken || !fileId) {
+      return;
+    }
+    $.ajax({
+      url: 'https://api.box.com/2.0/files/' + fileId + '?fields=permissions',
+      headers: { Authorization: 'Bearer ' + accessToken },
+      type: 'get',
+      success: function(file) {
+        var p = file && file.permissions ? file.permissions : {};
+        console.log('Sidebar permissions: can_comment=' + !!p.can_comment +
+          ' can_view_annotations=' + !!p.can_view_annotations +
+          ' can_view_annotations_all=' + !!p.can_view_annotations_all +
+          ' can_view_annotations_self=' + !!p.can_view_annotations_self);
+      }
+    });
+  }
+
   function getContentSidebarProps() {
-    return {
+    var props = {
       hasActivityFeed: true,
       hasMetadata: false,
+      responseInterceptor: sidebarResponseInterceptor,
       detailsSidebarProps: {
         hasNotices: true,
         hasProperties: true,
         hasAccessStats: true,
         hasVersions: true
       },
-      features: {
-        activityFeed: {
-          annotations: {
-            enabled: true
-          }
-        }
-      }
+      features: {}
     };
+    if (shouldEnableSidebarActivityAnnotations()) {
+      props.features.activityFeed = {
+        annotations: {
+          enabled: true
+        }
+      };
+    }
+    return props;
   }
 
   function getPreviewOptions(containerSelector, fileOptions, boxAnnotations) {

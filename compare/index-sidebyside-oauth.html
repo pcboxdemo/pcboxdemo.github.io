@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Compare — Box sign in</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script>
+    var DEFAULT_BOX_CLIENT_ID = 'uie27c6xniopg9wrcxywucg58t2emgs7';
+    var COMPARE_CALLBACK_URL = 'https://pcboxdemo.github.io/compare/index-sidebyside.html';
+    var SESSION_FILE_ID_KEY = 'compareSideBySideFileId';
+    var SESSION_FILE_EXT_KEY = 'compareSideBySideFileExt';
+    var SESSION_CLIENT_ID_KEY = 'compareSideBySideClientId';
+
+    $(document).ready(function () {
+      var params = new URLSearchParams(window.location.search);
+      var fileId = params.get('id') || params.get('fileId');
+      var fileExt = params.get('ext') || '';
+      var clientId = params.get('clientId') || DEFAULT_BOX_CLIENT_ID;
+
+      if (fileId) {
+        sessionStorage.setItem(SESSION_FILE_ID_KEY, fileId);
+      }
+      if (fileExt) {
+        sessionStorage.setItem(SESSION_FILE_EXT_KEY, fileExt);
+      }
+      sessionStorage.setItem(SESSION_CLIENT_ID_KEY, clientId);
+
+      var redirectUri = COMPARE_CALLBACK_URL + '?clientId=' + encodeURIComponent(clientId);
+      var authorizeUrl = 'https://account.box.com/api/oauth2/authorize' +
+        '?client_id=' + encodeURIComponent(clientId) +
+        '&response_type=code' +
+        '&redirect_uri=' + encodeURIComponent(redirectUri);
+
+      console.log('Compare OAuth: redirecting to Box authorize');
+      window.location.href = authorizeUrl;
+    });
+  </script>
+</head>
+<body>
+  <p>Redirecting to Box to sign in…</p>
+</body>
+</html>
