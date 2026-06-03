@@ -1,46 +1,49 @@
 /* Side-by-side compare: Details rails in margins; panels are fixed overlays (no layout shift) */
 
 .compare-stage {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  justify-content: center;
+  display: block;
   width: 100%;
-  min-height: calc(100vh - 120px);
+  min-height: 0;
   background: #3d3d3d;
   position: relative;
+  flex: 1 1 auto;
 }
 
+/* Overlay rails — do not steal horizontal space from previews */
 .compare-foldout {
-  flex: 1 1 0;
-  min-width: 48px;
-  display: flex;
-  align-items: stretch;
-  position: relative;
-  z-index: 10;
-  pointer-events: auto;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  z-index: 20;
+  pointer-events: none;
 }
 
 .compare-foldout--left {
-  justify-content: flex-end;
+  left: 0;
 }
 
 .compare-foldout--right {
-  justify-content: flex-start;
+  right: 0;
 }
 
 .compare-foldout-rail {
-  flex: 0 0 auto;
+  pointer-events: auto;
+  height: 100%;
   display: flex;
   align-items: center;
 }
 
 .compare-foldout--left .compare-foldout-rail {
-  margin-right: 4px;
+  margin-right: 0;
+  justify-content: flex-start;
+  padding-left: 2px;
 }
 
 .compare-foldout--right .compare-foldout-rail {
-  margin-left: 4px;
+  margin-left: 0;
+  justify-content: flex-end;
+  padding-right: 2px;
 }
 
 .compare-foldout-trigger {
@@ -241,8 +244,10 @@
 }
 
 .compare-stage .preview-panels-row--compare {
-  flex: 0 1 auto;
-  min-height: inherit;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  background: transparent;
 }
 
 @media (max-width: 900px) {
