@@ -18,6 +18,12 @@
   var uiBySide = { left: null, right: null };
   var selectedIdBySide = { left: null, right: null };
   var previewDomBound = false;
+  var clickPopupEl = null;
+  var clickPopupDismissBound = false;
+  var lastPreviewClickPoint = null;
+  var skipNextActivePopup = false;
+  var lastPopupShown = { id: null, at: 0 };
+  var suppressPopupDismiss = false;
 
   function log(msg) {
     console.log('Compare annotations panel: ' + msg);
@@ -148,6 +154,7 @@
     selectedIdBySide[side] = id;
     renderList(side);
     if (highlightPreview) {
+      skipNextActivePopup = true;
       var panelIndex = config.getPanelIndexForFoldoutSide ? config.getPanelIndexForFoldoutSide(side) : -1;
       if (panelIndex >= 0) {
         emitActiveOnPanel(panelIndex, id);
@@ -336,6 +343,217 @@
     loadPanelData(side, version);
   }
 
+  function getClickPopupEl() {
+    if (clickPopupEl) {
+      return clickPopupEl;
+    }
+    clickPopupEl = document.createElement('div');
+    clickPopupEl.className = 'compare-ann-click-popup';
+    clickPopupEl.setAttribute('role', 'dialog');
+    clickPopupEl.setAttribute('aria-label', 'Annotation');
+    clickPopupEl.hidden = true;
+    clickPopupEl.innerHTML =
+      '<div class="compare-ann-click-popup-header">' +
+      '<p class="compare-ann-click-popup-meta"></p>' +
+      '<button type="button" class="compare-ann-click-popup-close" aria-label="Close">&times;</button>' +
+      '</div>' +
+      '<div class="compare-ann-click-popup-body"></div>';
+    clickPopupEl.querySelector('.compare-ann-click-popup-close').addEventListener('click', dismissClickPopup);
+    document.body.appendChild(clickPopupEl);
+    bindClickPopupDismiss();
+    return clickPopupEl;
+  }
+
+  function bindClickPopupDismiss() {
+    if (clickPopupDismissBound) {
+      return;
+    }
+    document.addEventListener('click', function (evt) {
+      if (suppressPopupDismiss) {
+        return;
+      }
+      if (!clickPopupEl || clickPopupEl.hidden) {
+        return;
+      }
+      if (clickPopupEl.contains(evt.target)) {
+        return;
+      }
+      if (evt.target.closest && evt.target.closest('.ba-RegionAnnotation, .ba-PointAnnotation, [data-resin-itemid]')) {
+        return;
+      }
+      dismissClickPopup();
+    }, true);
+    document.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Escape') {
+        dismissClickPopup();
+      }
+    });
+    clickPopupDismissBound = true;
+  }
+
+  function dismissClickPopup() {
+    if (clickPopupEl) {
+      clickPopupEl.hidden = true;
+    }
+  }
+
+  function positionClickPopup(popup, point) {
+    var pad = 10;
+    var offset = 12;
+    var x = point && point.x != null ? point.x + offset : window.innerWidth / 2 - 140;
+    var y = point && point.y != null ? point.y + offset : window.innerHeight / 2 - 60;
+    popup.style.left = x + 'px';
+    popup.style.top = y + 'px';
+    popup.hidden = false;
+    requestAnimationFrame(function () {
+      var rect = popup.getBoundingClientRect();
+      var left = x;
+      var top = y;
+      if (left + rect.width > window.innerWidth - pad) {
+        left = window.innerWidth - rect.width - pad;
+      }
+      if (top + rect.height > window.innerHeight - pad) {
+        top = point && point.y != null ? point.y - rect.height - offset : window.innerHeight - rect.height - pad;
+      }
+      if (left < pad) {
+        left = pad;
+      }
+      if (top < pad) {
+        top = pad;
+      }
+      popup.style.left = left + 'px';
+      popup.style.top = top + 'px';
+    });
+  }
+
+  function resolveClickPoint(annotationId, fallbackPoint) {
+    if (fallbackPoint && fallbackPoint.x != null && fallbackPoint.y != null) {
+      return fallbackPoint;
+    }
+    var safeId = String(annotationId).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    var el = document.querySelector('[data-resin-itemid="' + safeId + '"]');
+    if (el && el.getBoundingClientRect) {
+      var r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+    return { x: window.innerWidth / 2 - 100, y: window.innerHeight / 3 };
+  }
+
+  function popupMetaLine(item) {
+    var parts = [];
+    if (item.page != null) {
+      parts.push('Page ' + item.page);
+    }
+    if (formatTargetType(item.targetType)) {
+      parts.push(formatTargetType(item.targetType));
+    }
+    if (item.authorLabel) {
+      parts.push(item.authorLabel);
+    }
+    if (item.createdAt) {
+      parts.push(formatWhen(item.createdAt));
+    }
+    return parts.join(' · ');
+  }
+
+  function ensureSideDataLoaded(side, version) {
+    if (!version) {
+      return Promise.reject(new Error('No version for side'));
+    }
+    var cached = cacheBySide[side];
+    if (cached && cached.versionId === version.id) {
+      return Promise.resolve();
+    }
+    if (!uiBySide[side]) {
+      buildPanelShell(side, version);
+    }
+    return fetchPanelData(side, version);
+  }
+
+  function showClickPopupContent(popup, item, point) {
+    var metaEl = popup.querySelector('.compare-ann-click-popup-meta');
+    var bodyEl = popup.querySelector('.compare-ann-click-popup-body');
+    metaEl.textContent = popupMetaLine(item);
+    bodyEl.className = 'compare-ann-click-popup-body';
+    bodyEl.textContent = item.message && String(item.message).trim() ? item.message : '(no note)';
+    positionClickPopup(popup, point);
+  }
+
+  function showClickPopupLoading(popup, point) {
+    var metaEl = popup.querySelector('.compare-ann-click-popup-meta');
+    var bodyEl = popup.querySelector('.compare-ann-click-popup-body');
+    metaEl.textContent = 'Annotation';
+    bodyEl.className = 'compare-ann-click-popup-body is-loading';
+    bodyEl.textContent = 'Loading…';
+    positionClickPopup(popup, point);
+  }
+
+  function showClickPopupError(popup, message, point) {
+    var metaEl = popup.querySelector('.compare-ann-click-popup-meta');
+    var bodyEl = popup.querySelector('.compare-ann-click-popup-body');
+    metaEl.textContent = 'Annotation';
+    bodyEl.className = 'compare-ann-click-popup-body is-error';
+    bodyEl.textContent = message;
+    positionClickPopup(popup, point);
+  }
+
+  function showAnnotationPopup(panelIndex, annotationId, clickPoint) {
+    var side = config.getFoldoutSideForPanelIndex
+      ? config.getFoldoutSideForPanelIndex(toPanelIndex(panelIndex))
+      : null;
+    if (!side || !annotationId) {
+      return;
+    }
+    var now = Date.now();
+    if (lastPopupShown.id === String(annotationId) && now - lastPopupShown.at < 120) {
+      return;
+    }
+    lastPopupShown = { id: String(annotationId), at: now };
+
+    var version = config.getVersionForSide ? config.getVersionForSide(side) : null;
+    var point = resolveClickPoint(annotationId, clickPoint || lastPreviewClickPoint);
+    var popup = getClickPopupEl();
+    var cachedItem = findAnnotationById(side, annotationId);
+
+    emitActiveOnPanel(panelIndex, annotationId);
+
+    suppressPopupDismiss = true;
+    setTimeout(function () {
+      suppressPopupDismiss = false;
+    }, 150);
+
+    if (cachedItem) {
+      showClickPopupContent(popup, cachedItem, point);
+      return;
+    }
+
+    showClickPopupLoading(popup, point);
+    ensureSideDataLoaded(side, version).then(function () {
+      var item = findAnnotationById(side, annotationId);
+      if (item) {
+        showClickPopupContent(popup, item, point);
+      } else {
+        showClickPopupError(popup, 'Note text not loaded yet. Open Annotations for the full list or try Refresh.', point);
+      }
+    }).catch(function (err) {
+      showClickPopupError(popup, err.message || 'Could not load annotation.', point);
+    });
+  }
+
+  function syncFoldoutSelectionIfOpen(panelIndex, annotationId) {
+    var side = config.getFoldoutSideForPanelIndex
+      ? config.getFoldoutSideForPanelIndex(toPanelIndex(panelIndex))
+      : null;
+    if (!side) {
+      return;
+    }
+    var foldout = config.getCompareFoldoutSidebar ? config.getCompareFoldoutSidebar() : null;
+    if (foldout && foldout.openSide === side && findAnnotationById(side, annotationId)) {
+      selectedIdBySide[side] = String(annotationId);
+      renderList(side);
+    }
+  }
+
   function openFoldoutForPanel(panelIndex, annotationId) {
     var side = config.getFoldoutSideForPanelIndex
       ? config.getFoldoutSideForPanelIndex(toPanelIndex(panelIndex))
@@ -379,8 +597,14 @@
     if (!annotationId) {
       return;
     }
+    if (skipNextActivePopup) {
+      skipNextActivePopup = false;
+      syncFoldoutSelectionIfOpen(panelIndex, String(annotationId));
+      return;
+    }
     log('preview click annotation ' + annotationId + ' panel ' + panelIndex);
-    openFoldoutForPanel(panelIndex, String(annotationId));
+    showAnnotationPopup(panelIndex, String(annotationId), lastPreviewClickPoint);
+    lastPreviewClickPoint = null;
   }
 
   function removeCompareListeners(boxAnnotations, key) {
@@ -455,6 +679,7 @@
     if (panelIndex < 0) {
       return;
     }
+    lastPreviewClickPoint = { x: evt.clientX, y: evt.clientY };
     var id = extractIdFromDomTarget(evt.target);
     if (!id) {
       return;
@@ -499,6 +724,7 @@
     uiBySide.right = null;
     selectedIdBySide.left = null;
     selectedIdBySide.right = null;
+    dismissClickPopup();
   }
 
   function setPlaceholder(side) {
@@ -516,6 +742,8 @@
     invalidateAll: invalidateAll,
     setPlaceholder: setPlaceholder,
     openFoldoutForPanel: openFoldoutForPanel,
+    showAnnotationPopup: showAnnotationPopup,
+    dismissClickPopup: dismissClickPopup,
     refreshPanel: refreshPanel
   };
 })(typeof window !== 'undefined' ? window : this);

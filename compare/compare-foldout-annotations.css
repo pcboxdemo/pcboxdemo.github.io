@@ -281,6 +281,80 @@
   min-height: 0;
 }
 
+/* Click popup — annotation text at click position (fold-out stays for full list) */
+.compare-ann-click-popup {
+  position: fixed;
+  z-index: 10050;
+  max-width: min(300px, calc(100vw - 24px));
+  padding: 0;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+  font-size: 0.8125rem;
+  color: #212529;
+  pointer-events: auto;
+}
+
+.compare-ann-click-popup[hidden] {
+  display: none !important;
+}
+
+.compare-ann-click-popup-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+  background: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+}
+
+.compare-ann-click-popup-meta {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6c757d;
+  line-height: 1.35;
+}
+
+.compare-ann-click-popup-close {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #6c757d;
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.compare-ann-click-popup-close:hover {
+  background: #e9ecef;
+  color: #212529;
+}
+
+.compare-ann-click-popup-body {
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.45;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.compare-ann-click-popup-body.is-loading {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.compare-ann-click-popup-body.is-error {
+  color: #842029;
+}
+
 @media (max-width: 700px) {
   .compare-ann-list-wrap {
     max-height: none;
