@@ -16,7 +16,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-<!-- Box UI Elements Preview + standalone Content Sidebar (same version) -->
+<!-- Box UI Elements Preview (modal may still embed sidebar) -->
 <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/26.3.0/en-US/preview.css">
 <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/elements/26.3.0/en-US/sidebar.css">
 <!-- Box Annotations V4 (local bundle, not on CDN) -->
@@ -25,6 +25,8 @@ License URL: http://creativecommons.org/licenses/by/3.0/
 <link rel="stylesheet" href="compare.css">
 <link rel="stylesheet" href="compare-sidebyside.css">
 <link rel="stylesheet" href="compare-foldout-sidebar.css">
+<link rel="stylesheet" href="compare-foldout-annotations.css">
+<link rel="stylesheet" href="compare-comments-dropdown.css">
 
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -33,7 +35,10 @@ License URL: http://creativecommons.org/licenses/by/3.0/
 <script src="https://cdn01.boxcdn.net/platform/elements/26.3.0/en-US/preview.js"></script>
 <script src="https://cdn01.boxcdn.net/platform/elements/26.3.0/en-US/sidebar.js"></script>
 <script type="module" src="../sandpit/annotations.js"></script>
+<script src="compare-annotations-api.js"></script>
 <script src="compare-foldout-sidebar.js"></script>
+<script src="compare-foldout-annotations.js"></script>
+<script src="compare-comments-dropdown.js"></script>
     <script>
   var TOKEN_GENERATOR_URL = "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator";
   var DEFAULT_BOX_CLIENT_ID = "uie27c6xniopg9wrcxywucg58t2emgs7";
@@ -56,9 +61,8 @@ License URL: http://creativecommons.org/licenses/by/3.0/
   var boxAnnotationsModal = null;
   var sideBySideVisible = false;
   var compareFoldoutSidebar = null;
-  var compareFoldoutBoxSidebars = { left: null, right: null };
   var compareFoldoutSidebarVersions = { left: null, right: null };
-  var COMPARE_FOLDOUT_SIDEBAR_HOST_CLASS = 'compare-box-sidebar-host';
+  var fileCanComment = true;
   var currentPreviewVersionIndex = -1;
   var timeFilterDays = 0; // Default: all versions
   var MIN_COMPARE_VERSIONS = 2;
@@ -260,7 +264,88 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     );
   }
 
+  function getFoldoutSideForPanelIndex(panelIndex) {
+    if (panelIndex === 0) {
+      return 'left';
+    }
+    if (panelIndex === 2) {
+      return 'right';
+    }
+    return null;
+  }
+
+  function getPanelIndexForFoldoutSide(side) {
+    if (side === 'left') {
+      return 0;
+    }
+    if (side === 'right') {
+      return 2;
+    }
+    return -1;
+  }
+
+  function getVersionForComparePanel(panelIndex) {
+    var count = selectedVersions.length;
+    if (panelIndex === 0) {
+      return compareFoldoutSidebarVersions.left;
+    }
+    if (panelIndex === 2) {
+      return compareFoldoutSidebarVersions.right;
+    }
+    if (panelIndex === 1 && count === 3) {
+      return getVersionBySelection(selectedVersions[1]);
+    }
+    return null;
+  }
+
+  function initCompareFoldoutAnnotations() {
+    if (typeof CompareFoldoutAnnotations === 'undefined') {
+      console.log('Compare foldout annotations: script not loaded');
+      return;
+    }
+    CompareFoldoutAnnotations.configure({
+      getAccessToken: function () {
+        return accessToken;
+      },
+      getFileId: function () {
+        return fileId;
+      },
+      getCompareFoldoutSidebar: function () {
+        return compareFoldoutSidebar;
+      },
+      getFoldoutSideForPanelIndex: getFoldoutSideForPanelIndex,
+      getPanelIndexForFoldoutSide: getPanelIndexForFoldoutSide,
+      getVersionForSide: function (side) {
+        return compareFoldoutSidebarVersions[side];
+      },
+      getBoxAnnotationsForPanel: function (panelIndex) {
+        return boxAnnotationsInstances[panelIndex];
+      }
+    });
+  }
+
+  function initCompareCommentsDropdown() {
+    if (typeof CompareCommentsDropdown === 'undefined') {
+      console.log('Compare comments dropdown: script not loaded');
+      return;
+    }
+    CompareCommentsDropdown.configure({
+      getAccessToken: function () {
+        return accessToken;
+      },
+      getFileId: function () {
+        return fileId;
+      },
+      getCanComment: function () {
+        return fileCanComment;
+      }
+    });
+    CompareCommentsDropdown.mount();
+  }
+
   function initCompareFoldoutSidebarsOnce() {
+    initCompareFoldoutAnnotations();
+    initCompareCommentsDropdown();
     if (compareFoldoutSidebar) {
       return;
     }
@@ -273,15 +358,9 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     compareFoldoutSidebar = CompareFoldoutSidebar.mount(stageEl, overlayEl);
     if (compareFoldoutSidebar) {
       compareFoldoutSidebar.onPanelOpen = function (side) {
-        var version = compareFoldoutSidebarVersions[side];
-        if (!version) {
-          return;
+        if (typeof CompareFoldoutAnnotations !== 'undefined') {
+          CompareFoldoutAnnotations.onPanelOpen(side);
         }
-        requestAnimationFrame(function () {
-          requestAnimationFrame(function () {
-            mountCompareFoldoutBoxSidebar(side, version);
-          });
-        });
       };
     }
   }
@@ -293,71 +372,10 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     }
   }
 
-  function getCompareFoldoutSidebarBodyEl(side) {
-    return document.querySelector('[data-compare-foldout-body="' + side + '"]');
-  }
-
   function setCompareFoldoutSidebarPlaceholder(side) {
-    var bodyEl = getCompareFoldoutSidebarBodyEl(side);
-    if (!bodyEl) {
-      return;
+    if (typeof CompareFoldoutAnnotations !== 'undefined') {
+      CompareFoldoutAnnotations.setPlaceholder(side);
     }
-    bodyEl.innerHTML = '<p class="sidebar-placeholder">Open Details to load Box activity and file info.</p>';
-  }
-
-  function destroyCompareFoldoutBoxSidebar(side) {
-    var inst = compareFoldoutBoxSidebars[side];
-    if (!inst) {
-      return;
-    }
-    try {
-      inst.hide();
-    } catch (hideErr) {
-      console.log('Compare foldout sidebar hide: ' + (hideErr && hideErr.message ? hideErr.message : hideErr));
-    }
-    compareFoldoutBoxSidebars[side] = null;
-  }
-
-  function destroyAllCompareFoldoutBoxSidebars() {
-    destroyCompareFoldoutBoxSidebar('left');
-    destroyCompareFoldoutBoxSidebar('right');
-  }
-
-  /** Standalone Box.ContentSidebar in fold-out panel — see developer.box.com sidebar guide */
-  function mountCompareFoldoutBoxSidebar(side, version) {
-    if (!version || !accessToken || !fileId) {
-      return;
-    }
-    if (typeof Box === 'undefined' || typeof Box.ContentSidebar === 'undefined') {
-      console.log('Compare foldout: Box.ContentSidebar not loaded (sidebar.js)');
-      return;
-    }
-    var bodyEl = getCompareFoldoutSidebarBodyEl(side);
-    if (!bodyEl) {
-      return;
-    }
-
-    destroyCompareFoldoutBoxSidebar(side);
-    bodyEl.innerHTML = '';
-    var host = document.createElement('div');
-    host.className = COMPARE_FOLDOUT_SIDEBAR_HOST_CLASS;
-    bodyEl.appendChild(host);
-
-    var containerSelector = '[data-compare-foldout-body="' + side + '"] .' + COMPARE_FOLDOUT_SIDEBAR_HOST_CLASS;
-    var sidebarOptions = getContentSidebarProps();
-    sidebarOptions.container = containerSelector;
-    if (!version.isCurrent) {
-      sidebarOptions.fileOptions = {};
-      sidebarOptions.fileOptions[fileId] = {
-        fileVersionId: version.id,
-        currentFileVersionId: currentFileVersionId
-      };
-    }
-
-    var sidebar = new Box.ContentSidebar();
-    sidebar.show(fileId, accessToken, sidebarOptions);
-    compareFoldoutBoxSidebars[side] = sidebar;
-    console.log('Compare foldout Box sidebar mounted: ' + side + ' version ' + version.versionNumber);
   }
 
   function refreshCompareFoldoutSidebars() {
@@ -380,12 +398,14 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     compareFoldoutSidebar.setTitle('left', formatPreviewPanelLabel(leftVersion, 1));
     compareFoldoutSidebar.setTitle('right', formatPreviewPanelLabel(rightVersion, count));
 
-    destroyAllCompareFoldoutBoxSidebars();
+    if (typeof CompareFoldoutAnnotations !== 'undefined') {
+      CompareFoldoutAnnotations.invalidateAll();
+    }
     setCompareFoldoutSidebarPlaceholder('left');
     setCompareFoldoutSidebarPlaceholder('right');
 
-    if (openSide) {
-      mountCompareFoldoutBoxSidebar(openSide, compareFoldoutSidebarVersions[openSide]);
+    if (openSide && typeof CompareFoldoutAnnotations !== 'undefined') {
+      CompareFoldoutAnnotations.onPanelOpen(openSide);
     }
   }
 
@@ -1432,10 +1452,19 @@ License URL: http://creativecommons.org/licenses/by/3.0/
       type: 'get',
       success: function(file) {
         var p = file && file.permissions ? file.permissions : {};
-        console.log('Sidebar permissions: can_comment=' + !!p.can_comment +
+        if (p && typeof p.can_comment === 'boolean') {
+          fileCanComment = p.can_comment;
+        } else {
+          fileCanComment = true;
+        }
+        console.log('Sidebar permissions: can_comment=' + fileCanComment +
           ' can_view_annotations=' + !!p.can_view_annotations +
           ' can_view_annotations_all=' + !!p.can_view_annotations_all +
           ' can_view_annotations_self=' + !!p.can_view_annotations_self);
+      },
+      error: function() {
+        fileCanComment = true;
+        console.log('Sidebar permissions: fetch failed, allowing comments for demo');
       }
     });
   }
@@ -1536,10 +1565,17 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     var preview = new Box.ContentPreview();
     var fileOptions = buildPreviewFileOptions(version);
     var boxAnnotations = createBoxAnnotationsInstance();
-    preview.show(fileId, accessToken, getSideBySidePreviewOptions(containerSelector, fileOptions, boxAnnotations));
+    var previewOptions = getSideBySidePreviewOptions(containerSelector, fileOptions, boxAnnotations);
+    if (typeof CompareFoldoutAnnotations !== 'undefined') {
+      CompareFoldoutAnnotations.enhancePreviewOptions(previewOptions, panelIndex, boxAnnotations);
+    }
+    preview.show(fileId, accessToken, previewOptions);
 
     boxPreviewInstances[panelIndex] = preview;
     boxAnnotationsInstances[panelIndex] = boxAnnotations;
+    if (typeof CompareFoldoutAnnotations !== 'undefined' && boxAnnotations) {
+      CompareFoldoutAnnotations.wireBoxAnnotations(panelIndex, boxAnnotations);
+    }
 
     console.log("**Side preview panel " + panelIndex + " version:** " + version.versionNumber);
   }
@@ -1583,8 +1619,13 @@ License URL: http://creativecommons.org/licenses/by/3.0/
 
   function hideSideBySidePreviews() {
     var i;
+    if (typeof CompareFoldoutAnnotations !== 'undefined') {
+      CompareFoldoutAnnotations.invalidateAll();
+    }
+    if (typeof CompareCommentsDropdown !== 'undefined') {
+      CompareCommentsDropdown.invalidate();
+    }
     closeCompareFoldoutSidebars();
-    destroyAllCompareFoldoutBoxSidebars();
     compareFoldoutSidebarVersions.left = null;
     compareFoldoutSidebarVersions.right = null;
     for (i = 0; i < PREVIEW_PANELS.length; i++) {
@@ -1699,7 +1740,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
           <button class="btn btn-primary btn-compare" disabled type="button" aria-describedby="compareHelpText">
             <i class="bi bi-layout-split"></i> Show Side by Side Previews
           </button>
-          <small id="compareHelpText" class="text-muted d-block mt-2">Select 2 or 3 versions, then compare below. Details opens an overlay (Close, Escape, or click outside).</small>
+          <small id="compareHelpText" class="text-muted d-block mt-2">Select 2 or 3 versions, then compare below. Use Annotations on each side for version notes; Comments in the center for file discussion. Click a region in the preview to jump to it.</small>
           </div>
         </div>
     </div>
@@ -1710,43 +1751,61 @@ License URL: http://creativecommons.org/licenses/by/3.0/
         Select 2 or 3 versions above and click Show Side by Side Previews.
       </p>
       <div class="compare-stage" id="compareStage" hidden>
-        <div class="compare-foldout compare-foldout--left" data-compare-foldout="left">
-          <div class="compare-foldout-rail">
-            <button type="button" class="compare-foldout-trigger" aria-expanded="false" aria-controls="compareFoldoutPanel-left">
-              <i class="bi bi-layout-sidebar" aria-hidden="true"></i>
-              <span class="compare-foldout-trigger-text">Details</span>
-            </button>
+        <div class="compare-stage-row">
+          <div class="compare-foldout compare-foldout--left" data-compare-foldout="left">
+            <div class="compare-foldout-rail">
+              <button type="button" class="compare-foldout-trigger" aria-expanded="false" aria-controls="compareFoldoutPanel-left">
+                <i class="bi bi-layout-sidebar" aria-hidden="true"></i>
+                <span class="compare-foldout-trigger-text">Annotations</span>
+              </button>
+            </div>
           </div>
-        </div>
-        <div class="preview-panels-row preview-panels-row--compare" id="previewPanelsRow">
-          <article class="preview-panel preview-panel--left" id="previewPanelLeft" aria-labelledby="previewLabelLeft">
-            <header class="preview-panel-header" id="previewLabelLeft">Version 1</header>
-            <div id="boxPreviewLeft" class="box-preview-container" role="region" aria-label="First selected version preview"></div>
-          </article>
-          <article class="preview-panel preview-panel--center" id="previewPanelCenter" hidden aria-labelledby="previewLabelCenter">
-            <header class="preview-panel-header" id="previewLabelCenter">Version 2</header>
-            <div id="boxPreviewCenter" class="box-preview-container" role="region" aria-label="Second selected version preview"></div>
-          </article>
-          <article class="preview-panel preview-panel--right" id="previewPanelRight" aria-labelledby="previewLabelRight">
-            <header class="preview-panel-header" id="previewLabelRight">Version 3</header>
-            <div id="boxPreviewRight" class="box-preview-container" role="region" aria-label="Third selected version preview"></div>
-          </article>
-        </div>
-        <div class="compare-foldout compare-foldout--right" data-compare-foldout="right">
-          <div class="compare-foldout-rail">
-            <button type="button" class="compare-foldout-trigger" aria-expanded="false" aria-controls="compareFoldoutPanel-right">
-              <i class="bi bi-layout-sidebar" aria-hidden="true"></i>
-              <span class="compare-foldout-trigger-text">Details</span>
-            </button>
+          <div class="compare-stage-center">
+            <div class="compare-comments-bar">
+              <div class="compare-comments-dropdown" id="compareCommentsDropdown">
+                <button type="button" class="compare-comments-trigger" aria-expanded="false" aria-controls="compareCommentsPanel">
+                  <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+                  <span>Comments</span>
+                  <i class="bi bi-chevron-down compare-comments-chevron" aria-hidden="true"></i>
+                </button>
+                <div class="compare-comments-panel" id="compareCommentsPanel" hidden>
+                  <div data-compare-comments-body>
+                    <p class="sidebar-placeholder">Open Comments for file discussion.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="preview-panels-row preview-panels-row--compare" id="previewPanelsRow">
+              <article class="preview-panel preview-panel--left" id="previewPanelLeft" aria-labelledby="previewLabelLeft">
+                <header class="preview-panel-header" id="previewLabelLeft">Version 1</header>
+                <div id="boxPreviewLeft" class="box-preview-container" role="region" aria-label="First selected version preview"></div>
+              </article>
+              <article class="preview-panel preview-panel--center" id="previewPanelCenter" hidden aria-labelledby="previewLabelCenter">
+                <header class="preview-panel-header" id="previewLabelCenter">Version 2</header>
+                <div id="boxPreviewCenter" class="box-preview-container" role="region" aria-label="Second selected version preview"></div>
+              </article>
+              <article class="preview-panel preview-panel--right" id="previewPanelRight" aria-labelledby="previewLabelRight">
+                <header class="preview-panel-header" id="previewLabelRight">Version 3</header>
+                <div id="boxPreviewRight" class="box-preview-container" role="region" aria-label="Third selected version preview"></div>
+              </article>
+            </div>
+          </div>
+          <div class="compare-foldout compare-foldout--right" data-compare-foldout="right">
+            <div class="compare-foldout-rail">
+              <button type="button" class="compare-foldout-trigger" aria-expanded="false" aria-controls="compareFoldoutPanel-right">
+                <i class="bi bi-layout-sidebar" aria-hidden="true"></i>
+                <span class="compare-foldout-trigger-text">Annotations</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Details overlay: fixed slide-in panels (previews stay full size) -->
+    <!-- Annotations overlay: fixed slide-in panels (previews stay full size) -->
     <div id="compareDetailsOverlay" class="compare-details-overlay" hidden aria-hidden="true">
       <button type="button" class="compare-foldout-backdrop" aria-label="Close details"></button>
-      <aside class="compare-foldout-panel compare-foldout-panel--overlay compare-foldout-panel--from-left" id="compareFoldoutPanel-left" role="dialog" aria-modal="true" aria-label="Left version details" hidden>
+      <aside class="compare-foldout-panel compare-foldout-panel--overlay compare-foldout-panel--from-left" id="compareFoldoutPanel-left" role="dialog" aria-modal="true" aria-label="Left version annotations" hidden>
         <div class="compare-foldout-panel-header">
           <h2 class="compare-foldout-panel-title">Left version</h2>
           <button type="button" class="compare-foldout-panel-close" aria-label="Close details">
@@ -1755,10 +1814,10 @@ License URL: http://creativecommons.org/licenses/by/3.0/
           </button>
         </div>
         <div class="compare-foldout-panel-body" data-compare-foldout-body="left">
-          <p class="sidebar-placeholder">Loading activity and file info...</p>
+          <p class="sidebar-placeholder">Open Annotations for notes on this version.</p>
         </div>
       </aside>
-      <aside class="compare-foldout-panel compare-foldout-panel--overlay compare-foldout-panel--from-right" id="compareFoldoutPanel-right" role="dialog" aria-modal="true" aria-label="Right version details" hidden>
+      <aside class="compare-foldout-panel compare-foldout-panel--overlay compare-foldout-panel--from-right" id="compareFoldoutPanel-right" role="dialog" aria-modal="true" aria-label="Right version annotations" hidden>
         <div class="compare-foldout-panel-header">
           <h2 class="compare-foldout-panel-title">Right version</h2>
           <button type="button" class="compare-foldout-panel-close" aria-label="Close details">
@@ -1767,7 +1826,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
           </button>
         </div>
         <div class="compare-foldout-panel-body" data-compare-foldout-body="right">
-          <p class="sidebar-placeholder">Loading activity and file info...</p>
+          <p class="sidebar-placeholder">Open Annotations for notes on this version.</p>
         </div>
       </aside>
     </div>

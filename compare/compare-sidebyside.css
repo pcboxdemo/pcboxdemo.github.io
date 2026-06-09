@@ -82,6 +82,22 @@ body.compare-mode-active .compare-stage {
   flex-direction: column;
 }
 
+body.compare-mode-active .compare-stage-row {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+
+body.compare-mode-active .compare-stage-center {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+body.compare-mode-active .compare-stage-center .preview-panels-row--compare {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .preview-panels-row--compare {
   flex: 1 1 auto;
   justify-content: stretch;
