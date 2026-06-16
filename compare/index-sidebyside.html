@@ -67,8 +67,6 @@ License URL: http://creativecommons.org/licenses/by/3.0/
   var timeFilterDays = 0; // Default: all versions
   var MIN_COMPARE_VERSIONS = 2;
   var MAX_COMPARE_VERSIONS = 3;
-  /** Show every version card so any two/three can be selected (no collapsed user groups). */
-  var COLLAPSE_CONSECUTIVE_USER_VERSIONS = false;
   var PREVIEW_PANELS = [
     { key: 'left', container: '#boxPreviewLeft', label: '#previewLabelLeft', panel: '#previewPanelLeft' },
     { key: 'center', container: '#boxPreviewCenter', label: '#previewLabelCenter', panel: '#previewPanelCenter' },
@@ -655,7 +653,7 @@ License URL: http://creativecommons.org/licenses/by/3.0/
     
     // Render each group
     $.each(versionGroups, function(groupIndex, group) {
-      var isCollapsed = COLLAPSE_CONSECUTIVE_USER_VERSIONS && group.versions.length > 1;
+      var isCollapsed = group.versions.length > 1;
       var displayVersions = isCollapsed ? [group.versions[0]] : group.versions;
       
       // First pass: create cards for this group
@@ -760,7 +758,9 @@ License URL: http://creativecommons.org/licenses/by/3.0/
       versionCard.append(versionHeader);
       
       versionCard.click(function() {
-        toggleVersionSelection(version.id, version.extension);
+        // When collapsed, select the newest version (first in group)
+        var versionToSelect = isCollapsed ? group.versions[0] : version;
+        toggleVersionSelection(versionToSelect.id, versionToSelect.extension);
       });
       
       // Only add padding when versions cross sides (different domains)

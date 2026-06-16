@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+.env.*
+*.env
+config.json
+*.key
+*.pem
+
+# OS
+.DS_Store
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
