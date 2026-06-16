@@ -530,9 +530,11 @@ License URL: http://creativecommons.org/licenses/by/3.0/
       expandedCards.push(versionCard);
     }
     
-    // Insert expanded cards after the collapsed card
+    // Insert expanded cards after the collapsed card (chain so order is preserved)
+    var insertAfter = collapsedCard;
     $.each(expandedCards, function(idx, card) {
-      collapsedCard.after(card);
+      insertAfter.after(card);
+      insertAfter = card;
     });
     
     // Change expand button to collapse button
