@@ -176,11 +176,16 @@ var selectedFile=null;
         console.log('submitting')
         //get the key value pairs
         let prefilltags = [];
-        $('input').each(function(index,data) {
+        $('input').each(function() {
+          if ($(this).closest("#custom").length || $(this).hasClass("nofill")) {
+            return;
+          }
           var value = $(this).val();
           var type=$(this).attr('type');
           var id = $(this).attr('id');
-          
+          if (id == null || id === "") {
+            return;
+          }
             if(type=='text') {
               prefilltags.push({"document_tag_id":id,"text_value":value,"read_only":true})
             }
@@ -188,8 +193,6 @@ var selectedFile=null;
               let boolVal = value=="on"?true:false;
               prefilltags.push({"document_tag_id":id,"checkbox_value":boolVal,"read_only":true})
             }
-
-          
        });
         //send to box sign 
         let actualSigners = [];
@@ -204,8 +207,6 @@ var selectedFile=null;
           })
 
         let data = {
-          //file_from_url: "your_url_here",
-          name:$("#name").val(),
           signers: actualSigners,
           "are_attachments_enabled": false,
            "are_text_signatures_enabled": true,
@@ -222,6 +223,10 @@ var selectedFile=null;
               },
              prefill_tags:prefilltags
         };
+        var requestName = $("#signRequestName").val();
+        if (requestName) {
+          data.name = requestName;
+        }
         if(selectedFile!=null) {
           data['source_files'] = [
           {
@@ -234,7 +239,7 @@ var selectedFile=null;
           data['template_id'] = $('#templateChooser').find(":selected").val();
         };
         console.log(data);
-        $("#req").JSONView(data,{ collapsed: true });
+        $("#req").JSONView(JSON.parse(JSON.stringify(data)),{ collapsed: true });
         //send box sign request
         $("#loader").show();
         $.ajax({
@@ -253,12 +258,15 @@ var selectedFile=null;
             $("#resp").JSONView(response,{ collapsed: true });
           }
           ,
-          error: function(xhr, status, error) {
-            //$("#response").text(JSON.stringify(xhr,null,2));
-						console.log('stat' + JSON.stringify(xhr.statusCode()));
-            console.log('res' + JSON.stringify(xhr.getAllResponseHeaders()));
+          error: function(xhr) {
+            console.log("sign request failed: " + xhr.status);
             $("#loader").hide();
-            $("#response").html(xhr.getAllResponseHeaders());
+            var body = xhr.responseText || xhr.statusText || "Request failed";
+            try {
+              $("#resp").JSONView(JSON.parse(body), { collapsed: false });
+            } catch (e) {
+              $("#resp").text(body);
+            }
           }
         });
 
@@ -460,6 +468,7 @@ var selectedFile=null;
       $(".tab-content").append('<div id="custom" class="tab-pane active"></div>');
       
       
+      $("#custom").append('<div class="mb-3"><label for="signRequestName" class="form-label">Sign request name</label><input type="text" class="form-control" id="signRequestName" placeholder="Sign request name" value="" label="Name"></div>');
       $("#custom").append('<div class="mb-3"><input type="checkbox" class="form-check-input" id="sendEmail" placeholder="" checked ><label for="sendEmail" class="form-label" style="margin-left:5px;">Send Email?</label></div>');
       $("#custom").append('<div class="mb-3"><label for="customEmailSubject" class="form-label">Custom Email Subject</label><input type="text" class="form-control" id="customEmailSubject" placeholder="Custom Email Subject" value="" label="Custom Email Subject"></div>');
       $("#custom").append('<div class="mb-3"><label for="customEmailSubject" class="form-label">Custom Email Message</label><input type="text" class="form-control" id="customEmailMessage" placeholder="Custom Email Message" value="" label="Custom Email Message"></div>');
