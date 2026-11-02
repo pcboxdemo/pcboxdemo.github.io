@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box event poller</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #101114;
+            --paper: #181b20;
+            --ink: #e6e2db;
+            --muted: #9b958c;
+            --line: #2c3138;
+            --accent: #e09262;
+            --accent-soft: #3a2c24;
+            --ok: #b7d48d;
+            --ok-soft: #24301c;
+            --warn: #e4c27a;
+            --warn-soft: #3a3018;
+            --danger: #f0a8b4;
+            --danger-soft: #3d2028;
+            --hover: #22262c;
+            --selected: #2c2824;
+            --head: #14171c;
+            --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+            --sans: "Avenir Next", "Segoe UI", sans-serif;
+            --mono: "ui-monospace", "SFMono-Regular", Menlo, Consolas, monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        [hidden] { display: none !important; }
+
+        html, body { height: 100%; }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            background: var(--bg);
+            font-family: var(--sans);
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        button, input { font: inherit; color: inherit; }
+
+        button { cursor: pointer; }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .wrap {
+            width: min(1600px, calc(100% - 20px));
+            height: 100%;
+            margin: 0 auto;
+            padding: 8px 0 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 6px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .who {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 4px;
+        }
+
+        #identity {
+            color: var(--muted);
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 2px;
+        }
+
+        .tabs button {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            padding: 4px 10px 6px;
+            font-size: 13px;
+            color: var(--muted);
+            border-bottom: 2px solid transparent;
+        }
+
+        .tabs button[aria-selected="true"] {
+            color: var(--ink);
+            border-bottom-color: var(--accent);
+        }
+
+        .tools, .history-tools, .status-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: end;
+        }
+
+        .tools { margin-bottom: 6px; }
+
+        .history-tools { margin-bottom: 4px; }
+
+        label.field {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 10px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        label.field.grow { flex: 1 1 240px; }
+
+        input[type="search"],
+        input[type="text"],
+        input[type="password"],
+        input[type="datetime-local"] {
+            min-height: 28px;
+            padding: 2px 8px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--bg);
+            text-transform: none;
+            letter-spacing: 0;
+            font-size: 12px;
+        }
+
+        .btn {
+            min-height: 28px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--line);
+            background: var(--paper);
+            font-size: 12px;
+        }
+
+        .btn.primary {
+            background: var(--accent);
+            color: #1a120e;
+            border-color: var(--accent);
+        }
+
+        .btn.small {
+            min-height: 22px;
+            padding: 0 6px;
+            font-size: 11px;
+        }
+
+        .btn:disabled { opacity: 0.55; cursor: default; }
+
+        .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+
+        .hint {
+            flex-basis: 100%;
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .type-filter { position: relative; }
+
+        #type-panel {
+            position: absolute;
+            z-index: 5;
+            top: calc(100% + 6px);
+            right: 0;
+            width: min(360px, 80vw);
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--paper);
+            box-shadow: var(--shadow);
+        }
+
+        #type-panel input { width: 100%; }
+
+        .type-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        #type-list {
+            max-height: 280px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 2px;
+            text-align: left;
+        }
+
+        #type-list label {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 4px 6px;
+            border-radius: 6px;
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 0;
+            text-align: left;
+            text-transform: none;
+            color: var(--ink);
+        }
+
+        #type-list label input {
+            margin: 0;
+            flex: 0 0 auto;
+        }
+
+        #type-list label:hover { background: var(--accent-soft); }
+
+        .status-row { margin: 4px 0 6px; min-height: 20px; }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #2a2e34;
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .pill.live { background: var(--ok-soft); color: var(--ok); }
+        .pill.paused { background: var(--warn-soft); color: var(--warn); }
+        .pill.error { background: var(--danger-soft); color: var(--danger); }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .pill.live .dot { animation: pulse 1.4s ease-in-out infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        #summary { color: var(--muted); font-size: 12px; }
+
+        .banner {
+            margin: 0 0 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: var(--danger-soft);
+            color: var(--danger);
+        }
+
+        .table-wrap {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--paper);
+        }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+
+        th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: var(--head);
+            text-align: left;
+            font-size: 10px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 4px 8px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        td {
+            padding: 3px 8px;
+            border-top: 1px solid var(--line);
+            vertical-align: middle;
+            font-size: 12px;
+        }
+
+        tbody tr.summary { cursor: pointer; }
+        tbody tr.summary:hover td { background: var(--hover); }
+        tbody tr.summary[aria-expanded="true"] td { background: var(--selected); }
+
+        .clip {
+            max-width: 280px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mono { font-family: var(--mono); font-size: 11px; }
+
+        .when { white-space: nowrap; }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 20px 8px;
+        }
+
+        .detail td { background: #241f1b; padding: 0; }
+
+        pre {
+            margin: 0;
+            padding: 14px 16px;
+            max-height: 320px;
+            overflow: auto;
+            background: #241f1b;
+            color: #f6f1ea;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        dialog {
+            border: 0;
+            padding: 0;
+            color: var(--ink);
+            background: var(--paper);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        dialog::backdrop { background: rgba(0, 0, 0, 0.62); }
+
+        #event-dialog { width: min(760px, calc(100vw - 32px)); }
+
+        .dialog-head, .dialog-body, .dialog-actions {
+            padding: 16px 18px;
+        }
+
+        .dialog-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .dialog-head h2 { margin: 0; font-size: 18px; font-weight: 600; }
+
+        .dialog-body p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+
+        .stack { display: flex; flex-direction: column; gap: 12px; }
+
+        .check {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            text-transform: none;
+            letter-spacing: 0;
+            font-size: 13px;
+            color: var(--ink);
+        }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        #event-dialog pre {
+            max-height: min(60vh, 520px);
+            border-radius: 0 0 16px 16px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="app" class="wrap">
+        <header>
+            <div class="tabs" role="tablist">
+                <button type="button" id="tab-streaming" role="tab" aria-selected="true" aria-controls="table-wrap">Streaming</button>
+                <button type="button" id="tab-historic" role="tab" aria-selected="false" aria-controls="table-wrap">Historic</button>
+            </div>
+            <div class="who">
+                <span id="identity">Not signed in</span>
+                <button type="button" class="btn" id="auth-button">Sign in</button>
+            </div>
+        </header>
+
+        <div class="tools">
+            <label class="field grow">Search
+                <input id="search" type="search" placeholder="Filter loaded events" autocomplete="off">
+            </label>
+            <div class="type-filter" id="type-filter">
+                <button type="button" class="btn" id="type-button" aria-expanded="false" aria-controls="type-panel">All event types</button>
+                <div id="type-panel" hidden>
+                    <input id="type-search" type="search" placeholder="Search event types" autocomplete="off">
+                    <div class="type-actions">
+                        <span id="type-count">All types</span>
+                        <button type="button" class="btn small" id="type-clear">Clear</button>
+                    </div>
+                    <div id="type-list"></div>
+                </div>
+            </div>
+            <button type="button" class="btn" id="pause-button">Pause</button>
+        </div>
+
+        <div class="history-tools" id="history-tools" hidden>
+            <label class="field">From
+                <input id="from-time" type="datetime-local">
+            </label>
+            <label class="field">To
+                <input id="to-time" type="datetime-local">
+            </label>
+            <div class="presets" id="presets">
+                <button type="button" class="btn" data-ms="3600000">1 hour</button>
+                <button type="button" class="btn" data-ms="86400000">24 hours</button>
+                <button type="button" class="btn" data-ms="604800000">7 days</button>
+                <button type="button" class="btn" data-ms="2592000000">30 days</button>
+            </div>
+            <button type="button" class="btn primary" id="load-button">Load</button>
+            <button type="button" class="btn" id="load-more" hidden>Load more</button>
+            <p class="hint">Times you pick are local. Events are shown in UTC. Historic uses admin logs, one year at most, 2,000 events per load.</p>
+        </div>
+
+        <div class="status-row">
+            <span id="pill" class="pill"><span class="dot"></span><span id="pill-text">Idle</span></span>
+            <span id="summary"></span>
+        </div>
+        <p id="banner" class="banner" hidden></p>
+
+        <div class="table-wrap" id="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Event type</th>
+                        <th>Created by</th>
+                        <th>Created at</th>
+                        <th>Item type</th>
+                        <th>Item name</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <dialog id="event-dialog" aria-labelledby="event-dialog-title">
+        <div class="dialog-head">
+            <h2 id="event-dialog-title">Event</h2>
+            <div>
+                <button type="button" class="btn small" id="copy-event">Copy</button>
+                <button type="button" class="btn small" id="close-event">Close</button>
+            </div>
+        </div>
+        <pre id="event-json"></pre>
+    </dialog>
+
+    <script>
+        (function () {
+            "use strict";
+
+            var POLL_MS = 10000;
+            var STREAM_LIMIT = 100;
+            var STREAM_CAP = 1000;
+            var HISTORY_PAGE = 500;
+            var HISTORY_CAP = 2000;
+            var HISTORY_PAGE_LIMIT = 8;
+            var STREAM_PAGE_LIMIT = 5;
+            var SEEN_CAP = 5000;
+            var YEAR_MS = 366 * 24 * 60 * 60 * 1000;
+            var CLIENT_ID = "iacu6hioawld82nq7p1q15ckiu6uvuv0";
+            var TOKEN_GENERATOR_URL = "https://dik4ogwqph.execute-api.eu-west-2.amazonaws.com/default/box-node-token-generator";
+            var SESSION_TOKEN = "event-poller-token";
+            var SESSION_EXPIRES = "event-poller-expires";
+            var LOCAL_HASH = "event-poller-token-hash";
+            var LOCAL_AUTH_AT = "event-poller-auth-time";
+            var HASH_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+            var EVENT_TYPES = [
+                "ACCESS_GRANTED", "ACCESS_REVOKED", "ADD_DEVICE_ASSOCIATION", "ADD_LOGIN_ACTIVITY_DEVICE",
+                "ADMIN_LOGIN", "ADVANCED_FOLDER_SETTINGS_UPDATE", "APPLICATION_CREATED", "APPLICATION_PUBLIC_KEY_ADDED",
+                "APPLICATION_PUBLIC_KEY_DELETED", "CHANGE_ADMIN_ROLE", "CHANGE_FOLDER_PERMISSION", "COLLABORATION_ACCEPT",
+                "COLLABORATION_EXPIRATION", "COLLABORATION_INVITE", "COLLABORATION_REMOVE", "COLLABORATION_ROLE_CHANGE",
+                "COMMENT_CREATE", "COMMENT_DELETE", "COMMENT_EDIT", "CONTENT_WORKFLOW_ABNORMAL_DOWNLOAD_ACTIVITY",
+                "CONTENT_WORKFLOW_AUTOMATION_ADD", "CONTENT_WORKFLOW_AUTOMATION_DELETE", "CONTENT_WORKFLOW_POLICY_ADD",
+                "CONTENT_WORKFLOW_SHARING_POLICY_VIOLATION", "CONTENT_WORKFLOW_UPLOAD_POLICY_VIOLATION", "COPY",
+                "DATA_RETENTION_CREATE_RETENTION", "DATA_RETENTION_REMOVE_RETENTION", "DELETE", "DELETE_USER",
+                "DEVICE_TRUST_CHECK_FAILED", "DOWNLOAD", "EDIT", "EDIT_USER", "EMAIL_ALIAS_CONFIRM", "EMAIL_ALIAS_PRIMARY",
+                "EMAIL_ALIAS_REMOVE", "EMAIL_UPLOAD_DISABLED", "EMAIL_UPLOAD_ENABLED", "ENTERPRISE_APP_AUTHORIZATION_UPDATE",
+                "EXTERNAL_COLLAB_SECURITY_SETTINGS", "FAILED_LOGIN", "FAVORITE", "FILE_MARKED_MALICIOUS", "FILE_REQUEST_CREATE",
+                "FILE_REQUEST_DELETE", "FILE_REQUEST_UPDATE", "FILE_VERSION_RESTORE", "FILE_WATERMARKED_DOWNLOAD", "GROUP_ADD_ITEM",
+                "GROUP_ADD_USER", "GROUP_CREATION", "GROUP_DELETION", "GROUP_EDITED", "GROUP_REMOVE_ITEM", "GROUP_REMOVE_USER",
+                "ILLEGAL_ITEM_OWNERSHIP_TRANSFER_BY_USER", "ITEM_EMAIL_SEND", "ITEM_MODIFY", "ITEM_OPEN", "ITEM_SHARED_UPDATE",
+                "ITEM_SYNC", "ITEM_UNSYNC", "LEGAL_HOLD_ASSIGNMENT_CREATE", "LEGAL_HOLD_ASSIGNMENT_DELETE", "LEGAL_HOLD_POLICY_CREATE",
+                "LEGAL_HOLD_POLICY_DELETE", "LEGAL_HOLD_POLICY_UPDATE", "LOCK", "LOGIN", "METADATA_CASCADE_POLICY_APPLY",
+                "METADATA_CASCADE_POLICY_CREATE", "METADATA_INSTANCE_COPY", "METADATA_INSTANCE_CREATE", "METADATA_INSTANCE_DELETE",
+                "METADATA_INSTANCE_UPDATE", "METADATA_TEMPLATE_CREATE", "METADATA_TEMPLATE_DELETE", "METADATA_TEMPLATE_UPDATE",
+                "MOVE", "NEW_USER", "OAUTH2_ACCESS_TOKEN_REVOKE", "OAUTH2_REFRESH_TOKEN_REVOKE", "PREVIEW", "REMOVE_DEVICE_ASSOCIATION",
+                "REMOVE_LOGIN_ACTIVITY_DEVICE", "RENAME", "RETENTION_POLICY_ASSIGNMENT_ADD", "SHARE", "SHARED_LINK_ONE_TIME_PASSCODE_ACCESS",
+                "SHARED_LINK_ONE_TIME_PASSCODE_CHALLENGE", "SHARED_LINK_SEND", "SHARE_EXPIRATION", "SHIELD_ALERT", "SHIELD_DOWNLOAD_BLOCKED",
+                "SHIELD_EXTERNAL_COLLAB_ACCESS_BLOCKED", "SHIELD_EXTERNAL_COLLAB_ACCESS_BLOCKED_MISSING_JUSTIFICATION",
+                "SHIELD_EXTERNAL_COLLAB_ACCESS_JUSTIFIED", "SHIELD_EXTERNAL_COLLAB_INVITE_BLOCKED",
+                "SHIELD_EXTERNAL_COLLAB_INVITE_BLOCKED_MISSING_JUSTIFICATION", "SHIELD_EXTERNAL_COLLAB_INVITE_JUSTIFIED",
+                "SHIELD_JUSTIFICATION_APPROVAL", "SHIELD_PREVIEW_BLOCKED", "SHIELD_SHARED_LINK_ACCESS_BLOCKED",
+                "SHIELD_SHARED_LINK_STATUS_RESTRICTED_ON_CREATE", "SHIELD_SHARED_LINK_STATUS_RESTRICTED_ON_UPDATE",
+                "SIGN_DOCUMENT_ASSIGNED", "SIGN_DOCUMENT_CANCELLED", "SIGN_DOCUMENT_COMPLETED", "SIGN_DOCUMENT_CONVERTED",
+                "SIGN_DOCUMENT_CREATED", "SIGN_DOCUMENT_DECLINED", "SIGN_DOCUMENT_EXPIRED", "SIGN_DOCUMENT_SIGNED",
+                "SIGN_DOCUMENT_VIEWED_BY_SIGNED", "SIGNER_DOWNLOADED", "SIGNER_FORWARDED", "STORAGE_EXPIRATION",
+                "TASK_ASSIGNMENT_CREATE", "TASK_ASSIGNMENT_DELETE", "TASK_ASSIGNMENT_UPDATE", "TASK_CREATE", "TASK_UPDATE",
+                "TERMS_OF_SERVICE_ACCEPT", "TERMS_OF_SERVICE_REJECT", "UNDELETE", "UNFAVORITE", "UNLOCK", "UNSHARE",
+                "UPDATE_COLLABORATION_EXPIRATION", "UPDATE_SHARE_EXPIRATION", "UPLOAD", "USER_AUTHENTICATE_OAUTH2_ACCESS_TOKEN_CREATE",
+                "WATERMARK_LABEL_CREATE", "WATERMARK_LABEL_DELETE", "WORKFLOW_AUTOMATION_CREATE", "WORKFLOW_AUTOMATION_DELETE",
+                "WORKFLOW_AUTOMATION_UPDATE"
+            ];
+
+            var app = document.getElementById("app");
+            var identity = document.getElementById("identity");
+            var authButton = document.getElementById("auth-button");
+            var tabStreaming = document.getElementById("tab-streaming");
+            var tabHistoric = document.getElementById("tab-historic");
+            var searchInput = document.getElementById("search");
+            var typeFilter = document.getElementById("type-filter");
+            var typeButton = document.getElementById("type-button");
+            var typePanel = document.getElementById("type-panel");
+            var typeSearch = document.getElementById("type-search");
+            var typeCount = document.getElementById("type-count");
+            var typeClear = document.getElementById("type-clear");
+            var typeList = document.getElementById("type-list");
+            var pauseButton = document.getElementById("pause-button");
+            var historyTools = document.getElementById("history-tools");
+            var fromInput = document.getElementById("from-time");
+            var toInput = document.getElementById("to-time");
+            var loadButton = document.getElementById("load-button");
+            var loadMoreButton = document.getElementById("load-more");
+            var pill = document.getElementById("pill");
+            var pillText = document.getElementById("pill-text");
+            var summary = document.getElementById("summary");
+            var banner = document.getElementById("banner");
+            var rows = document.getElementById("rows");
+            var eventDialog = document.getElementById("event-dialog");
+            var eventDialogTitle = document.getElementById("event-dialog-title");
+            var eventJson = document.getElementById("event-json");
+            var copyEvent = document.getElementById("copy-event");
+            var closeEvent = document.getElementById("close-event");
+
+            var signedIn = false;
+            var token = null;
+            var tokenExpiresAt = 0;
+            var activeTab = "streaming";
+            var manualPause = false;
+            var selectedTypes = new Set();
+            var typeSnapshot = "";
+            var appliedStreamTypes = "";
+            var streamingEvents = [];
+            var historicEvents = [];
+            var seenStream = new Set();
+            var seenHistory = new Set();
+            var streamPosition = null;
+            var streamTimer = null;
+            var streamBusy = false;
+            var streamGen = 0;
+            var historyPosition = null;
+            var historyQuery = null;
+            var historyTruncated = false;
+            var historyBusy = false;
+            var historyGen = 0;
+            var expanded = { streaming: null, historic: null };
+            var modalEvent = null;
+            var copyTimer = null;
+
+            function el(tag, className, text) {
+                var node = document.createElement(tag);
+                if (className) node.className = className;
+                if (text != null) node.textContent = text;
+                return node;
+            }
+
+            function pad(n) {
+                return String(n).padStart(2, "0");
+            }
+
+            function toLocalInputValue(date) {
+                return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + "T" + pad(date.getHours()) + ":" + pad(date.getMinutes());
+            }
+
+            function formatUtc(iso) {
+                var date = new Date(iso);
+                if (isNaN(date.getTime())) return "";
+                return date.getUTCFullYear() + "-" + pad(date.getUTCMonth() + 1) + "-" + pad(date.getUTCDate()) + " " + pad(date.getUTCHours()) + ":" + pad(date.getUTCMinutes()) + ":" + pad(date.getUTCSeconds()) + " UTC";
+            }
+
+            function eventKey(event) {
+                if (event.event_id) return String(event.event_id);
+                var source = event.source || {};
+                var actor = event.created_by || {};
+                return [event.event_type || "", event.created_at || "", source.item_id || source.id || "", actor.id || ""].join("|");
+            }
+
+            function actorName(event) {
+                var actor = event.created_by || {};
+                return actor.name || actor.login || "";
+            }
+
+            function itemType(event) {
+                var source = event.source || {};
+                return source.item_type || source.type || "";
+            }
+
+            function itemName(event) {
+                var source = event.source || {};
+                return source.item_name || source.name || "";
+            }
+
+            function showOrDash(value) {
+                return value ? value : "—";
+            }
+
+            function typesKey(list) {
+                return list.slice().sort().join(",");
+            }
+
+            function selectedList() {
+                return Array.from(selectedTypes);
+            }
+
+            function byNewest(a, b) {
+                var left = a.created_at || "";
+                var right = b.created_at || "";
+                if (left === right) return 0;
+                return left < right ? 1 : -1;
+            }
+
+            function remember(set, id) {
+                if (set.has(id)) return false;
+                set.add(id);
+                if (set.size > SEEN_CAP) set.delete(set.values().next().value);
+                return true;
+            }
+
+            function errorMessage(error) {
+                if (!error) return "Something went wrong.";
+                if (error.message === "Failed to fetch") {
+                    return "Could not reach Box. Add this page's origin to the app's CORS domains.";
+                }
+                return error.message || "Something went wrong.";
+            }
+
+            function showBanner(error) {
+                banner.hidden = false;
+                banner.textContent = errorMessage(error);
+                setPill("error", "Error");
+            }
+
+            function clearBanner() {
+                banner.hidden = true;
+                banner.textContent = "";
+            }
+
+            function setPill(state, text) {
+                pill.className = "pill" + (state ? " " + state : "");
+                pillText.textContent = text;
+            }
+
+            function setSummary(text) {
+                summary.textContent = text;
+            }
+
+            function redirectUri() {
+                return window.location.origin + window.location.pathname;
+            }
+
+            function authError(message) {
+                var error = new Error(message);
+                error.auth = true;
+                return error;
+            }
+
+            function setAuthButton() {
+                authButton.textContent = signedIn ? "Sign out" : "Sign in";
+            }
+
+            function saveAuth(data) {
+                token = data.token;
+                var expiresIn = Number(data.expires_in || data.expiresIn || 3600);
+                tokenExpiresAt = Date.now() + expiresIn * 1000;
+                signedIn = true;
+                sessionStorage.setItem(SESSION_TOKEN, token);
+                sessionStorage.setItem(SESSION_EXPIRES, String(tokenExpiresAt));
+                if (data.tokenHash) {
+                    localStorage.setItem(LOCAL_HASH, data.tokenHash);
+                    localStorage.setItem(LOCAL_AUTH_AT, String(Date.now()));
+                }
+                setAuthButton();
+            }
+
+            function clearAuth() {
+                token = null;
+                tokenExpiresAt = 0;
+                signedIn = false;
+                sessionStorage.removeItem(SESSION_TOKEN);
+                sessionStorage.removeItem(SESSION_EXPIRES);
+                localStorage.removeItem(LOCAL_HASH);
+                localStorage.removeItem(LOCAL_AUTH_AT);
+                setAuthButton();
+            }
+
+            function signIn() {
+                if (!CLIENT_ID) {
+                    showBanner(authError("Set CLIENT_ID in this file. Register this redirect URI on that Box app: " + redirectUri()));
+                    return;
+                }
+                var authUrl = "https://account.box.com/api/oauth2/authorize?response_type=code&client_id=" + encodeURIComponent(CLIENT_ID) + "&redirect_uri=" + encodeURIComponent(redirectUri());
+                window.location.assign(authUrl);
+            }
+
+            function signOut() {
+                clearAuth();
+                stopStreaming();
+                streamGen += 1;
+                historyGen += 1;
+                streamingEvents = [];
+                historicEvents = [];
+                seenStream.clear();
+                seenHistory.clear();
+                streamPosition = null;
+                identity.textContent = "Not signed in";
+                clearBanner();
+                setPill("idle", "Idle");
+                setSummary("");
+                renderTable();
+            }
+
+            async function exchangeCode(code) {
+                var params = new URLSearchParams();
+                params.set("authCode", code);
+                params.set("clientId", CLIENT_ID);
+                var response = await fetch(TOKEN_GENERATOR_URL + "?" + params.toString());
+                var data = await response.json().catch(function () { return {}; });
+                if (!response.ok || !data.token) {
+                    throw authError(data.message || data.error || "Sign-in failed");
+                }
+                saveAuth(data);
+                var url = new URL(window.location.href);
+                url.searchParams.delete("code");
+                url.searchParams.delete("auth");
+                history.replaceState({}, "", url.pathname + url.search + url.hash);
+                console.log("Signed in");
+            }
+
+            async function refreshFromHash() {
+                var tokenHash = localStorage.getItem(LOCAL_HASH);
+                var authAt = Number(localStorage.getItem(LOCAL_AUTH_AT) || 0);
+                if (!tokenHash || !authAt || Date.now() - authAt > HASH_MAX_AGE_MS) {
+                    clearAuth();
+                    throw authError("Sign in to Box");
+                }
+                var params = new URLSearchParams();
+                params.set("action", "validate");
+                params.set("tokenHash", tokenHash);
+                params.set("clientId", CLIENT_ID);
+                var response = await fetch(TOKEN_GENERATOR_URL + "?" + params.toString());
+                var data = await response.json().catch(function () { return {}; });
+                var access = data.token || data.accessToken;
+                if (!response.ok || !access) {
+                    clearAuth();
+                    throw authError(data.message || data.error || "Session expired. Sign in again.");
+                }
+                saveAuth({
+                    token: access,
+                    expires_in: data.expires_in || data.expiresIn,
+                    tokenHash: data.tokenHash || tokenHash
+                });
+            }
+
+            async function getToken(force) {
+                if (!CLIENT_ID) throw authError("Set CLIENT_ID in this file. Register this redirect URI on that Box app: " + redirectUri());
+                if (!force && token && Date.now() < tokenExpiresAt - 60000) return token;
+                var stored = sessionStorage.getItem(SESSION_TOKEN);
+                var storedExpiry = Number(sessionStorage.getItem(SESSION_EXPIRES) || 0);
+                if (!force && stored && Date.now() < storedExpiry - 60000) {
+                    token = stored;
+                    tokenExpiresAt = storedExpiry;
+                    signedIn = true;
+                    setAuthButton();
+                    return token;
+                }
+                await refreshFromHash();
+                return token;
+            }
+
+            async function boxGet(pathAndQuery) {
+                var access = await getToken(false);
+                var response = await fetch("https://api.box.com" + pathAndQuery, {
+                    headers: { "Authorization": "Bearer " + access }
+                });
+                if (response.status === 401) {
+                    access = await getToken(true);
+                    response = await fetch("https://api.box.com" + pathAndQuery, {
+                        headers: { "Authorization": "Bearer " + access }
+                    });
+                }
+                var data = await response.json().catch(function () { return {}; });
+                if (!response.ok) {
+                    throw new Error(data.message || data.error_description || ("Box returned " + response.status));
+                }
+                return data;
+            }
+
+            async function connect() {
+                await getToken(false);
+                try {
+                    var me = await boxGet("/2.0/users/me?fields=id,name,login,enterprise");
+                    var name = me.name || me.login || me.id || "Connected";
+                    var enterprise = me.enterprise && me.enterprise.name ? me.enterprise.name : "";
+                    identity.textContent = enterprise ? name + " · " + enterprise : name;
+                } catch (error) {
+                    identity.textContent = "Connected";
+                }
+            }
+
+            function updateTypeButton() {
+                var count = selectedTypes.size;
+                var names = selectedList();
+                if (count === 0) typeButton.textContent = "All event types";
+                else if (count === 1) typeButton.textContent = names[0];
+                else typeButton.textContent = count + " event types";
+                typeCount.textContent = count === 0 ? "All types" : count + " selected";
+            }
+
+            function renderTypeList() {
+                var query = typeSearch.value.trim().toLowerCase();
+                typeList.replaceChildren();
+                EVENT_TYPES.forEach(function (name) {
+                    if (query && name.toLowerCase().indexOf(query) === -1) return;
+                    var label = el("label");
+                    var box = document.createElement("input");
+                    box.type = "checkbox";
+                    box.checked = selectedTypes.has(name);
+                    box.addEventListener("change", function () {
+                        if (box.checked) selectedTypes.add(name);
+                        else selectedTypes.delete(name);
+                        updateTypeButton();
+                        updateHistoryButtons();
+                    });
+                    label.appendChild(box);
+                    label.appendChild(document.createTextNode(name));
+                    typeList.appendChild(label);
+                });
+            }
+
+            function openTypePanel() {
+                typeSnapshot = typesKey(selectedList());
+                typePanel.hidden = false;
+                typeButton.setAttribute("aria-expanded", "true");
+                typeSearch.value = "";
+                renderTypeList();
+                typeSearch.focus();
+            }
+
+            function streamTypesChanged() {
+                return typesKey(selectedList()) !== appliedStreamTypes;
+            }
+
+            function ensureStreamTypes() {
+                if (!streamTypesChanged()) return false;
+                streamGen += 1;
+                appliedStreamTypes = typesKey(selectedList());
+                streamPosition = null;
+                streamingEvents = [];
+                seenStream.clear();
+                expanded.streaming = null;
+                return true;
+            }
+
+            function closeTypePanel() {
+                if (typePanel.hidden) return;
+                typePanel.hidden = true;
+                typeButton.setAttribute("aria-expanded", "false");
+                updateTypeButton();
+                if (activeTab === "streaming" && typesKey(selectedList()) !== typeSnapshot) {
+                    ensureStreamTypes();
+                    renderTable();
+                    pollStreaming();
+                }
+            }
+
+            function currentEvents() {
+                return activeTab === "streaming" ? streamingEvents : historicEvents;
+            }
+
+            function matches(event, query) {
+                if (!query) return true;
+                var haystack = [event.event_type, actorName(event), itemType(event), itemName(event), formatUtc(event.created_at)].join(" ").toLowerCase();
+                return haystack.indexOf(query) !== -1;
+            }
+
+            function pretty(event) {
+                return JSON.stringify(event, null, 2);
+            }
+
+            function openModal(event) {
+                modalEvent = event;
+                eventDialogTitle.textContent = (event.event_type || "Event") + " · " + formatUtc(event.created_at);
+                eventJson.textContent = pretty(event);
+                copyEvent.textContent = "Copy";
+                if (!eventDialog.open) eventDialog.showModal();
+            }
+
+            function toggleExpanded(event) {
+                var key = eventKey(event);
+                expanded[activeTab] = expanded[activeTab] === key ? null : key;
+                renderTable();
+            }
+
+            function buildRow(event) {
+                var key = eventKey(event);
+                var open = expanded[activeTab] === key;
+                var tr = el("tr", "summary");
+                tr.tabIndex = 0;
+                tr.setAttribute("aria-expanded", open ? "true" : "false");
+                var typeCell = el("td", "mono", showOrDash(event.event_type));
+                var actor = actorName(event);
+                var actorCell = el("td", "clip", showOrDash(actor));
+                actorCell.title = actor;
+                var when = formatUtc(event.created_at);
+                var whenCell = el("td", "mono when", showOrDash(when));
+                whenCell.title = event.created_at || "";
+                var typeName = itemType(event);
+                var name = itemName(event);
+                var itemTypeCell = el("td", null, showOrDash(typeName));
+                var itemNameCell = el("td", "clip", showOrDash(name));
+                itemNameCell.title = name;
+                var action = el("td");
+                var view = el("button", "btn small", "View");
+                view.type = "button";
+                view.addEventListener("click", function (clickEvent) {
+                    clickEvent.stopPropagation();
+                    openModal(event);
+                });
+                action.appendChild(view);
+                tr.appendChild(typeCell);
+                tr.appendChild(actorCell);
+                tr.appendChild(whenCell);
+                tr.appendChild(itemTypeCell);
+                tr.appendChild(itemNameCell);
+                tr.appendChild(action);
+                tr.addEventListener("click", function () { toggleExpanded(event); });
+                tr.addEventListener("keydown", function (keyEvent) {
+                    if (keyEvent.target.closest("button")) return;
+                    if (keyEvent.key === "Enter" || keyEvent.key === " ") {
+                        keyEvent.preventDefault();
+                        toggleExpanded(event);
+                    }
+                });
+                return tr;
+            }
+
+            function buildDetail(event) {
+                var tr = el("tr", "detail");
+                var td = document.createElement("td");
+                td.colSpan = 6;
+                var pre = el("pre", null, pretty(event));
+                td.appendChild(pre);
+                tr.appendChild(td);
+                return tr;
+            }
+
+            function renderTable() {
+                var events = currentEvents();
+                var query = searchInput.value.trim().toLowerCase();
+                var fragment = document.createDocumentFragment();
+                var shown = 0;
+                if (!events.length) {
+                    var empty = el("tr");
+                    var emptyText = activeTab === "streaming" ? (signedIn ? "No streaming events yet." : "Sign in to listen for events.") : "No historic events loaded.";
+                    var cell = el("td", "empty", emptyText);
+                    cell.colSpan = 6;
+                    empty.appendChild(cell);
+                    fragment.appendChild(empty);
+                } else {
+                    events.forEach(function (event) {
+                        if (!matches(event, query)) return;
+                        shown += 1;
+                        fragment.appendChild(buildRow(event));
+                        if (expanded[activeTab] === eventKey(event)) fragment.appendChild(buildDetail(event));
+                    });
+                    if (!shown) {
+                        var none = el("tr");
+                        var noneCell = el("td", "empty", "No events match this search.");
+                        noneCell.colSpan = 6;
+                        none.appendChild(noneCell);
+                        fragment.appendChild(none);
+                    }
+                }
+                rows.replaceChildren(fragment);
+                if (activeTab === "historic" && historyQuery) {
+                    var windowText = formatUtc(historyQuery.from) + " – " + formatUtc(historyQuery.to);
+                    setSummary(shown + " shown · " + events.length + " events · " + windowText + (historyTruncated ? " · more in this window" : ""));
+                } else if (!pill.classList.contains("error")) {
+                    setSummary(shown + " shown · " + events.length + " stored");
+                }
+            }
+
+            function stopStreaming() {
+                if (streamTimer) clearInterval(streamTimer);
+                streamTimer = null;
+            }
+
+            function startStreaming() {
+                if (!signedIn || manualPause || activeTab !== "streaming" || streamTimer) return;
+                pollStreaming();
+                streamTimer = setInterval(pollStreaming, POLL_MS);
+            }
+
+            async function pollStreaming() {
+                if (!signedIn || manualPause || activeTab !== "streaming" || streamBusy) return;
+                streamBusy = true;
+                var generation = streamGen;
+                var added = 0;
+                try {
+                    if (ensureStreamTypes()) generation = streamGen;
+                    var pages = 0;
+                    var batch = [];
+                    while (pages < STREAM_PAGE_LIMIT) {
+                        pages += 1;
+                        var params = new URLSearchParams();
+                        params.set("stream_type", "admin_logs_streaming");
+                        params.set("limit", String(STREAM_LIMIT));
+                        params.set("stream_position", streamPosition || "now");
+                        if (selectedTypes.size) params.set("event_type", selectedList().join(","));
+                        var data = await boxGet("/2.0/events?" + params.toString());
+                        if (generation !== streamGen) return;
+                        if (data.next_stream_position != null) streamPosition = String(data.next_stream_position);
+                        var entries = data.entries || [];
+                        entries.forEach(function (event) {
+                            if (remember(seenStream, eventKey(event))) batch.push(event);
+                        });
+                        if (entries.length < STREAM_LIMIT) break;
+                    }
+                    added = batch.length;
+                    if (generation !== streamGen) return;
+                    if (added) streamingEvents = streamingEvents.concat(batch).sort(byNewest).slice(0, STREAM_CAP);
+                    if (activeTab !== "streaming") return;
+                    clearBanner();
+                    setPill("live", "Listening");
+                    if (!added) return;
+                    renderTable();
+                    setSummary(added + " new · " + streamingEvents.length + " stored");
+                } catch (error) {
+                    if (generation === streamGen && activeTab === "streaming") {
+                        showBanner(error);
+                        if (error.auth) {
+                            manualPause = true;
+                            pauseButton.textContent = "Resume";
+                            stopStreaming();
+                        }
+                    }
+                } finally {
+                    streamBusy = false;
+                    if (generation !== streamGen && !manualPause && activeTab === "streaming") pollStreaming();
+                }
+            }
+
+            function historyKeyNow() {
+                return [fromInput.value, toInput.value, typesKey(selectedList())].join("|");
+            }
+
+            function updateHistoryButtons() {
+                var sameQuery = historyQuery && historyQuery.key === historyKeyNow();
+                loadMoreButton.hidden = !(historyTruncated && sameQuery);
+                loadButton.disabled = historyBusy;
+                loadMoreButton.disabled = historyBusy;
+                loadButton.textContent = historyBusy ? "Loading" : "Load";
+            }
+
+            function applyPreset(ms) {
+                var to = new Date();
+                var from = new Date(to.getTime() - Number(ms));
+                fromInput.value = toLocalInputValue(from);
+                toInput.value = toLocalInputValue(to);
+                updateHistoryButtons();
+            }
+
+            function appendHistoric(entries) {
+                var added = 0;
+                entries.forEach(function (event) {
+                    if (remember(seenHistory, eventKey(event))) {
+                        historicEvents.push(event);
+                        added += 1;
+                    }
+                });
+                return added;
+            }
+
+            async function loadHistoric(more) {
+                if (historyBusy) return;
+                if (!more) {
+                    var fromDate = new Date(fromInput.value);
+                    var toDate = new Date(toInput.value);
+                    if (!fromInput.value || !toInput.value || isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+                        showBanner(new Error("Choose a from and to time."));
+                        return;
+                    }
+                    if (fromDate >= toDate) {
+                        showBanner(new Error("From must be earlier than to."));
+                        return;
+                    }
+                    if (toDate.getTime() - fromDate.getTime() > YEAR_MS) {
+                        showBanner(new Error("Historic windows can be at most one year."));
+                        return;
+                    }
+                    historyGen += 1;
+                    historicEvents = [];
+                    seenHistory.clear();
+                    historyPosition = null;
+                    historyTruncated = false;
+                    expanded.historic = null;
+                    historyQuery = {
+                        from: fromDate.toISOString(),
+                        to: toDate.toISOString(),
+                        types: selectedList(),
+                        key: historyKeyNow()
+                    };
+                } else if (!historyQuery) {
+                    return;
+                }
+                var generation = historyGen;
+                historyBusy = true;
+                updateHistoryButtons();
+                clearBanner();
+                setPill("live", "Loading");
+                var fetched = 0;
+                var pages = 0;
+                var stop = "done";
+                try {
+                    while (true) {
+                        if (generation !== historyGen) return;
+                        if (fetched >= HISTORY_CAP || pages >= HISTORY_PAGE_LIMIT) {
+                            stop = "cap";
+                            break;
+                        }
+                        pages += 1;
+                        var params = new URLSearchParams();
+                        params.set("stream_type", "admin_logs");
+                        params.set("limit", String(HISTORY_PAGE));
+                        params.set("created_after", historyQuery.from);
+                        params.set("created_before", historyQuery.to);
+                        if (historyPosition) params.set("stream_position", historyPosition);
+                        if (historyQuery.types.length) params.set("event_type", historyQuery.types.join(","));
+                        var data = await boxGet("/2.0/events?" + params.toString());
+                        if (generation !== historyGen) return;
+                        var entries = data.entries || [];
+                        if (!entries.length) {
+                            stop = "done";
+                            break;
+                        }
+                        var added = appendHistoric(entries);
+                        fetched += added;
+                        var next = data.next_stream_position;
+                        if (next == null || String(next) === String(historyPosition)) {
+                            stop = "done";
+                            break;
+                        }
+                        historyPosition = String(next);
+                        if (added === 0) {
+                            stop = "done";
+                            break;
+                        }
+                        if (activeTab === "historic") setSummary("Loading · " + historicEvents.length + " events");
+                    }
+                    if (generation !== historyGen) return;
+                    historyTruncated = stop === "cap";
+                    historicEvents.sort(byNewest);
+                    if (activeTab !== "historic") return;
+                    clearBanner();
+                    setPill("idle", historyTruncated ? "Truncated" : "Loaded");
+                    renderTable();
+                } catch (error) {
+                    if (generation === historyGen) showBanner(error);
+                } finally {
+                    historyBusy = false;
+                    updateHistoryButtons();
+                }
+            }
+
+            function showTab(tab) {
+                closeTypePanel();
+                activeTab = tab;
+                tabStreaming.setAttribute("aria-selected", tab === "streaming" ? "true" : "false");
+                tabHistoric.setAttribute("aria-selected", tab === "historic" ? "true" : "false");
+                historyTools.hidden = tab !== "historic";
+                pauseButton.hidden = tab !== "streaming";
+                if (tab === "streaming") {
+                    if (signedIn && !manualPause) startStreaming();
+                    else setPill(manualPause ? "paused" : "idle", manualPause ? "Paused" : "Idle");
+                } else {
+                    stopStreaming();
+                    if (historyBusy) setPill("live", "Loading");
+                    else if (banner.hidden) setPill("idle", historicEvents.length ? (historyTruncated ? "Truncated" : "Loaded") : "Idle");
+                }
+                renderTable();
+            }
+
+            function bind() {
+                authButton.addEventListener("click", function () {
+                    if (signedIn) signOut();
+                    else signIn();
+                });
+                tabStreaming.addEventListener("click", function () { showTab("streaming"); });
+                tabHistoric.addEventListener("click", function () { showTab("historic"); });
+                searchInput.addEventListener("input", renderTable);
+                typeButton.addEventListener("click", function () {
+                    if (typePanel.hidden) openTypePanel();
+                    else closeTypePanel();
+                });
+                typeSearch.addEventListener("input", renderTypeList);
+                typeClear.addEventListener("click", function () {
+                    selectedTypes.clear();
+                    updateTypeButton();
+                    renderTypeList();
+                    updateHistoryButtons();
+                });
+                document.addEventListener("click", function (event) {
+                    if (!typePanel.hidden && !typeFilter.contains(event.target)) closeTypePanel();
+                });
+                document.addEventListener("keydown", function (event) {
+                    if (event.key === "Escape" && !typePanel.hidden) closeTypePanel();
+                });
+                pauseButton.addEventListener("click", function () {
+                    manualPause = !manualPause;
+                    pauseButton.textContent = manualPause ? "Resume" : "Pause";
+                    if (manualPause) {
+                        stopStreaming();
+                        setPill("paused", "Paused");
+                    } else if (activeTab === "streaming") {
+                        startStreaming();
+                    }
+                });
+                document.getElementById("presets").addEventListener("click", function (event) {
+                    var button = event.target.closest("button");
+                    if (!button) return;
+                    applyPreset(button.getAttribute("data-ms"));
+                });
+                fromInput.addEventListener("change", updateHistoryButtons);
+                toInput.addEventListener("change", updateHistoryButtons);
+                loadButton.addEventListener("click", function () { loadHistoric(false); });
+                loadMoreButton.addEventListener("click", function () { loadHistoric(true); });
+                closeEvent.addEventListener("click", function () { eventDialog.close(); });
+                eventDialog.addEventListener("click", function (event) {
+                    if (event.target === eventDialog) eventDialog.close();
+                });
+                copyEvent.addEventListener("click", async function () {
+                    if (!modalEvent) return;
+                    try {
+                        await navigator.clipboard.writeText(pretty(modalEvent));
+                        copyEvent.textContent = "Copied";
+                        if (copyTimer) clearTimeout(copyTimer);
+                        copyTimer = setTimeout(function () { copyEvent.textContent = "Copy"; }, 1500);
+                    } catch (error) {
+                        copyEvent.textContent = "Copy failed";
+                    }
+                });
+            }
+
+            applyPreset(86400000);
+            updateTypeButton();
+            bind();
+            renderTable();
+            var returnCode = new URLSearchParams(window.location.search).get("code") || new URLSearchParams(window.location.search).get("auth");
+            var startup = returnCode ? exchangeCode(returnCode) : Promise.resolve();
+            startup.then(function () {
+                return connect();
+            }).then(function () {
+                if (activeTab === "streaming" && !manualPause) startStreaming();
+            }).catch(function (error) {
+                showBanner(error);
+                if (error.auth) identity.textContent = "Not signed in";
+            });
+        }());
+    </script>
+</body>
+</html>
